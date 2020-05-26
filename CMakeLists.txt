@@ -34,6 +34,9 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 else(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   set(BUILD_EXTERNAL NO)
 
+  # we require include_directories because other components may include intrinsics headers.
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/GenXIntrinsics/include)
+  include_directories(${CMAKE_CURRENT_BINARY_DIR}/GenXIntrinsics/include)
 endif(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
 include(FindPythonInterp)
