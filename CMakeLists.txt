@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.13.4)
 
 set(LLVM_GENX_INTRINSICS_VERSION 1.0)
 
