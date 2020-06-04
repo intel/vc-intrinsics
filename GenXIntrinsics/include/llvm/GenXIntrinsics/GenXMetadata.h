@@ -36,7 +36,7 @@
 namespace llvm {
 namespace genx {
 
-namespace ModuleMD {
+namespace FunctionMD {
 const static char GenXKernels[] = "genx.kernels";
 const static char GenXByteOffset[] = "genx_byte_offset";
 const static char GenXVolatile[] = "genx_volatile";
@@ -44,11 +44,11 @@ const static char CMGenXMain[] = "CMGenxMain";
 const static char CMStackCall[] = "CMStackCall";
 const static char CMFloatControl[] = "CMFloatControl";
 const static char OCLRuntime[] = "oclrt";
-const static char SPIRVMemoryModel[] = "spirv.MemoryModel";
 const static char ReferencedIndirectly[] = "referenced-indirectly";
-} // namespace ModuleMD
+} // namespace FunctionMD
 
 namespace SPIRVParams {
+const static char SPIRVMemoryModel[] = "spirv.MemoryModel";
 const static unsigned SPIRVMemoryModelSimple = 0;
 const static unsigned SPIRVAddressingModel32 = 1;
 const static unsigned SPIRVAddressingModel64 = 2;
