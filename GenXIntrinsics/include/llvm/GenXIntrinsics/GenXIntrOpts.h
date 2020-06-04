@@ -28,6 +28,12 @@ class Pass;
 Pass *createCMSimdCFLoweringPass();
 Pass *createISPCSimdCFLoweringPass();
 
+//===----------------------------------------------------------------------===//
+//
+// GenXRestoreIntrAttr - Restore Intrinsics' Attributes
+//
+Pass *createGenXRestoreIntrAttrPass();
+
 } // End llvm namespace
 
 #endif

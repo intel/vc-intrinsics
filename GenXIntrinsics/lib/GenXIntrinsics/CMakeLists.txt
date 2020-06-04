@@ -1,7 +1,8 @@
-
 if(BUILD_EXTERNAL)
   add_library(LLVMGenXIntrinsics 
               GenXIntrinsics.cpp
+              GenXRestoreIntrAttr.cpp
+              GenXSimdCFLowering.cpp
              )
   llvm_update_compile_flags(LLVMGenXIntrinsics)
   add_dependencies(LLVMGenXIntrinsics GenXIntrinsicsGen)
@@ -18,6 +19,8 @@ else()
 
   add_llvm_library(LLVMGenXIntrinsics
     GenXIntrinsics.cpp
+    GenXRestoreIntrAttr.cpp
+    GenXSimdCFLowering.cpp
     ADDITIONAL_HEADER_DIRS
     ${GENX_INTRINSICS_MAIN_INCLUDE_DIR}/llvm/GenXIntrinsics
 
