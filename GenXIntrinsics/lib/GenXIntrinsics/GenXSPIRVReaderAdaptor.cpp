@@ -54,14 +54,6 @@ void GenXSPIRVReaderAdaptor::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool GenXSPIRVReaderAdaptor::runOnModule(Module &M) {
-  auto TargetTriple = StringRef(M.getTargetTriple());
-  if (TargetTriple.startswith("spir")) {
-    if (TargetTriple.startswith("spir64"))
-      M.setTargetTriple("genx64");
-    else
-      M.setTargetTriple("genx");
-  }
-
   for (auto &&GV : M.getGlobalList()) {
     if (!GV.hasAttribute(VCModuleMD::VCGlobalVariable))
       continue;
