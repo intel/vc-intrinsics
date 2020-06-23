@@ -73,10 +73,10 @@ bool GenXSPIRVWriterAdaptor::runOnModule(Module &M) {
     MemoryModelMD->addOperand(MDNode::get(Context, ValueVec));
   }
   if (TargetTriple.startswith("genx")) {
-    if (TargetTriple.startswith("genx64"))
-      M.setTargetTriple("spir64");
-    else
+    if (TargetTriple.startswith("genx32"))
       M.setTargetTriple("spir");
+    else
+      M.setTargetTriple("spir64");
   }
 
   for (auto &&GV : M.getGlobalList()) {
