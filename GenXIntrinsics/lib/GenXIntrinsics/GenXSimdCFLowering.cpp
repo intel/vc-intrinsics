@@ -504,15 +504,15 @@ void CMSimdCFLowering::calculateVisitOrder(Module *M,
       continue;
     }
     for (auto ui = F->use_begin(), ue = F->use_end(); ui != ue; ++ui) {
-      if (auto CI = dyn_cast<CallInst>(ui->getUser())) {
-        Function *Caller = CI->getParent()->getParent();
+      if (auto I = dyn_cast<Instruction>(ui->getUser())) {
+        Function *Caller = I->getFunction();
         // do not add a recursive call edge to the UnvisitedCallers
         if (Caller == F) {
           if (F->hasFnAttribute(genx::FunctionMD::CMStackCall))
-            DiagnosticInfoSimdCF::emit(CI, "SIMD recursive call", DS_Warning);
+            DiagnosticInfoSimdCF::emit(I, "SIMD recursive call", DS_Warning);
           else
             DiagnosticInfoSimdCF::emit(
-                CI, "Recursive function doesn't have CMStackCall attribute");
+                I, "Recursive function doesn't have CMStackCall attribute");
         } else {
           CGNode *CallerNode = &CallGraph[Caller];
           CallerNode->F = Caller;
@@ -1085,10 +1085,11 @@ void CMSimdCFLower::predicateInst(Instruction *Inst, unsigned SimdWidth) {
         predicateSend(CI, IntrinsicID, SimdWidth);
         return;
       case GenXIntrinsic::not_any_intrinsic:
-        // Call to real subroutine.
-        // ignore those SIMT entry function.
-        if (!Callee->hasFnAttribute("CMGenxSIMT") &&
-            !Callee->hasFnAttribute("CMGenxNoSIMDPred")) {
+        // Call to a real subroutine.
+        // Ignore those SIMT entry function for direct class, for indirect ones
+        // conservatively allow everything for now.
+        if (!Callee || (!Callee->hasFnAttribute("CMGenxSIMT") &&
+                        !Callee->hasFnAttribute("CMGenxNoSIMDPred"))) {
           predicateCall(CI, SimdWidth);
         }
         return;
@@ -1475,7 +1476,8 @@ CallInst *CMSimdCFLower::predicateWrRegion(CallInst *WrR, unsigned SimdWidth)
 void CMSimdCFLower::predicateCall(CallInst *CI, unsigned SimdWidth)
 {
   Function *F = CI->getCalledFunction();
-  assert(F);
+  // TODO: support width warnings for indirect calls,
+  // now PSEntry is actually fake for them as F=nullptr for such cases
   auto PSEntry = &PredicatedSubroutines[F];
 
   // Skip predicating recursive function
