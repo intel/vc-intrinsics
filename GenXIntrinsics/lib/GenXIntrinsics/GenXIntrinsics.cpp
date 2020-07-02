@@ -592,6 +592,31 @@ FunctionType *GenXIntrinsic::getGenXType(LLVMContext &Context,
   return FunctionType::get(ResultTy, ArgTys, false);
 }
 
+#ifndef NDEBUG
+// Sanity check for intrinsic types.
+// After translation from SPIRV literal structures become identified.
+// However, if intrinsic returns multiple values, then it returns
+// literal structure.
+// Having this, compatible intrinsics will have same argument types
+// and either same return types or layout identical structure types.
+static bool isCompatibleIntrinsicSignature(FunctionType *DecodedType,
+                                           FunctionType *FoundType) {
+  if (DecodedType == FoundType)
+    return true;
+
+  if (DecodedType->params() != FoundType->params())
+    return false;
+
+  // Return types are different. Check for structures.
+  auto *DecStrTy = dyn_cast<StructType>(DecodedType->getReturnType());
+  auto *FoundStrTy = dyn_cast<StructType>(FoundType->getReturnType());
+  if (!DecStrTy || !FoundStrTy)
+    return false;
+
+  return DecStrTy->isLayoutIdentical(FoundStrTy);
+}
+#endif
+
 Function *GenXIntrinsic::getGenXDeclaration(Module *M, GenXIntrinsic::ID id,
                                             ArrayRef<Type *> Tys) {
   assert(isGenXNonTrivialIntrinsic(id));
@@ -604,8 +629,8 @@ Function *GenXIntrinsic::getGenXDeclaration(Module *M, GenXIntrinsic::ID id,
   if (!F)
     F = Function::Create(FTy, GlobalVariable::ExternalLinkage, GenXName, M);
 
-  assert((F->getType() == PointerType::get(FTy, 0 /* AddressSpace */)) &&
-         "Type must be fixed");
+  assert(isCompatibleIntrinsicSignature(FTy, F->getFunctionType()) &&
+         "Module contains intrinsic declaration with incompatible type!");
 
   resetGenXAttributes(F);
   return F;
