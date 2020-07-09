@@ -147,6 +147,11 @@ bool GenXSPIRVWriterAdaptor::runOnFunction(Function &F) {
 
   F.setCallingConv(CallingConv::SPIR_KERNEL);
 
+  auto MDName =
+      cast<MDString>(KernelMD->getOperand(KernelMDOp::Name).get())->getString();
+  if (MDName != F.getName())
+    F.setName(MDName);
+
   if (KernelMD->getNumOperands() > KernelMDOp::ArgKinds) {
     if (auto *KindsNode =
             dyn_cast<MDNode>(KernelMD->getOperand(KernelMDOp::ArgKinds))) {
