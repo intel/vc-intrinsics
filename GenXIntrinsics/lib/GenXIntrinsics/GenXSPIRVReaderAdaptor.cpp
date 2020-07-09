@@ -82,6 +82,15 @@ bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
     F.addFnAttr(Attribute::NoInline);
   }
 
+  if (Attrs.hasFnAttribute(VCFunctionMD::VCSIMTCall)) {
+    auto SIMTMode = StringRef();
+    SIMTMode = Attrs
+                   .getAttribute(AttributeList::FunctionIndex,
+                                 VCFunctionMD::VCSIMTCall)
+                   .getValueAsString();
+    F.addFnAttr(FunctionMD::CMGenxSIMT, SIMTMode);
+  }
+
   auto &&Context = F.getContext();
   if (Attrs.hasFnAttribute(VCFunctionMD::VCFloatControl)) {
     auto FloatControl = unsigned(0);
