@@ -93,6 +93,9 @@ bool GenXSPIRVWriterAdaptor::runOnModule(Module &M) {
   for (auto &&F : M)
     runOnFunction(F);
 
+  // Old metadata is not needed anymore at this point.
+  M.eraseNamedMetadata(M.getNamedMetadata(FunctionMD::GenXKernels));
+
   return true;
 }
 
