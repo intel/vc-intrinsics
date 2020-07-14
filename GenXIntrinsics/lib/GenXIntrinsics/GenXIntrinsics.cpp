@@ -465,6 +465,7 @@ static const char * const GenXIntrinsicNameTable[] = {
 
 bool isOverloaded(GenXIntrinsic::ID id) {
   id = static_cast<GenXIntrinsic::ID>(id - GenXIntrinsic::not_genx_intrinsic);
+  assert(isGenXIntrinsic(id) && "Invalid intrinsic ID!");
 #define GET_INTRINSIC_OVERLOAD_TABLE
 #include "llvm/GenXIntrinsics/GenXIntrinsicDescription.gen"
 #undef GET_INTRINSIC_OVERLOAD_TABLE
