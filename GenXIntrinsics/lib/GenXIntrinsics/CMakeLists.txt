@@ -1,3 +1,8 @@
+set(LLVM_LIBS
+  LLVMCodeGen
+  LLVMSupport
+  )
+
 if(BUILD_EXTERNAL)
   add_library(LLVMGenXIntrinsics 
               GenXIntrinsics.cpp
@@ -8,8 +13,10 @@ if(BUILD_EXTERNAL)
              )
   llvm_update_compile_flags(LLVMGenXIntrinsics)
   add_dependencies(LLVMGenXIntrinsics GenXIntrinsicsGen)
-  add_dependencies(LLVMGenXIntrinsics LLVMCodeGen)
-  target_link_libraries(LLVMGenXIntrinsics LLVMCodeGen)
+
+  vc_get_llvm_targets(LLVM_LIBS ${LLVM_LIBS})
+  target_link_libraries(LLVMGenXIntrinsics ${LLVM_LIBS})
+
   target_include_directories(LLVMGenXIntrinsics PUBLIC
     $<BUILD_INTERFACE:${GENX_INTRINSICS_MAIN_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/../../include>
@@ -29,8 +36,7 @@ else()
     ${GENX_INTRINSICS_MAIN_INCLUDE_DIR}/llvm/GenXIntrinsics
 
     LINK_LIBS
-      LLVMCodeGen
-      LLVMSupport
+      ${LLVM_LIBS}
 
     DEPENDS
       GenXIntrinsicsGen
