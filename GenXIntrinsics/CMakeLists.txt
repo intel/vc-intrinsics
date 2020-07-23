@@ -6,6 +6,8 @@ if(IGC_INFRA)
   set(GENX_INTRINSICS_MAIN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
 endif()
 
+include(cmake/utils.cmake)
+
 set(GENX_INTRINSICS_DESCRIPTION "GenXIntrinsicDescription.gen")
 
 add_subdirectory(include/llvm)
