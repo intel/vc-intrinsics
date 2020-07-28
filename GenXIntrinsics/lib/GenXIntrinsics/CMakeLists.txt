@@ -1,6 +1,7 @@
-set(LLVM_LIBS
-  LLVMCodeGen
-  LLVMSupport
+set(LLVM_COMPONENTS
+  CodeGen
+  Support
+  Core
   )
 
 if(BUILD_EXTERNAL)
@@ -14,7 +15,7 @@ if(BUILD_EXTERNAL)
   llvm_update_compile_flags(LLVMGenXIntrinsics)
   add_dependencies(LLVMGenXIntrinsics GenXIntrinsicsGen)
 
-  vc_get_llvm_targets(LLVM_LIBS ${LLVM_LIBS})
+  vc_get_llvm_targets(LLVM_LIBS ${LLVM_COMPONENTS})
   target_link_libraries(LLVMGenXIntrinsics ${LLVM_LIBS})
 
   target_include_directories(LLVMGenXIntrinsics PUBLIC
@@ -24,7 +25,9 @@ if(BUILD_EXTERNAL)
   )
 else()
   # when we are building in LLVM infra, we need to conform
-  set(LLVM_LINK_COMPONENTS Core)
+  set(LLVM_LINK_COMPONENTS
+    ${LLVM_COMPONENTS}
+    )
 
   add_llvm_library(LLVMGenXIntrinsics
     GenXIntrinsics.cpp
@@ -34,9 +37,6 @@ else()
     GenXSPIRVWriterAdaptor.cpp
     ADDITIONAL_HEADER_DIRS
     ${GENX_INTRINSICS_MAIN_INCLUDE_DIR}/llvm/GenXIntrinsics
-
-    LINK_LIBS
-      ${LLVM_LIBS}
 
     DEPENDS
       GenXIntrinsicsGen
