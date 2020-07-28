@@ -19,6 +19,12 @@ if(NOT BUILD_EXTERNAL)
   add_subdirectory(unittests)
 endif()
 
+# Experimental lit tests for intrinsic passes. Require plugin support,
+# so only available with LLVM dylib (for stability).
+if(LLVM_LINK_LLVM_DYLIB)
+  add_subdirectory(test)
+endif()
+
 # this option is to switch on install when we are building not inside IGC
 if(INSTALL_REQUIRED)
   install(DIRECTORY include/llvm
