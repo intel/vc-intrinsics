@@ -316,6 +316,8 @@ def createOverloadTable():
         if isOverloadable:
             f.write(" | (1U<<" + str((i+1)%8) + ")")
     f.write("\n};\n\n")
+    f.write("assert( ((id / 8) < (sizeof(OTable) / sizeof(OTable[0]))) && "
+            "\"Overload Table index overflow\");\n");
     f.write("return (OTable[id/8] & (1 << (id%8))) != 0;\n")
     f.write("#endif\n\n")
     f.close()
