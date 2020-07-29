@@ -21,8 +21,13 @@ endif()
 
 # Experimental lit tests for intrinsic passes. Require plugin support,
 # so only available with LLVM dylib (for stability).
-if(LLVM_LINK_LLVM_DYLIB)
-  add_subdirectory(test)
+if(VC_INTR_ENABLE_LIT_TESTS)
+  if(LLVM_LINK_LLVM_DYLIB)
+    message(STATUS "VC intrinsics lit tests are enabled")
+    add_subdirectory(test)
+  else()
+    message(STATUS "VC intrinsics lit tests require dynamic LLVM, skipping")
+  endif()
 endif()
 
 # this option is to switch on install when we are building not inside IGC
