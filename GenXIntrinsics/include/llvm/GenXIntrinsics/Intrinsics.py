@@ -523,8 +523,10 @@ def createAttributeTable():
     f.write("  };\n\n")
 
     f.write("  unsigned AttrIdx = id - 1 - GenXIntrinsic::not_genx_intrinsic;\n"
+            "  #ifndef NDEBUG\n"
             "  const size_t AttrMapNum = sizeof(IntrinsicsToAttributesMap)/sizeof(IntrinsicsToAttributesMap[0]);\n"
-            "  assert(AttrIdx < AttrMapNum && \"invalid attribute index\");\n")
+            "  assert(AttrIdx < AttrMapNum && \"invalid attribute index\");\n"
+            "  #endif // NDEBUG\n")
 
     f.write("  AttributeList AS[1];\n" #Currently only allowed to have one attribute per instrinsic
             "  unsigned NumAttrs = 0;\n"

@@ -177,7 +177,6 @@
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
-#include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/IRBuilder.h"
@@ -190,20 +189,13 @@
 #include <algorithm>
 #include <set>
 
-
-
-// TODO: part of wrapper: decide if it should be applied in this way
-#include <llvm/IR/InstrTypes.h>
 #if VC_INTR_LLVM_VERSION_MAJOR >= 8
 #include <llvm/IR/PatternMatch.h>
 #endif
-namespace VCINTR {
-#if VC_INTR_LLVM_VERSION_MAJOR <= 7
-using llvm::TerminatorInst;
-#elif VC_INTR_LLVM_VERSION_MAJOR >= 8
-using TerminatorInst = llvm::Instruction;
-#endif
-} // namespace VCINTR
+
+#include "llvmVCWrapper/IR/GlobalVariable.h"
+#include "llvmVCWrapper/IR/DerivedTypes.h"
+#include "llvmVCWrapper/IR/InstrTypes.h"
 
 using namespace llvm;
 
@@ -428,7 +420,7 @@ bool CMSimdCFLowering::doInitialization(Module &M)
   // We have to try each overload of llvm.genx.simdcf.any separately.
   bool HasSimdCF = false;
   for (unsigned Width = 2; Width <= CMSimdCFLower::MAX_SIMD_CF_WIDTH; Width <<= 1) {
-    auto VT = VectorType::get(Type::getInt1Ty(M.getContext()), Width);
+    auto VT = VCINTR::getVectorType(Type::getInt1Ty(M.getContext()), Width);
     Function *SimdCFAny = GenXIntrinsic::getGenXDeclaration(
         &M, GenXIntrinsic::genx_simdcf_any, VT);
     if (!SimdCFAny->use_empty()) {
@@ -439,7 +431,7 @@ bool CMSimdCFLowering::doInitialization(Module &M)
 
   if (HasSimdCF) {
     // Create the global variable for the execution mask.
-    auto EMTy = VectorType::get(Type::getInt1Ty(M.getContext()),
+    auto EMTy = VCINTR::getVectorType(Type::getInt1Ty(M.getContext()),
       CMSimdCFLower::MAX_SIMD_CF_WIDTH);
     auto EMVar = new GlobalVariable(M, EMTy, false/*isConstant*/,
         GlobalValue::InternalLinkage, Constant::getAllOnesValue(EMTy), "EM");
@@ -1528,7 +1520,7 @@ void CMSimdCFLower::lowerSimdCF()
         Cond = Builder.CreateVectorSplat(SimdWidth, C);
       else {
         Cond = Br->getCondition();
-        Type *VecTy = VectorType::get(Cond->getType(), 1);
+        Type *VecTy = VCINTR::getVectorType(Cond->getType(), 1);
         Value *Undef = UndefValue::get(VecTy);
         Type *I32Ty = Type::getInt32Ty(Cond->getContext());
         auto Insert = Builder.CreateInsertElement(Undef, Cond,
@@ -1536,7 +1528,7 @@ void CMSimdCFLower::lowerSimdCF()
                                                   Cond->getName() + ".splat");
         auto Splat = Builder.CreateShuffleVector(
             Insert, Undef,
-            Constant::getNullValue(VectorType::get(I32Ty, SimdWidth)),
+            Constant::getNullValue(VCINTR::getVectorType(I32Ty, SimdWidth)),
             Insert->getName());
         Cond = Splat;
       }
@@ -1782,7 +1774,7 @@ Value *CMSimdCFLower::getRMAddr(BasicBlock *JP, unsigned SimdWidth)
     assert(SimdWidth);
     // Create an RM variable for this join point. Insert an alloca at the start
     // of the function.
-    Type *RMTy = VectorType::get(Type::getInt1Ty(F->getContext()), SimdWidth);
+    Type *RMTy = VCINTR::getVectorType(Type::getInt1Ty(F->getContext()), SimdWidth);
     Instruction *InsertBefore = &F->front().front();
     *RMAddr = new AllocaInst(RMTy, /*AddrSpace*/ 0,
                              Twine("RM.") + JP->getName(), InsertBefore);
