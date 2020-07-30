@@ -28,30 +28,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /// ---------------------------
 /// This pass converts metadata to SPIRV format from whichever used in frontend
 
-#include "llvm/ADT/StringRef.h"
-#include "llvm/Pass.h"
-
 namespace llvm {
-namespace genx {
-class GenXSPIRVWriterAdaptor final : public ModulePass {
+class ModulePass;
+class PassRegistry;
 
-public:
-  static char ID;
-  explicit GenXSPIRVWriterAdaptor() : ModulePass(ID) {}
-  llvm::StringRef getPassName() const override {
-    return "GenX SPIRVWriter Adaptor";
-  }
-  void getAnalysisUsage(AnalysisUsage &AU) const override;
-  bool runOnModule(Module &M) override;
-
-private:
-  bool runOnFunction(Function &F);
-};
-
-} // namespace genx
-} // namespace llvm
-
-namespace llvm {
 void initializeGenXSPIRVWriterAdaptorPass(PassRegistry &);
 ModulePass *createGenXSPIRVWriterAdaptorPass();
 } // namespace llvm

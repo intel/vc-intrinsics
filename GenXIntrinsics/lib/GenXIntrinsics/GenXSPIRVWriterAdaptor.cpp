@@ -31,13 +31,34 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "llvm/GenXIntrinsics/GenXSPIRVWriterAdaptor.h"
 #include "llvm/GenXIntrinsics/GenXIntrinsics.h"
 #include "llvm/GenXIntrinsics/GenXMetadata.h"
+
+#include "llvm/ADT/StringRef.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Pass.h"
 
 using namespace llvm;
 using namespace genx;
+
+namespace {
+
+class GenXSPIRVWriterAdaptor final : public ModulePass {
+public:
+  static char ID;
+  explicit GenXSPIRVWriterAdaptor() : ModulePass(ID) {}
+  llvm::StringRef getPassName() const override {
+    return "GenX SPIRVWriter Adaptor";
+  }
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  bool runOnModule(Module &M) override;
+
+private:
+  bool runOnFunction(Function &F);
+};
+
+} // namespace
 
 char GenXSPIRVWriterAdaptor::ID = 0;
 

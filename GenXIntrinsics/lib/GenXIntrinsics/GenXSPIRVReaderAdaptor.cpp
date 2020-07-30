@@ -30,13 +30,34 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "llvm/GenXIntrinsics/GenXSPIRVReaderAdaptor.h"
 #include "llvm/GenXIntrinsics/GenXMetadata.h"
+
+#include "llvm/ADT/StringRef.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Pass.h"
 
 using namespace llvm;
 using namespace genx;
+
+namespace {
+
+class GenXSPIRVReaderAdaptor final : public ModulePass {
+public:
+  static char ID;
+  explicit GenXSPIRVReaderAdaptor() : ModulePass(ID) {}
+  llvm::StringRef getPassName() const override {
+    return "GenX SPIRVReader Adaptor";
+  }
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  bool runOnModule(Module &M) override;
+
+private:
+  bool runOnFunction(Function &F);
+};
+
+} // namespace
 
 char GenXSPIRVReaderAdaptor::ID = 0;
 
