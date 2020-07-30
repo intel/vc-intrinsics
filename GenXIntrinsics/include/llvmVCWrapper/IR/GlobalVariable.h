@@ -22,6 +22,7 @@
  OTHER DEALINGS IN THE SOFTWARE.
 ======================= end_copyright_notice ==================================*/
 
+
 #ifndef VCINTR_IR_GLOBALVARIABLE_H
 #define VCINTR_IR_GLOBALVARIABLE_H
 
