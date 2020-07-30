@@ -348,14 +348,15 @@ bool CMSimdCFLowering::doInitialization(Module &M)
   }
 #endif
 
-  for (auto &G : M.getGlobalList()) {
-    if (!G.hasAttribute(genx::FunctionMD::GenXVolatile))
+  for (auto &Global : M.getGlobalList()) {
+    auto *G = cast<VCINTR::GlobalVariable>(&Global);
+    if (!G->hasAttribute(genx::FunctionMD::GenXVolatile))
       continue;
     // Transform all load store on volatile globals to vload/vstore to disable
     // optimizations on this global (no PHI will be produced.).
-    auto AS0 = G.getAddressSpace();
+    auto AS0 = G->getAddressSpace();
     std::vector<User*> WL;
-    for (auto UI = G.user_begin(); UI != G.user_end();) {
+    for (auto UI = G->user_begin(); UI != G->user_end();) {
       auto U = *UI++;
       WL.push_back(U);
     }
@@ -1078,7 +1079,7 @@ void CMSimdCFLower::predicateInst(Instruction *Inst, unsigned SimdWidth) {
         return;
       case GenXIntrinsic::not_any_intrinsic:
         // Call to a real subroutine.
-        // Ignore those SIMT entry function for direct class, for indirect ones
+        // Ignore those SIMT entry function for direct calls, for indirect ones
         // conservatively allow everything for now.
         if (!Callee || (!Callee->hasFnAttribute("CMGenxSIMT") &&
                         !Callee->hasFnAttribute("CMGenxNoSIMDPred"))) {
@@ -1469,7 +1470,7 @@ void CMSimdCFLower::predicateCall(CallInst *CI, unsigned SimdWidth)
 {
   Function *F = CI->getCalledFunction();
   // TODO: support width warnings for indirect calls,
-  // now PSEntry is actually fake for them as F=nullptr for such cases
+  // now PSEntry for them is actually fake as F=nullptr for such cases
   auto PSEntry = &PredicatedSubroutines[F];
 
   // Skip predicating recursive function
