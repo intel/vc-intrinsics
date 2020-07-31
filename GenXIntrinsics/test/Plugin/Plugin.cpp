@@ -23,6 +23,7 @@
 ======================= end_copyright_notice ==================================*/
 
 
+#include "llvm/GenXIntrinsics/GenXSimdCFLowering.h"
 #include "llvm/GenXIntrinsics/GenXSPIRVReaderAdaptor.h"
 #include "llvm/GenXIntrinsics/GenXSPIRVWriterAdaptor.h"
 
@@ -34,6 +35,7 @@ using namespace llvm;
 static int initializePasses() {
   PassRegistry &PR = *PassRegistry::getPassRegistry();
 
+  initializeCMSimdCFLoweringPass(PR);
   initializeGenXSPIRVReaderAdaptorPass(PR);
   initializeGenXSPIRVWriterAdaptorPass(PR);
 

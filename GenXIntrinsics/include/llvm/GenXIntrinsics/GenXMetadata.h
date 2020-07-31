@@ -44,6 +44,7 @@ static constexpr const char CMGenXMain[] = "CMGenxMain";
 static constexpr const char CMStackCall[] = "CMStackCall";
 static constexpr const char CMFloatControl[] = "CMFloatControl";
 static constexpr const char CMGenxSIMT[] = "CMGenxSIMT";
+static constexpr const char CMGenxReplicateMask[] = "CMGenxReplicateMask";
 static constexpr const char OCLRuntime[] = "oclrt";
 static constexpr const char ReferencedIndirectly[] = "referenced-indirectly";
 } // namespace FunctionMD
