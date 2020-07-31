@@ -199,10 +199,6 @@
 
 using namespace llvm;
 
-namespace llvm {
-void initializeCMSimdCFLoweringPass(PassRegistry &);
-}
-
 namespace {
 
 // Grouping : utility class to maintain a grouping, a partition of a set of
@@ -463,7 +459,6 @@ bool CMSimdCFLowering::doInitialization(Module &M)
       CI->eraseFromParent();
     }
   }
-
   return HasSimdCF;
 }
 
@@ -1178,6 +1173,59 @@ static bool isSingleBlockLocalStore(const Instruction *SI)
   return false;
 }
 
+static bool replicatesMask(Function *F) {
+  return F->hasFnAttribute(genx::FunctionMD::CMGenxReplicateMask);
+}
+
+static unsigned getNumChannelsReplicated(Function *F) {
+  assert(replicatesMask(F) &&
+         "Expected function with 'genx_replicate_mask' attribute");
+  uint32_t NumChannels = 0;
+  F->getFnAttribute(genx::FunctionMD::CMGenxReplicateMask)
+      .getValueAsString()
+      .getAsInteger(0, NumChannels);
+  return NumChannels;
+}
+
+// Instructions like gather4 or functions which use gather4
+// (marked with genx_replicate_mask attribute) have more output than execution
+// size. In this case, subsequent store will be wider. Handle this case here.
+unsigned CMSimdCFLower::deduceNumChannels(Instruction *SI) {
+  assert((isa<StoreInst>(SI) || GenXIntrinsic::isVStore(SI)) &&
+         "Store inst expected");
+  unsigned NumChannels = 1;
+  Value *StoredValue = SI->getOperand(0);
+  // TODO: handle cases when stored value is used in cast instructions
+
+  // If it's not a call there can't be possible replication of the mask
+  if (!isa<CallInst>(StoredValue))
+    return NumChannels;
+
+  auto *CI = cast<CallInst>(StoredValue);
+
+  if (Function *F = CI->getCalledFunction()) {
+    if (!GenXIntrinsic::isGenXIntrinsic(F)) {
+       if (replicatesMask(F))
+         return getNumChannelsReplicated(F);
+      return NumChannels;
+    }
+  }
+  // If it's not a function call then check for a specific instruction
+  unsigned IID = GenXIntrinsic::getGenXIntrinsicID(CI);
+  switch (IID) {
+  case GenXIntrinsic::genx_gather4_scaled2: {
+    unsigned AddrElems =
+        cast<VectorType>(CI->getOperand(4)->getType())->getNumElements();
+    unsigned ResultElems = cast<VectorType>(CI->getType())->getNumElements();
+    NumChannels = ResultElems / AddrElems;
+    break;
+  }
+  default:
+    break;
+  }
+
+  return NumChannels;
+}
 /***********************************************************************
  * predicateStore : add predication to a StoreInst
  *
@@ -1283,25 +1331,13 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
       WrRegionToPredicate->eraseFromParent();
     return;
   }
-  // Instructions like gather4 have more output than execution size.
-  // In this case, subsequent store will be wider. Handle this case here.
-  unsigned NumChannels = 1;
-  if (auto *I = dyn_cast<CallInst>(SI->getOperand(0))) {
-    unsigned IID = GenXIntrinsic::getGenXIntrinsicID(I);
-    switch (IID) {
-    case GenXIntrinsic::genx_gather4_scaled2: {
-      unsigned AddrElems =
-          cast<VectorType>(I->getArgOperand(4)->getType())->getNumElements();
-      unsigned ResultElems = cast<VectorType>(I->getType())->getNumElements();
-      NumChannels = ResultElems / AddrElems;
-      break;
-    }
-    default:
-      break;
-    }
-  }
+  // Try to deduce number of channels to fit into
+  // current SIMD Width (check if certain instruction used or
+  // 'genx_replicate_mask' attribute is provided)
+  unsigned NumChannels = deduceNumChannels(SI);
   if (StoreVT->getNumElements() != SimdWidth * NumChannels) {
-    DiagnosticInfoSimdCF::emit(SI, "mismatching SIMD width inside SIMD control flow");
+    DiagnosticInfoSimdCF::emit(
+        SI, "mismatching SIMD width inside SIMD control flow");
     return;
   }
   // Predicate the store by creating a select.

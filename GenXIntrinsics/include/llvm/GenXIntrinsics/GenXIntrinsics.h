@@ -63,6 +63,7 @@ namespace GenXResult {
   };
 }
 
+
 namespace GenXRegion {
 enum {
   // Operands in both rdregion and wrregion:
@@ -377,6 +378,7 @@ static inline bool isVLoadStore(const Function *F) {
 static inline bool isVLoadStore(const Value *V) {
   return isVLoadStore(getGenXIntrinsicID(V));
 }
+
 
 } // namespace GenXIntrinsic
 
