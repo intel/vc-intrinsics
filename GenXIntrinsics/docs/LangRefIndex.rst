@@ -1,4 +1,4 @@
-GenX intrinsics documentation (language reference)
+VC Intrinsics documentation (language reference)
 ==================================================
 
 .. toctree::
