@@ -193,7 +193,7 @@
 #include <llvm/IR/PatternMatch.h>
 #endif
 
-#include "llvmVCWrapper/IR/GlobalVariable.h"
+#include "llvmVCWrapper/IR/GlobalValue.h"
 #include "llvmVCWrapper/IR/DerivedTypes.h"
 #include "llvmVCWrapper/IR/InstrTypes.h"
 
@@ -348,15 +348,14 @@ bool CMSimdCFLowering::doInitialization(Module &M)
   }
 #endif
 
-  for (auto &Global : M.getGlobalList()) {
-    auto *G = cast<VCINTR::GlobalVariable>(&Global);
-    if (!G->hasAttribute(genx::FunctionMD::GenXVolatile))
+  for (auto &G : M.getGlobalList()) {
+    if (!G.hasAttribute(genx::FunctionMD::GenXVolatile))
       continue;
     // Transform all load store on volatile globals to vload/vstore to disable
     // optimizations on this global (no PHI will be produced.).
-    auto AS0 = G->getAddressSpace();
+    auto AS0 = VCINTR::GlobalValue::getAddressSpace(G);
     std::vector<User*> WL;
-    for (auto UI = G->user_begin(); UI != G->user_end();) {
+    for (auto UI = G.user_begin(); UI != G.user_end();) {
       auto U = *UI++;
       WL.push_back(U);
     }
