@@ -23,23 +23,25 @@
 ======================= end_copyright_notice ==================================*/
 
 
-#ifndef VCINTR_IR_GLOBALVARIABLE_H
-#define VCINTR_IR_GLOBALVARIABLE_H
+#ifndef VCINTR_IR_GLOBALVALUE_H
+#define VCINTR_IR_GLOBALVALUE_H
 
-#include <llvm/IR/GlobalVariable.h>
+#include <llvm/IR/GlobalValue.h>
 
 namespace VCINTR {
+
+namespace GlobalValue {
+
+inline unsigned getAddressSpace(const llvm::GlobalValue &GV) {
 #if VC_INTR_LLVM_VERSION_MAJOR <= 7
-class GlobalVariable : public llvm::GlobalVariable {
-public:
-    unsigned getAddressSpace() const {
-      llvm::PointerType *PtrType = getType();
-      return PtrType->getAddressSpace();
-    }
-};
-#elif VC_INTR_LLVM_VERSION_MAJOR >= 8
-using GlobalVariable = llvm::GlobalVariable;
+  return GV.getType()->getAddressSpace();
+#else
+  return GV.getAddressSpace();
 #endif
+}
+
+} // namespace GlobalValue
+
 } // namespace VCINTR
 
 #endif // VCINTR_IR_GLOBALVARIABLE_H
