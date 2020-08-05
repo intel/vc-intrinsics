@@ -3515,6 +3515,19 @@ Imported_Intrinsics = \
 ##
 ## * Return value: the vector value read
 ##
-    "print_format_index" : ["int",["anyptr"],"NoMem"]
+    "print_format_index" : ["int",["anyptr"],"NoMem"],
 
+## ``llvm.genx.address.convert`` : convert dataport address to integer
+## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+##
+## * arg0: pointer kernel argument (svmptr_t or state pointer like image)
+##
+## * Return value: i32/i64, surface/sampler index or stateless address
+##
+## Intrinsic is used as a temporary SPIRV instruction to convert
+## distinct address arguments into simple format (i32/i64) that is
+## used across all memory instructions.  This is needed to encode
+## SPIRV with appropriate types for kernel arguments.
+##
+    "address_convert" : ["anyint",["anyptr"],"NoMem"]
 }
