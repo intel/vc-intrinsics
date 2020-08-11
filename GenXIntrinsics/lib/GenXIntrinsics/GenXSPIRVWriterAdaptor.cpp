@@ -27,6 +27,8 @@
 /// ---------------------------
 /// This pass converts metadata to SPIRV format from whichever used in frontend
 
+#include "AdaptorsCommon.h"
+
 #include "llvm/GenXIntrinsics/GenXSPIRVWriterAdaptor.h"
 #include "llvm/GenXIntrinsics/GenXIntrinsics.h"
 #include "llvm/GenXIntrinsics/GenXMetadata.h"

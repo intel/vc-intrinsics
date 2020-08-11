@@ -122,8 +122,18 @@ static constexpr const char ReadWrite[] = "_rw";
 static constexpr const char TypeSuffix[] = "_t";
 } // namespace CommonTypes
 
+namespace SPIRVParams {
+static constexpr const char SPIRVMemoryModel[] = "spirv.MemoryModel";
+static constexpr const char SPIRVSIMDSubgroupSize[] =
+    "intel_reqd_sub_group_size";
+static constexpr unsigned SPIRVMemoryModelSimple = 0;
+static constexpr unsigned SPIRVMemoryModelOCL = 2;
+static constexpr unsigned SPIRVAddressingModel32 = 1;
+static constexpr unsigned SPIRVAddressingModel64 = 2;
+
 // Has to correspond to spir address space encoding.
 static constexpr unsigned SPIRVGlobalAS = 1;
+} // namespace SPIRVParams
 
 } // namespace genx
 } // namespace llvm
