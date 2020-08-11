@@ -179,7 +179,7 @@ static SPIRVArgDesc analyzeKernelArg(const Argument &Arg) {
 
   auto *PointerTy = cast<PointerType>(Ty);
   // Writer converts annotated things to global pointers.
-  if (PointerTy->getAddressSpace() != SPIRVGlobalAS)
+  if (PointerTy->getAddressSpace() != SPIRVParams::SPIRVGlobalAS)
     return {SPIRVType::Other};
 
   Type *PointeeTy = PointerTy->getElementType();
