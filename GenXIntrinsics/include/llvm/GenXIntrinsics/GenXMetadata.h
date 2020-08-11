@@ -77,6 +77,24 @@ enum KernelMDOp {
   Reserved_0,
   BarrierCnt    // Barrier count
 };
+
+static MDNode *GetOldStyleKernelMD(Function const &F) {
+  auto *KernelMD = static_cast<MDNode *>(nullptr);
+  auto *KernelMDs = F.getParent()->getNamedMetadata(FunctionMD::GenXKernels);
+  if (!KernelMDs)
+    return KernelMD;
+
+  for (unsigned I = 0, E = KernelMDs->getNumOperands(); I < E; ++I) {
+    auto *Kernel = mdconst::dyn_extract<Function>(
+        KernelMDs->getOperand(I)->getOperand(KernelMDOp::FunctionRef));
+    if (Kernel == &F) {
+      KernelMD = KernelMDs->getOperand(I);
+      break;
+    }
+  }
+  return KernelMD;
+}
+
 } // namespace genx
 } // namespace llvm
 
