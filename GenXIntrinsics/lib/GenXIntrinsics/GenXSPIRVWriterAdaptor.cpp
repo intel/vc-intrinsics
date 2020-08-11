@@ -166,15 +166,7 @@ bool GenXSPIRVWriterAdaptor::runOnFunction(Function &F) {
                   MDNode::get(Context, SizeMD));
   }
 
-  auto *KernelMD = static_cast<MDNode *>(nullptr);
-  for (unsigned I = 0, E = KernelMDs->getNumOperands(); I < E; ++I) {
-    auto *Kernel = mdconst::dyn_extract<Function>(
-        KernelMDs->getOperand(I)->getOperand(KernelMDOp::FunctionRef));
-    if (Kernel == &F) {
-      KernelMD = KernelMDs->getOperand(I);
-      break;
-    }
-  }
+  auto *KernelMD = GetOldStyleKernelMD(F);
   if (!KernelMD)
     return true;
 
