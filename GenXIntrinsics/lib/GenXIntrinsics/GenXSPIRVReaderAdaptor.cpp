@@ -393,6 +393,10 @@ static void rewriteKernelsTypes(Module &M) {
 }
 
 bool GenXSPIRVReaderAdaptor::runOnModule(Module &M) {
+  auto *KernelMDs = M.getNamedMetadata(FunctionMD::GenXKernels);
+  if (KernelMDs)
+    return false;
+
   for (auto &&GV : M.getGlobalList()) {
     if (!GV.hasAttribute(VCModuleMD::VCGlobalVariable))
       continue;
