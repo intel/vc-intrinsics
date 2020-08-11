@@ -37,32 +37,32 @@ namespace llvm {
 namespace genx {
 
 namespace FunctionMD {
-const static char GenXKernels[] = "genx.kernels";
-const static char GenXByteOffset[] = "genx_byte_offset";
-const static char GenXVolatile[] = "genx_volatile";
-const static char CMGenXMain[] = "CMGenxMain";
-const static char CMStackCall[] = "CMStackCall";
-const static char CMFloatControl[] = "CMFloatControl";
-const static char CMGenxSIMT[] = "CMGenxSIMT";
-const static char OCLRuntime[] = "oclrt";
-const static char ReferencedIndirectly[] = "referenced-indirectly";
+static constexpr const char GenXKernels[] = "genx.kernels";
+static constexpr const char GenXByteOffset[] = "genx_byte_offset";
+static constexpr const char GenXVolatile[] = "genx_volatile";
+static constexpr const char CMGenXMain[] = "CMGenxMain";
+static constexpr const char CMStackCall[] = "CMStackCall";
+static constexpr const char CMFloatControl[] = "CMFloatControl";
+static constexpr const char CMGenxSIMT[] = "CMGenxSIMT";
+static constexpr const char OCLRuntime[] = "oclrt";
+static constexpr const char ReferencedIndirectly[] = "referenced-indirectly";
 } // namespace FunctionMD
 
 namespace VCModuleMD {
-const static char VCGlobalVariable[] = "VCGlobalVariable";
-const static char VCVolatile[] = "VCVolatile";
-const static char VCByteOffset[] = "VCByteOffset";
+static constexpr const char VCGlobalVariable[] = "VCGlobalVariable";
+static constexpr const char VCVolatile[] = "VCVolatile";
+static constexpr const char VCByteOffset[] = "VCByteOffset";
 } // namespace VCModuleMD
 
 namespace VCFunctionMD {
-const static char VCFunction[] = "VCFunction";
-const static char VCStackCall[] = "VCStackCall";
-const static char VCArgumentIOKind[] = "VCArgumentIOKind";
-const static char VCFloatControl[] = "VCFloatControl";
-const static char VCSLMSize[] = "VCSLMSize";
-const static char VCArgumentKind[] = "VCArgumentKind";
-const static char VCArgumentDesc[] = "VCArgumentDesc";
-const static char VCSIMTCall[] = "VCSIMTCall";
+static constexpr const char VCFunction[] = "VCFunction";
+static constexpr const char VCStackCall[] = "VCStackCall";
+static constexpr const char VCArgumentIOKind[] = "VCArgumentIOKind";
+static constexpr const char VCFloatControl[] = "VCFloatControl";
+static constexpr const char VCSLMSize[] = "VCSLMSize";
+static constexpr const char VCArgumentKind[] = "VCArgumentKind";
+static constexpr const char VCArgumentDesc[] = "VCArgumentDesc";
+static constexpr const char VCSIMTCall[] = "VCSIMTCall";
 } // namespace VCFunctionMD
 
 enum KernelMDOp {
