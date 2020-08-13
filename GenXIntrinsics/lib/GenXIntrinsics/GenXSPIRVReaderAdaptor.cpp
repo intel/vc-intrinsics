@@ -193,7 +193,12 @@ static SPIRVArgDesc analyzeKernelArg(const Argument &Arg) {
   if (!isa<PointerType>(Ty))
     return {SPIRVType::Other};
 
-  Type *PointeeTy = cast<PointerType>(Ty)->getElementType();
+  auto *PointerTy = cast<PointerType>(Ty);
+  // Writer converts annotated things to global pointers.
+  if (PointerTy->getAddressSpace() != SPIRVGlobalAS)
+    return {SPIRVType::Other};
+
+  Type *PointeeTy = PointerTy->getElementType();
   // Not a pointer to struct, cannot be sampler or image.
   if (!isa<StructType>(PointeeTy))
     return {SPIRVType::Pointer};
