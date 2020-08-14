@@ -79,50 +79,40 @@ void GenXSPIRVReaderAdaptor::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();
 }
 
-// Check that Str starts with Part.
-// If true, drop Part from Str and return result,
-// else return None.
-static Optional<StringRef> consumeStringPart(StringRef Str, StringRef Part) {
-  if (!Str.startswith(Part))
-    return None;
-
-  return Str.drop_front(Part.size());
-}
-
 static std::pair<SPIRVType, StringRef> parseImageDim(StringRef TyName) {
   // Greedy match: 1d_buffer first.
-  if (auto Rest = consumeStringPart(TyName, OCLTypes::Dim1dBuffer))
-    return {SPIRVType::Image1dBuffer, Rest.getValue()};
+  if (TyName.consume_front(OCLTypes::Dim1dBuffer))
+    return {SPIRVType::Image1dBuffer, TyName};
 
-  if (auto Rest = consumeStringPart(TyName, OCLTypes::Dim1d))
-    return {SPIRVType::Image1d, Rest.getValue()};
+  if (TyName.consume_front(OCLTypes::Dim1d))
+    return {SPIRVType::Image1d, TyName};
 
-  if (auto Rest = consumeStringPart(TyName, OCLTypes::Dim2d))
-    return {SPIRVType::Image2d, Rest.getValue()};
+  if (TyName.consume_front(OCLTypes::Dim2d))
+    return {SPIRVType::Image2d, TyName};
 
-  if (auto Rest = consumeStringPart(TyName, OCLTypes::Dim3d))
-    return {SPIRVType::Image3d, Rest.getValue()};
+  if (TyName.consume_front(OCLTypes::Dim3d))
+    return {SPIRVType::Image3d, TyName};
 
   llvm_unreachable("Unexpected image dimensionality");
 }
 
 static std::pair<AccessType, StringRef> parseAccessQualifier(StringRef TyName) {
-  if (auto Rest = consumeStringPart(TyName, CommonTypes::ReadOnly))
-    return {AccessType::ReadOnly, Rest.getValue()};
+  if (TyName.consume_front(CommonTypes::ReadOnly))
+    return {AccessType::ReadOnly, TyName};
 
-  if (auto Rest = consumeStringPart(TyName, CommonTypes::WriteOnly))
-    return {AccessType::WriteOnly, Rest.getValue()};
+  if (TyName.consume_front(CommonTypes::WriteOnly))
+    return {AccessType::WriteOnly, TyName};
 
-  if (auto Rest = consumeStringPart(TyName, CommonTypes::ReadWrite))
-    return {AccessType::ReadWrite, Rest.getValue()};
+  if (TyName.consume_front(CommonTypes::ReadWrite))
+    return {AccessType::ReadWrite, TyName};
 
   llvm_unreachable("Unexpected image access modifier");
 }
 
 static SPIRVArgDesc parseImageType(StringRef TyName) {
-  Optional<StringRef> MaybeName = consumeStringPart(TyName, OCLTypes::Image);
-  assert(MaybeName && "Unexpected opencl type");
-  TyName = MaybeName.getValue();
+  const bool Consumed = TyName.consume_front(OCLTypes::Image);
+  assert(Consumed && "Unexpected opencl type");
+  (void)Consumed;
 
   SPIRVType ImageType;
   std::tie(ImageType, TyName) = parseImageDim(TyName);
@@ -133,33 +123,27 @@ static SPIRVArgDesc parseImageType(StringRef TyName) {
 }
 
 static Optional<SPIRVArgDesc> parseBufferType(StringRef TyName) {
-  Optional<StringRef> MaybeName =
-      consumeStringPart(TyName, IntelTypes::TypePrefix);
-  if (!MaybeName)
+  if (!TyName.consume_front(IntelTypes::TypePrefix))
     return None;
 
-  MaybeName = consumeStringPart(MaybeName.getValue(), IntelTypes::Buffer);
-  if (!MaybeName)
+  if (!TyName.consume_front(IntelTypes::Buffer))
     return None;
 
   // Now assume that buffer type is correct.
   AccessType AccType;
   StringRef Suffix;
-  std::tie(AccType, Suffix) = parseAccessQualifier(MaybeName.getValue());
+  std::tie(AccType, Suffix) = parseAccessQualifier(TyName);
   assert(Suffix == CommonTypes::TypeSuffix && "Bad buffer type");
   return SPIRVArgDesc{SPIRVType::Buffer, AccType};
 }
 
 static Optional<SPIRVArgDesc> parseOCLType(StringRef TyName) {
-  Optional<StringRef> MaybeName =
-      consumeStringPart(TyName, OCLTypes::TypePrefix);
-  if (!MaybeName)
+  if (!TyName.consume_front(OCLTypes::TypePrefix))
     return None;
 
-  TyName = MaybeName.getValue();
   // Sampler type.
-  if (auto Rest = consumeStringPart(TyName, OCLTypes::Sampler)) {
-    assert(Rest.getValue() == CommonTypes::TypeSuffix && "Bad sampler type");
+  if (TyName.consume_front(OCLTypes::Sampler)) {
+    assert(TyName == CommonTypes::TypeSuffix && "Bad sampler type");
     return {SPIRVType::Sampler};
   }
 
