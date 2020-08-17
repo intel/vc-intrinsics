@@ -65,7 +65,7 @@ Imported_Intrinsics = \
     "aaaabegin" : ["anyvector",[],"None"],
     "zzzzend" : ["anyvector",[],"None"],
 
-### ``llvm.genx.gather.alloca.<any type>`` : CMC internal, no VISA
+### ``llvm.genx.alloca.<any type>`` : CMC internal, no VISA
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### Indicates memory allocation in thread-private memory
