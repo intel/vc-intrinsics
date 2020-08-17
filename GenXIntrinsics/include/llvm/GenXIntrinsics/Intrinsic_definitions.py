@@ -76,6 +76,18 @@ Imported_Intrinsics = \
 ###
     "alloca" : ["anyint",["any"],"None"],
 
+### ``llvm.genx.faddr.<any type>`` : take an address of the function provided
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### Takes an address of the provided function which then may be used
+### in VISA indirect call instruction.
+###
+### * arg0: function to take address of
+###
+### * Return value: i64 address ready to be consumed by an indirect call
+###
+    "faddr" : ["long", ["any"], "None"],
+
 ## --------------------------------
 ### Region/element access intrinsics
 ### --------------------------------
