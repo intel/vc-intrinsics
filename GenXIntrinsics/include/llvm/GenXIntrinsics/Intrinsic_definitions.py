@@ -74,7 +74,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: offset in stack surface
 ###
-    "alloca" : ["int",["any"],"None"],
+    "alloca" : ["anyint",["any"],"None"],
 
 ## --------------------------------
 ### Region/element access intrinsics
