@@ -795,6 +795,7 @@ void CMSimdCFLower::findAndSplitJoinPoints()
     auto JP = Br->getSuccessor(0);
     if (JoinPoints.count(JP))
       continue;
+    JoinToGoto[JP] = Br->getParent();
     // This is a new join point.
     LLVM_DEBUG(dbgs() << "new join point " << JP->getName() << "\n");
     auto SplitBB = JP->splitBasicBlock(JP->getFirstNonPHI(), ".afterjoin");
@@ -1606,8 +1607,15 @@ void CMSimdCFLower::lowerSimdCF()
       auto Br = cast<BranchInst>(JP->getTerminator());
       assert(!Br->isConditional());
       auto NewBr = BranchInst::Create(JIP, JP->getNextNode(), BranchCond, Br);
+      assert(JoinToGoto.count(JP));
       NewBr->setDebugLoc(DL);
       Br->eraseFromParent();
+      auto *OrigBranch = &JoinToGoto.at(JP)->back();
+      fixPHIInput(JIP,
+                  (OrigBranch->getSuccessor(0) == JP
+                       ? OrigBranch->getSuccessor(1)
+                       : OrigBranch->getSuccessor(0)),
+                  NewBr->getParent());
       // Get the JIP's RM, just to ensure that it knows its SIMD width in case
       // nothing else references it.
       getRMAddr(JIP, cast<VectorType>(RM->getType())->getNumElements());

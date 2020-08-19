@@ -55,6 +55,8 @@ class CMSimdCFLower {
   MapVector<BasicBlock *, unsigned> PredicatedBlocks;
   // The join points, together with the simd width of each one.
   MapVector<BasicBlock *, unsigned> JoinPoints;
+  // Mapping of join points to their correspond goto BBs
+  std::map<BasicBlock *, BasicBlock *> JoinToGoto;
   // The JIP for each simd branch and join point.
   std::map<BasicBlock *, BasicBlock *> JIPs;
   // Subroutines that are predicated, mapping to the simd width.
