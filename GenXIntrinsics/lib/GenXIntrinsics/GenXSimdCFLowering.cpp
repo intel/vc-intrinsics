@@ -1610,12 +1610,13 @@ void CMSimdCFLower::lowerSimdCF()
       assert(JoinToGoto.count(JP));
       NewBr->setDebugLoc(DL);
       Br->eraseFromParent();
-      auto *OrigBranch = &JoinToGoto.at(JP)->back();
-      fixPHIInput(JIP,
-                  (OrigBranch->getSuccessor(0) == JP
-                       ? OrigBranch->getSuccessor(1)
-                       : OrigBranch->getSuccessor(0)),
-                  NewBr->getParent());
+      auto *OrigBranch = cast<BranchInst>(JoinToGoto.at(JP)->getTerminator());
+      if (OrigBranch->isConditional())
+        fixPHIInput(JIP,
+                    (OrigBranch->getSuccessor(0) == JP
+                         ? OrigBranch->getSuccessor(1)
+                         : OrigBranch->getSuccessor(0)),
+                    NewBr->getParent());
       // Get the JIP's RM, just to ensure that it knows its SIMD width in case
       // nothing else references it.
       getRMAddr(JIP, cast<VectorType>(RM->getType())->getNumElements());
