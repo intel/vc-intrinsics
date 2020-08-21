@@ -54,6 +54,15 @@ enum ID : unsigned {
   not_any_intrinsic
 };
 
+namespace GenXResult {
+  enum ResultIndexes {
+    IdxAddc_Add    = 1,
+    IdxAddc_Carry  = 0,
+    IdxSubb_Sub    = 1,
+    IdxSubb_Borrow = 0
+  };
+}
+
 namespace GenXRegion {
 enum {
   // Operands in both rdregion and wrregion:

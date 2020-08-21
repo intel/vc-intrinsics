@@ -604,11 +604,6 @@ Imported_Intrinsics = \
     "usadd_sat" : ["anyint",["anyint",1],"NoMem"],
     "uuadd_sat" : ["anyint",["anyint",1],"NoMem"],
 
-### addc
-### ^^^^
-### No intrinsic for addc as it has two results.
-###
-
 ### asr
 ### ^^^
 ### asr intrinsic is not needed. Because asr cannot overflow, an asr that
@@ -1238,12 +1233,27 @@ Imported_Intrinsics = \
     "usdp4a_sat" : ["anyvector",["anyvector","anyvector","anyvector"],"NoMem"],
     "uudp4a_sat" : ["anyvector",["anyvector","anyvector","anyvector"],"NoMem"],
 
-
+### addc
+### ^^^^
+###
+### ``llvm.genx.addc.<{carry, add}>.<any int>`` : add with carry
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * ``llvm.genx.addc`` :
+###
+### * arg0: first input, i32 scalar/vector integer type
+### * arg1: second input, same type as arg0
+    "addc" : [["anyint", "anyint"], [0, 0], "NoMem"],
 
 ### subb
 ### ^^^^
-### No intrinsic for subb as it has two results.
 ###
+### ``llvm.genx.subb.<{borrow, sub}>.<any int>`` : sub with borrow
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * ``llvm.genx.subb`` :
+###
+### * arg0: first input, i32 scalar/vector integer type
+### * arg1: second input, same type as arg0
+    "subb" : [["anyint", "anyint"], [0, 0], "NoMem"],
 
 ### xor
 ### ^^^
