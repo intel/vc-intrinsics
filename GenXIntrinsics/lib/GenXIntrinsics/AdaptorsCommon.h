@@ -133,7 +133,24 @@ static constexpr unsigned SPIRVAddressingModel64 = 2;
 
 // Has to correspond to spir address space encoding.
 static constexpr unsigned SPIRVGlobalAS = 1;
+static constexpr unsigned SPIRVConstantAS = 2;
 } // namespace SPIRVParams
+
+inline unsigned getOpaqueTypeAddressSpace(SPIRVType Ty) {
+  switch (Ty) {
+  case SPIRVType::Sampler:
+    return SPIRVParams::SPIRVConstantAS;
+  case SPIRVType::Buffer:
+  case SPIRVType::Image1d:
+  case SPIRVType::Image1dBuffer:
+  case SPIRVType::Image2d:
+  case SPIRVType::Image3d:
+    return SPIRVParams::SPIRVGlobalAS;
+  default:
+    // Default to zero for other types.
+    return 0;
+  }
+}
 
 } // namespace genx
 } // namespace llvm

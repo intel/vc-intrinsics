@@ -178,8 +178,10 @@ static SPIRVArgDesc analyzeKernelArg(const Argument &Arg) {
     return {SPIRVType::Other};
 
   auto *PointerTy = cast<PointerType>(Ty);
-  // Writer converts annotated things to global pointers.
-  if (PointerTy->getAddressSpace() != SPIRVParams::SPIRVGlobalAS)
+  // Annotated things are converted to global and constant pointers.
+  const unsigned AddressSpace = PointerTy->getAddressSpace();
+  if (AddressSpace != SPIRVParams::SPIRVGlobalAS &&
+      AddressSpace != SPIRVParams::SPIRVConstantAS)
     return {SPIRVType::Other};
 
   Type *PointeeTy = PointerTy->getElementType();
@@ -193,8 +195,12 @@ static SPIRVArgDesc analyzeKernelArg(const Argument &Arg) {
   if (!StrTy->hasName())
     return {SPIRVType::Pointer};
 
-  if (auto MaybeDesc = parseOpaqueType(StrTy->getName()))
-    return MaybeDesc.getValue();
+  if (auto MaybeDesc = parseOpaqueType(StrTy->getName())) {
+    SPIRVArgDesc Desc = MaybeDesc.getValue();
+    assert(getOpaqueTypeAddressSpace(Desc.Ty) == AddressSpace &&
+           "Mismatching address space for type");
+    return Desc;
+  }
 
   // If nothing was matched then it is simple pointer.
   return {SPIRVType::Pointer};
