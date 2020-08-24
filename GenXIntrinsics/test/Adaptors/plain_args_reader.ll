@@ -7,7 +7,7 @@
 %intel.buffer_rw_t = type opaque
 %opencl.sampler_t = type opaque
 
-define spir_kernel void @test(%intel.buffer_rw_t addrspace(1)* %surf, %opencl.sampler_t addrspace(1)* %samp, i64 %ptr, i32 %gen) #0 {
+define spir_kernel void @test(%intel.buffer_rw_t addrspace(1)* %surf, %opencl.sampler_t addrspace(2)* %samp, i64 %ptr, i32 %gen) #0 {
 ; CHECK-LABEL: @test(
 
 ; CHECK: i32
@@ -27,12 +27,12 @@ define spir_kernel void @test(%intel.buffer_rw_t addrspace(1)* %surf, %opencl.sa
 ;
 entry:
   %0 = call i32 @llvm.genx.address.convert.i32.p1intel.buffer_rw_t(%intel.buffer_rw_t addrspace(1)* %surf)
-  %1 = call i32 @llvm.genx.address.convert.i32.p1opencl.sampler_t(%opencl.sampler_t addrspace(1)* %samp)
+  %1 = call i32 @llvm.genx.address.convert.i32.p2opencl.sampler_t(%opencl.sampler_t addrspace(2)* %samp)
   ret void
 }
 
 declare i32 @llvm.genx.address.convert.i32.p1intel.buffer_rw_t(%intel.buffer_rw_t addrspace(1)*)
-declare i32 @llvm.genx.address.convert.i32.p1opencl.sampler_t(%opencl.sampler_t addrspace(1)*)
+declare i32 @llvm.genx.address.convert.i32.p2opencl.sampler_t(%opencl.sampler_t addrspace(2)*)
 
 attributes #0 = { "VCFunction" }
 
