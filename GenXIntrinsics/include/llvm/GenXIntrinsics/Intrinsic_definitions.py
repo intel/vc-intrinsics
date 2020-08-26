@@ -1422,6 +1422,41 @@ Imported_Intrinsics = \
     "dword_atomic_imin" : ["anyvector",["anyvector","int","anyint",0,0],"None"],
     "dword_atomic_imax" : ["anyvector",["anyvector","int","anyint",0,0],"None"],
 
+### ``llvm.genx.dword.atomic2.*.<return type>.<vector type.<any int>`` : dword atomic with binary operator (variant with no oldval)
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * ``llvm.genx.dword.atomic2.add`` : vISA DWORD_ATOMIC ADD instruction
+### * ``llvm.genx.dword.atomic2.sub`` : vISA DWORD_ATOMIC SUB instruction
+### * ``llvm.genx.dword.atomic2.min`` : vISA DWORD_ATOMIC MIN instruction
+### * ``llvm.genx.dword.atomic2.max`` : vISA DWORD_ATOMIC MAX instruction
+### * ``llvm.genx.dword.atomic2.xchg`` : vISA DWORD_ATOMIC XCHG instruction
+### * ``llvm.genx.dword.atomic2.and`` : vISA DWORD_ATOMIC AND instruction
+### * ``llvm.genx.dword.atomic2.or`` : vISA DWORD_ATOMIC OR instruction
+### * ``llvm.genx.dword.atomic2.xor`` : vISA DWORD_ATOMIC XOR instruction
+### * ``llvm.genx.dword.atomic2.imin`` : vISA DWORD_ATOMIC IMIN instruction
+### * ``llvm.genx.dword.atomic2.imax`` : vISA DWORD_ATOMIC IMAX instruction
+###
+### * (Exec_size inferred from element offset type)
+### * arg0: vXi1 predicate (overloaded)
+### * arg1: i32 surface index
+### * arg2: vXi32 element offset in bytes (overloaded)
+### * arg3: vXi32 src
+###
+### * Return value: vXi32 the old value read
+###
+### Predicate, element offset, src, and the return value must all have the
+### same vector width, which must be 1, 8 or 16.
+###
+    "dword_atomic2_add" : ["anyvector",["anyvector","int","anyint",0],"None"],
+    "dword_atomic2_sub" : ["anyvector",["anyvector","int","anyint",0],"None"],
+    "dword_atomic2_min" : ["anyvector",["anyvector","int","anyint",0],"None"],
+    "dword_atomic2_max" : ["anyvector",["anyvector","int","anyint",0],"None"],
+    "dword_atomic2_xchg" : ["anyvector",["anyvector","int","anyint",0],"None"],
+    "dword_atomic2_and" : ["anyvector",["anyvector","int","anyint",0],"None"],
+    "dword_atomic2_or" : ["anyvector",["anyvector","int","anyint",0],"None"],
+    "dword_atomic2_xor" : ["anyvector",["anyvector","int","anyint",0],"None"],
+    "dword_atomic2_imin" : ["anyvector",["anyvector","int","anyint",0],"None"],
+    "dword_atomic2_imax" : ["anyvector",["anyvector","int","anyint",0],"None"],
+
 ### ``llvm.genx.dword.atomic.*.<return type>.<vector type>.<any int>`` : dword atomic with fmin/fmax operation
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.dword.atomic.fmin`` : vISA DWORD_ATOMIC FMIN instruction
@@ -1442,6 +1477,26 @@ Imported_Intrinsics = \
     "dword_atomic_fmin" : ["anyvector",["anyvector","int","anyint",0,0],"None"],
     "dword_atomic_fmax" : ["anyvector",["anyvector","int","anyint",0,0],"None"],
 
+### ``llvm.genx.dword.atomic2.*.<return type>.<vector type>.<any int>`` : dword atomic with fmin/fmax operation (variant with no oldval)
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * ``llvm.genx.dword.atomic2.fmin`` : vISA DWORD_ATOMIC FMIN instruction
+### * ``llvm.genx.dword.atomic2.fmax`` : vISA DWORD_ATOMIC FMAX instruction
+###
+### * (Exec_size inferred from element offset type)
+### * arg0: vXi1 predicate(overloaded)
+### * arg1: i32 surface index
+### * arg2: vXi32 element offset in bytes (overloaded)
+### * arg3: vXfloat src
+###
+### * Return value: vXfloat the old value read
+###
+### Predicate, element offset, src, and the return value must all have the
+### same vector width, which must be 1, 8 or 16.
+###
+    "dword_atomic2_fmin" : ["anyvector",["anyvector","int","anyint",0],"None"],
+    "dword_atomic2_fmax" : ["anyvector",["anyvector","int","anyint",0],"None"],
+
+
 ### ``llvm.genx.dword.atomic.*.<return type>.<any vector>`` : dword atomic with inc/dec operation
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.dword.atomic.inc`` : vISA DWORD_ATOMIC INC instruction
@@ -1461,6 +1516,24 @@ Imported_Intrinsics = \
     "dword_atomic_inc" : ["anyvector",["anyvector","int",0,0],"None"],
     "dword_atomic_dec" : ["anyvector",["anyvector","int",0,0],"None"],
 
+### ``llvm.genx.dword.atomic2.*.<return type>.<any vector>`` : dword atomic with inc/dec operation (variant with no oldval)
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * ``llvm.genx.dword.atomic2.inc`` : vISA DWORD_ATOMIC INC instruction
+### * ``llvm.genx.dword.atomic2.dec`` : vISA DWORD_ATOMIC DEC instruction
+###
+### * (Exec_size inferred from element offset type)
+### * arg0: vXi1 predicate (overloaded)
+### * arg1: i32 surface index
+### * arg2: vXi32 element offset in bytes
+###
+### * Return value: vXi32 the old value read
+###
+### Predicate, element offset, src, and the return value must all have the
+### same vector width, which must be 1, 8 or 16.
+###
+    "dword_atomic2_inc" : ["anyvector",["anyvector","int",0],"None"],
+    "dword_atomic2_dec" : ["anyvector",["anyvector","int",0],"None"],
+
 ### ``llvm.genx.dword.atomic.cmpxchg.<return type>.<vector type>`` : vISA DWORD_ATOMIC CMPXCHG instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
@@ -1479,6 +1552,23 @@ Imported_Intrinsics = \
 ###
     "dword_atomic_cmpxchg" : ["anyvector",["anyvector","int",0,0,0,0],"None"],
 
+### ``llvm.genx.dword.atomic2.cmpxchg.<return type>.<vector type>`` : vISA DWORD_ATOMIC CMPXCHG instruction (variant with no oldval)
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * (Exec_size inferred from element offset type)
+### * arg0: vXi1 predicate (overloaded)
+### * arg1: i32 surface index
+### * arg2: vXi32 element offset in bytes
+### * arg3: vXi32 src0
+### * arg4: vXi32 src1
+###
+### * Return value: vXi32 the old value read
+###
+### Predicate, element offset, src, and the return value must all have the
+### same vector width, which must be 1, 8 or 16.
+###
+    "dword_atomic2_cmpxchg" : ["anyvector",["anyvector","int",0,0,0],"None"],
+
 ### ``llvm.genx.dword.atomic.fcmpwr.<return type>.<vector type>.<any int>`` : vISA DWORD_ATOMIC FCMPWR instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
@@ -1496,6 +1586,23 @@ Imported_Intrinsics = \
 ### same vector width, which must be 1, 8 or 16.
 ###
     "dword_atomic_fcmpwr" : ["anyvector",["anyvector","int","anyint",0,0,0],"None"],
+
+### ``llvm.genx.dword.atomic2.fcmpwr.<return type>.<vector type>.<any int>`` : vISA DWORD_ATOMIC FCMPWR instruction (variant with no oldval)
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * (Exec_size inferred from element offset type)
+### * arg0: vXi1 predicate (overloaded)
+### * arg1: i32 surface index
+### * arg2: vXi32 element offset in bytes (overloaded)
+### * arg3: vXfloat src0
+### * arg4: vXfloat src1
+###
+### * Return value: vXfloat the old value read
+###
+### Predicate, element offset, src, and the return value must all have the
+### same vector width, which must be 1, 8 or 16.
+###
+    "dword_atomic2_fcmpwr" : ["anyvector",["anyvector","int","anyint",0,0],"None"],
 
 ### ``llvm.genx.typed.atomic.*.<return type>.<vector type>.<any int>`` : atomic typed with binary operator
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
