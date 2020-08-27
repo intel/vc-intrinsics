@@ -3471,6 +3471,19 @@ Imported_Intrinsics = \
 ###
     "output" : ["void",["vararg"],"None"],
 
+### ``llvm.genx.output.1.<any type>`` : Mark output argument
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * Return value: void
+###
+### SPIRV does not support functions with variable-length argument number,
+### so output_1 is output analog with single argument
+### This implementation intrinsic is to mark output argument.
+### This intrinsic call only extends the live range of marked argument and
+### emits no code.
+###
+    "output_1" : ["void",["any"],"None"],
+
 ## ``llvm.genx.print.buffer`` : read stateless pointer to print buffer
 ## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ## ``llvm.genx.print.buffer`` : read implicit arg print buffer ptr
