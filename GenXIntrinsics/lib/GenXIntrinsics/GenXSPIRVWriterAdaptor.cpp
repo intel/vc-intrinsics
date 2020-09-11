@@ -445,21 +445,6 @@ static void rewriteKernelsTypes(Module &M) {
 
 bool GenXSPIRVWriterAdaptor::runOnModule(Module &M) {
   auto TargetTriple = StringRef(M.getTargetTriple());
-  if (!M.getNamedMetadata(SPIRVParams::SPIRVMemoryModel)) {
-    // TODO: remove this block when finally transferred to open source
-    auto &&Context = M.getContext();
-    auto AddressingModel = TargetTriple.startswith("genx64")
-                               ? SPIRVParams::SPIRVAddressingModel64
-                               : SPIRVParams::SPIRVAddressingModel32;
-    auto *MemoryModelMD =
-        M.getOrInsertNamedMetadata(SPIRVParams::SPIRVMemoryModel);
-    auto ValueVec = std::vector<llvm::Metadata *>();
-    ValueVec.push_back(ConstantAsMetadata::get(
-        ConstantInt::get(Type::getInt32Ty(Context), AddressingModel)));
-    ValueVec.push_back(ConstantAsMetadata::get(ConstantInt::get(
-        Type::getInt32Ty(Context), SPIRVParams::SPIRVMemoryModelSimple)));
-    MemoryModelMD->addOperand(MDNode::get(Context, ValueVec));
-  }
   if (TargetTriple.startswith("genx")) {
     if (TargetTriple.startswith("genx32"))
       M.setTargetTriple("spir");
