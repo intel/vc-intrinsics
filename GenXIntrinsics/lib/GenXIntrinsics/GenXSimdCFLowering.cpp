@@ -1291,9 +1291,11 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
     if (Width == SimdWidth) {
       // This wrregion has the right width input. We could predicate it.
       if (WrRegionToPredicate) {
-        // is this right? what if there is bitcast in between?
         UseNeedsUpdate = &WrRegionToPredicate->getOperandUse(
             GenXIntrinsic::GenXRegion::NewValueOperandNum);
+        // if there is a bitcast in between then replace bitcats's operand
+        if (auto BC = dyn_cast<BitCastInst>(UseNeedsUpdate->get()))
+          UseNeedsUpdate = &BC->getOperandUse(0);
       }
       else {
         UseNeedsUpdate = U;
@@ -1325,7 +1327,7 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
   }
   if (WrRegionToPredicate) {
     // We found a wrregion to predicate. Replace it with a predicated one.
-    assert(UseNeedsUpdate); 
+    assert(UseNeedsUpdate);
     *UseNeedsUpdate = predicateWrRegion(WrRegionToPredicate, SimdWidth);
     if (WrRegionToPredicate->use_empty())
       WrRegionToPredicate->eraseFromParent();
