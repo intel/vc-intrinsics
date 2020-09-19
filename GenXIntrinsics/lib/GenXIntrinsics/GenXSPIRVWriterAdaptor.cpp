@@ -364,9 +364,10 @@ static ArgKind extractArgumentKind(const Argument &Arg) {
   const AttributeList Attrs = F->getAttributes();
   const Attribute Attr =
       Attrs.getParamAttr(Arg.getArgNo(), VCFunctionMD::VCArgumentKind);
-  unsigned AttrVal;
+  unsigned AttrVal = {};
   const bool Conv = Attr.getValueAsString().getAsInteger(0, AttrVal);
   assert(!Conv && "Expected integer value as arg kind");
+  // TODO: add some sanity check that the value can be casted to ArgKind
   return static_cast<ArgKind>(AttrVal);
 }
 
