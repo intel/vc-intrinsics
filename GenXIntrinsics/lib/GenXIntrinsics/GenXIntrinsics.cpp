@@ -517,7 +517,6 @@ static ArrayRef<const char *> findTargetSubtable(StringRef Name) {
   return makeArrayRef(&GenXIntrinsicNameTable[1] + TI.Offset, TI.Count);
 }
 
-
 GenXIntrinsic::ID GenXIntrinsic::getGenXIntrinsicID(const Function *F) {
   assert(F);
   llvm::StringRef Name = F->getName();
@@ -528,8 +527,16 @@ GenXIntrinsic::ID GenXIntrinsic::getGenXIntrinsicID(const Function *F) {
   if (auto *MD = F->getMetadata(GenXIntrinsicMDName)) {
     assert(MD->getNumOperands() == 1 && "Invalid intrinsic metadata");
     auto Val = cast<ValueAsMetadata>(MD->getOperand(0))->getValue();
-    return static_cast<GenXIntrinsic::ID>(
-        cast<ConstantInt>(Val)->getZExtValue());
+    GenXIntrinsic::ID Id =
+        static_cast<GenXIntrinsic::ID>(cast<ConstantInt>(Val)->getZExtValue());
+
+    // we need to check that metadata is correct and can be actually used
+    if (isGenXIntrinsic(Id)) {
+      const char *NamePrefix =
+          GenXIntrinsicNameTable[Id - GenXIntrinsic::not_genx_intrinsic];
+      if (Name.startswith(NamePrefix))
+        return Id;
+    }
   }
 
   // Fallback to string lookup.
