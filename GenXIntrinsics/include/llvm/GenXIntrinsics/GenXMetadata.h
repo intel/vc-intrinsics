@@ -43,6 +43,7 @@ const static char GenXVolatile[] = "genx_volatile";
 const static char CMGenXMain[] = "CMGenxMain";
 const static char CMStackCall[] = "CMStackCall";
 const static char CMFloatControl[] = "CMFloatControl";
+const static char CMGenxReplicateMask[] = "CMGenxReplicateMask";
 const static char CMGenxSIMT[] = "CMGenxSIMT";
 const static char OCLRuntime[] = "oclrt";
 const static char ReferencedIndirectly[] = "referenced-indirectly";
