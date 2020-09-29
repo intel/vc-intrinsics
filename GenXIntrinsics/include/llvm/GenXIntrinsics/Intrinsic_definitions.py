@@ -1267,6 +1267,7 @@ Imported_Intrinsics = \
 ### * arg1: second input, same type as arg0
     "subb" : [["anyint", "anyint"], [0, 0], "NoMem"],
 
+
 ### xor
 ### ^^^
 ### Intrinsic not needed; use LLVM IR Xor instruction
