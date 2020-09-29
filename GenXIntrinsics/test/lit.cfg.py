@@ -21,6 +21,9 @@ config.suffixes = ['.ll']
 # excludes: A list of directories  and files to exclude from the testsuite.
 config.excludes = ['CMakeLists.txt', 'Plugin']
 
+used_llvm = "llvm{}".format(config.llvm_version_major)
+config.available_features = [used_llvm]
+
 # test_source_root: The root path where tests are located.
 config.test_source_root = os.path.dirname(__file__)
 
