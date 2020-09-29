@@ -12,6 +12,7 @@ config.host_arch = "@HOST_ARCH@"
 config.python_executable = "@PYTHON_EXECUTABLE@"
 config.test_run_dir = "@CMAKE_CURRENT_BINARY_DIR@"
 config.vc_intrinsics_plugin = "$<TARGET_FILE:VCIntrinsicsPlugin>"
+config.llvm_version_major = "@LLVM_VERSION_MAJOR@"
 
 # Support substitution of the tools and libs dirs with user parameters. This is
 # used when we can't determine the tool dir at configuration time.
