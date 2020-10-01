@@ -1,4 +1,3 @@
-; XFAIL: llvm7
 ; RUN: opt -S -cmsimdcflowering < %s | FileCheck %s
 
 @Rcp_T2 = internal global <64 x double> undef

@@ -1347,7 +1347,8 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
   if (auto SInst = dyn_cast<StoreInst>(SI)) {
     auto *PtrOp = SInst->getPointerOperand();
     Load = new LoadInst(PtrOp->getType()->getPointerElementType(), PtrOp,
-                        PtrOp->getName() + ".simdcfpred.load", SI);
+                        PtrOp->getName() + ".simdcfpred.load",
+                        false /* isVolatile */, SI);
   }
   else {
     auto ID = GenXIntrinsic::genx_vload;
@@ -1579,11 +1580,13 @@ void CMSimdCFLower::lowerSimdCF()
         Constant::getAllOnesValue(Cond->getType()), Cond->getName() + ".not",
         Br);
     Value *RMAddr = getRMAddr(UIP, SimdWidth);
-    Instruction *OldEM = new LoadInst(EMVar->getType()->getPointerElementType(),
-                                      EMVar, EMVar->getName(), Br);
+    Instruction *OldEM =
+        new LoadInst(EMVar->getType()->getPointerElementType(), EMVar,
+                     EMVar->getName(), false /* isVolatile */, Br);
     OldEM->setDebugLoc(DL);
-    auto OldRM = new LoadInst(RMAddr->getType()->getPointerElementType(),
-                              RMAddr, RMAddr->getName(), Br);
+    auto OldRM =
+        new LoadInst(RMAddr->getType()->getPointerElementType(), RMAddr,
+                     RMAddr->getName(), false /* isVolatile */, Br);
     OldRM->setDebugLoc(DL);
     Type *Tys[] = { OldEM->getType(), OldRM->getType() };
     auto GotoFunc = GenXIntrinsic::getGenXDeclaration(BB->getParent()->getParent(),
@@ -1593,9 +1596,9 @@ void CMSimdCFLower::lowerSimdCF()
     Goto->setDebugLoc(DL);
     Goto->setConvergent();
     Instruction *NewEM = ExtractValueInst::Create(Goto, 0, "goto.extractem", Br);
-    (new StoreInst(NewEM, EMVar, Br))->setDebugLoc(DL);
+    (new StoreInst(NewEM, EMVar, false /* isVolatile */, Br))->setDebugLoc(DL);
     auto NewRM = ExtractValueInst::Create(Goto, 1, "goto.extractrm", Br);
-    (new StoreInst(NewRM, RMAddr, Br))->setDebugLoc(DL);
+    (new StoreInst(NewRM, RMAddr, false /* isVolatile */, Br))->setDebugLoc(DL);
     auto BranchCond = ExtractValueInst::Create(Goto, 2, "goto.extractcond", Br);
     // Change the branch condition.
     auto OldCond = dyn_cast<Instruction>(Br->getCondition());
@@ -1616,11 +1619,13 @@ void CMSimdCFLower::lowerSimdCF()
     Instruction *InsertBefore = JP->getFirstNonPHI();
     // Insert {NewEM,BranchCond} = llvm.genx.simdcf.join(OldEM,RM)
     Value *RMAddr = getRMAddr(JP, SimdWidth);
-    Instruction *OldEM = new LoadInst(EMVar->getType()->getPointerElementType(),
-                                      EMVar, EMVar->getName(), InsertBefore);
+    Instruction *OldEM =
+        new LoadInst(EMVar->getType()->getPointerElementType(), EMVar,
+                     EMVar->getName(), false /* isVolatile */, InsertBefore);
     OldEM->setDebugLoc(DL);
-    auto RM = new LoadInst(RMAddr->getType()->getPointerElementType(), RMAddr,
-                           RMAddr->getName(), InsertBefore);
+    auto RM =
+        new LoadInst(RMAddr->getType()->getPointerElementType(), RMAddr,
+                     RMAddr->getName(), false /* isVolatile */, InsertBefore);
     RM->setDebugLoc(DL);
     Type *Tys[] = { OldEM->getType(), RM->getType() };
     auto JoinFunc = GenXIntrinsic::getGenXDeclaration(
@@ -1631,11 +1636,13 @@ void CMSimdCFLower::lowerSimdCF()
     Join->setDebugLoc(DL);
     Join->setConvergent();
     auto NewEM = ExtractValueInst::Create(Join, 0, "join.extractem", InsertBefore);
-    (new StoreInst(NewEM, EMVar, InsertBefore))->setDebugLoc(DL);
+    (new StoreInst(NewEM, EMVar, false /* isVolatile */, InsertBefore))
+        ->setDebugLoc(DL);
     auto BranchCond = ExtractValueInst::Create(Join, 1, "join.extractcond", InsertBefore);
     // Zero RM.
-    (new StoreInst(Constant::getNullValue(RM->getType()), RMAddr, InsertBefore))
-          ->setDebugLoc(DL);
+    (new StoreInst(Constant::getNullValue(RM->getType()), RMAddr,
+                   false /* isVolatile */, InsertBefore))
+        ->setDebugLoc(DL);
     BasicBlock *JIP = JIPs[JP];
     if (JIP) {
       // This join point is in predicated code, so it was separated into its
@@ -1698,7 +1705,7 @@ void CMSimdCFLower::lowerUnmaskOps() {
           auto DL = cast<CallInst>(CIB)->getDebugLoc();
           Instruction *OldEM =
               new LoadInst(EMVar->getType()->getPointerElementType(), EMVar,
-                           EMVar->getName(), CIB);
+                           EMVar->getName(), false /* isVolatile */, CIB);
           OldEM->setDebugLoc(DL);
           Type *Tys[] = {OldEM->getType()};
           auto SavemaskFunc =  GenXIntrinsic::getGenXDeclaration(
@@ -1716,11 +1723,12 @@ void CMSimdCFLower::lowerUnmaskOps() {
           Value *Arg1s[] = {Savemask, ConstantInt::get(Savemask->getType(), 0xFFFFFFFF) };
           auto Unmask = CallInst::Create(UnmaskFunc, Arg1s, "unmask", CIB);
           Unmask->setDebugLoc(DL);
-          (new StoreInst(Unmask, EMVar, CIB))->setDebugLoc(DL);
+          (new StoreInst(Unmask, EMVar, false /* isVolatile */, CIB))
+              ->setDebugLoc(DL);
           // put in genx_simdcf_remask
           DL = CIE->getDebugLoc();
           OldEM = new LoadInst(EMVar->getType()->getPointerElementType(), EMVar,
-                               EMVar->getName(), CIE);
+                               EMVar->getName(), false /* isVolatile */, CIE);
           OldEM->setDebugLoc(DL);
           Type *Ty2s[] = {OldEM->getType()};
           auto RemaskFunc = GenXIntrinsic::getGenXDeclaration(
@@ -1729,7 +1737,8 @@ void CMSimdCFLower::lowerUnmaskOps() {
           Value *Arg2s[] = {OldEM, LoadV};
           auto Remask = CallInst::Create(RemaskFunc, Arg2s, "remask", CIE);
           Remask->setDebugLoc(DL);
-          (new StoreInst(Remask, EMVar, CIE))->setDebugLoc(DL);
+          (new StoreInst(Remask, EMVar, false /* isVolatile */, CIE))
+              ->setDebugLoc(DL);
         }
       }
     }
@@ -1775,8 +1784,9 @@ CallInst *CMSimdCFLower::isSimdCFAny(Value *V)
 Instruction *CMSimdCFLower::loadExecutionMask(Instruction *InsertBefore,
     unsigned SimdWidth, unsigned NumChannels)
 {
-  Instruction *EM = new LoadInst(EMVar->getType()->getPointerElementType(),
-                                 EMVar, EMVar->getName(), InsertBefore);
+  Instruction *EM =
+      new LoadInst(EMVar->getType()->getPointerElementType(), EMVar,
+                   EMVar->getName(), false /* isVolatile */, InsertBefore);
   EM->setDebugLoc(InsertBefore->getDebugLoc());
   // If the simd width is not MAX_SIMD_CF_WIDTH, extract the part of EM we want.
   if (NumChannels == 1 && SimdWidth == MAX_SIMD_CF_WIDTH)
@@ -1826,7 +1836,8 @@ Value *CMSimdCFLower::getRMAddr(BasicBlock *JP, unsigned SimdWidth)
     *RMAddr = new AllocaInst(RMTy, /*AddrSpace*/ 0,
                              Twine("RM.") + JP->getName(), InsertBefore);
     // Initialize to all zeros.
-    new StoreInst(Constant::getNullValue(RMTy), *RMAddr, InsertBefore);
+    new StoreInst(Constant::getNullValue(RMTy), *RMAddr, false /* isVolatile */,
+                  InsertBefore);
   }
   assert(!SimdWidth ||
          cast<VectorType>((*RMAddr)->getType()->getPointerElementType())
