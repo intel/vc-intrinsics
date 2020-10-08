@@ -42,6 +42,7 @@ static constexpr const char GenXByteOffset[] = "genx_byte_offset";
 static constexpr const char GenXVolatile[] = "genx_volatile";
 static constexpr const char CMGenXMain[] = "CMGenxMain";
 static constexpr const char CMStackCall[] = "CMStackCall";
+static constexpr const char CMCallable[] = "CMCallable";
 static constexpr const char CMFloatControl[] = "CMFloatControl";
 static constexpr const char CMGenxSIMT[] = "CMGenxSIMT";
 static constexpr const char CMGenxReplicateMask[] = "CMGenxReplicateMask";
@@ -58,6 +59,7 @@ static constexpr const char VCByteOffset[] = "VCByteOffset";
 namespace VCFunctionMD {
 static constexpr const char VCFunction[] = "VCFunction";
 static constexpr const char VCStackCall[] = "VCStackCall";
+static constexpr const char VCCallable[] = "VCCallable";
 static constexpr const char VCArgumentIOKind[] = "VCArgumentIOKind";
 static constexpr const char VCFloatControl[] = "VCFloatControl";
 static constexpr const char VCSLMSize[] = "VCSLMSize";
