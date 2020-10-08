@@ -393,9 +393,14 @@ static void rewriteKernelsTypes(Module &M) {
   SmallVector<Function *, 4> Kernels;
   std::transform(M.begin(), M.end(), std::back_inserter(Kernels),
                  [](Function &F) { return &F; });
-  for (auto *F : Kernels)
-    if (F->getCallingConv() == CallingConv::SPIR_KERNEL)
-      rewriteKernelArguments(*F);
+  for (auto *F : Kernels) {
+    // Skip things that are not VC kernels.
+    if (F->getCallingConv() != CallingConv::SPIR_KERNEL)
+      continue;
+    if (!F->getAttributes().hasFnAttribute(VCFunctionMD::VCFunction))
+      continue;
+    rewriteKernelArguments(*F);
+  }
 }
 
 bool GenXSPIRVReaderAdaptor::runOnModule(Module &M) {
