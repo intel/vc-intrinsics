@@ -3529,5 +3529,19 @@ Imported_Intrinsics = \
 ## used across all memory instructions.  This is needed to encode
 ## SPIRV with appropriate types for kernel arguments.
 ##
-    "address_convert" : ["anyint",["anyptr"],"NoMem"]
+    "address_convert" : ["anyint",["anyptr"],"NoMem"],
+
+## ``llvm.genx.jump.table`` : CMC internal, no VISA
+## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+##
+## * arg0: integer BasicBlock index in the full set of destinations
+## * arg1-N: the full set of switch labels
+##
+## * Return value: selected label
+##
+## The intrinsic is a helper for switch jump tables generation. Arg0
+## will be used by visa switchjmp as index. Return value and arg1-N are
+## used to make ir semantically legal.
+##
+    "jump_table" : ["anyptr", ["anyint", "vararg"], "NoMem"]
 }
