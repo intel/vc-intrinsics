@@ -348,7 +348,8 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
     Type *EltTy = DecodeFixedType(Infos, Tys, Context);
     Type *Ty = Tys[D.getArgumentNumber()];
     if (VectorType *VTy = dyn_cast<VectorType>(Ty)) {
-      return VCINTR::getVectorType(EltTy, VTy->getNumElements());
+      return VCINTR::getVectorType(EltTy,
+                                   VCINTR::VectorType::getNumElements(VTy));
     }
     llvm_unreachable("unhandled");
   }
@@ -448,10 +449,10 @@ static std::string getMangledTypeStr(Type* Ty) {
       Result += "vararg";
     // Ensure nested function types are distinguishable.
     Result += "f";
-  }
-  else if (isa<VectorType>(Ty))
-    Result += "v" + utostr(cast<VectorType>(Ty)->getNumElements()) +
-      getMangledTypeStr(cast<VectorType>(Ty)->getElementType());
+  } else if (isa<VectorType>(Ty))
+    Result += "v" +
+              utostr(VCINTR::VectorType::getNumElements(cast<VectorType>(Ty))) +
+              getMangledTypeStr(cast<VectorType>(Ty)->getElementType());
   else if (Ty)
     Result += EVT::getEVT(Ty).getEVTString();
   return Result;
