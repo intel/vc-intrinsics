@@ -23,42 +23,42 @@
 ======================= end_copyright_notice ==================================*/
 
 
-#ifndef VCINTR_IR_DERIVEDYPES_H
-#define VCINTR_IR_DERIVEDYPES_H
+#ifndef VCINTR_IR_INSTRUCTIONS_H
+#define VCINTR_IR_INSTRUCTIONS_H
 
-#include <llvm/IR/DerivedTypes.h>
+#include <algorithm>
+#include <llvm/IR/Instructions.h>
 
 namespace VCINTR {
-// TODO: move this to namespace VectorType and rename to "get"
-#if VC_INTR_LLVM_VERSION_MAJOR >= 9
-  static inline llvm::VectorType *getVectorType(llvm::Type *ElementType,
-                                                llvm::ElementCount EC) {
-    return llvm::VectorType::get(ElementType, EC);
-  }
-#endif
+namespace ShuffleVectorInst {
+auto static constexpr UndefMaskElem = -1;
 
-  static inline llvm::VectorType *getVectorType(llvm::Type *ElementType,
-                                                unsigned NumElements) {
-#if VC_INTR_LLVM_VERSION_MAJOR >= 11
-    return llvm::VectorType::get(ElementType, NumElements, false /*Scalable*/);
-#else
-    return llvm::VectorType::get(ElementType, NumElements);
-#endif
-  }
-
-namespace VectorType {
-
-static unsigned getNumElements(llvm::VectorType *VecType) {
-  using namespace llvm;
+// LLVM <= 10 does not have ShuffleVectorInst ctor which accepts ArrayRef<int>
+// This method returns mask with appropriate type for ShuffleVectorInst ctor
 #if VC_INTR_LLVM_VERSION_MAJOR <= 10
-  return VecType->getNumElements();
+static llvm::Constant *getShuffleMask(llvm::ArrayRef<int> Mask,
+                                      llvm::LLVMContext &Context) {
+  using namespace llvm;
+  auto Indices = SmallVector<llvm::Constant *, 8>{};
+  auto *Int32Ty = IntegerType::getInt32Ty(Context);
+  std::transform(Mask.begin(), Mask.end(), std::back_inserter(Indices),
+                 [&](int El) -> llvm::Constant * {
+                   if (El == UndefMaskElem)
+                     return UndefValue::get(Int32Ty);
+                   else
+                     return ConstantInt::get(Int32Ty, El);
+                 });
+  return ConstantVector::get(Indices);
+}
 #else
-  auto *FixedVecType = cast<FixedVectorType>(VecType);
-  return FixedVecType->getNumElements();
+static llvm::ArrayRef<int> getShuffleMask(llvm::ArrayRef<int> Mask,
+                                          llvm::LLVMContext &Context) {
+  return Mask;
+}
 #endif
-}
 
-} // namespace VectorType
-}
+} // namespace VCINTR
 
-#endif // VCINTR_IR_DERIVEDYPES_H
+} // namespace VCINTR
+
+#endif // VCINTR_IR_INSTRUCTIONS_H

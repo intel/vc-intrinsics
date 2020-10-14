@@ -578,8 +578,8 @@ bool CMSimdCFLower::findSimdBranches(unsigned CMWidth)
     if (!Br || !Br->isConditional())
       continue;
     if (auto SimdCondUse = getSimdConditionUse(Br->getCondition())) {
-      unsigned SimdWidth =
-          cast<VectorType>((*SimdCondUse)->getType())->getNumElements();
+      unsigned SimdWidth = VCINTR::VectorType::getNumElements(
+          cast<VectorType>((*SimdCondUse)->getType()));
       if (CMWidth && SimdWidth != CMWidth)
         DiagnosticInfoSimdCF::emit(Br, "mismatching SIMD CF width inside SIMD call");
       SimdBranches[BB] = SimdWidth;
@@ -1126,7 +1126,8 @@ void CMSimdCFLower::rewritePredication(CallInst *CI, unsigned SimdWidth)
          EnabledValues->getType() == DisabledDefaults->getType() &&
          "malformed predication intrinsic");
 
-  if (cast<VectorType>(EnabledValues->getType())->getNumElements() != SimdWidth) {
+  if (VCINTR::VectorType::getNumElements(
+          cast<VectorType>(EnabledValues->getType())) != SimdWidth) {
     DiagnosticInfoSimdCF::emit(CI, "mismatching SIMD width inside SIMD control flow");
     return;
   }
@@ -1214,9 +1215,10 @@ unsigned CMSimdCFLower::deduceNumChannels(Instruction *SI) {
   unsigned IID = GenXIntrinsic::getGenXIntrinsicID(CI);
   switch (IID) {
   case GenXIntrinsic::genx_gather4_scaled2: {
-    unsigned AddrElems =
-        cast<VectorType>(CI->getOperand(4)->getType())->getNumElements();
-    unsigned ResultElems = cast<VectorType>(CI->getType())->getNumElements();
+    unsigned AddrElems = VCINTR::VectorType::getNumElements(
+        cast<VectorType>(CI->getOperand(4)->getType()));
+    unsigned ResultElems =
+        VCINTR::VectorType::getNumElements(cast<VectorType>(CI->getType()));
     NumChannels = ResultElems / AddrElems;
     break;
   }
@@ -1241,7 +1243,7 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
   auto V = SI->getOperand(0);
   auto StoreVT = dyn_cast<VectorType>(V->getType());
   // Scalar store not predicated
-  if (!StoreVT || StoreVT->getNumElements() == 1)
+  if (!StoreVT || VCINTR::VectorType::getNumElements(StoreVT) == 1)
     return; 
   // no predication for ISPC uniform store
   if (SI->getMetadata("ISPC-Uniform") != nullptr)
@@ -1287,7 +1289,7 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
     Value *Input = WrRegion->getArgOperand(
         GenXIntrinsic::GenXRegion::NewValueOperandNum);
     if (auto VT = dyn_cast<VectorType>(Input->getType()))
-      Width = VT->getNumElements();
+      Width = VCINTR::VectorType::getNumElements(VT);
     if (Width == SimdWidth) {
       // This wrregion has the right width input. We could predicate it.
       if (WrRegionToPredicate) {
@@ -1337,7 +1339,7 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
   // current SIMD Width (check if certain instruction used or
   // 'genx_replicate_mask' attribute is provided)
   unsigned NumChannels = deduceNumChannels(SI);
-  if (StoreVT->getNumElements() != SimdWidth * NumChannels) {
+  if (VCINTR::VectorType::getNumElements(StoreVT) != SimdWidth * NumChannels) {
     DiagnosticInfoSimdCF::emit(
         SI, "mismatching SIMD width inside SIMD control flow");
     return;
@@ -1448,7 +1450,8 @@ void CMSimdCFLower::predicateScatterGather(CallInst *CI, unsigned SimdWidth,
 {
   Value *OldPred = CI->getArgOperand(PredOperandNum);
   assert(OldPred->getType()->getScalarType()->isIntegerTy(1));
-  if (SimdWidth != cast<VectorType>(OldPred->getType())->getNumElements()) {
+  if (SimdWidth != VCINTR::VectorType::getNumElements(
+                       cast<VectorType>(OldPred->getType()))) {
     DiagnosticInfoSimdCF::emit(CI, "mismatching SIMD width of scatter/gather inside SIMD control flow");
     return;
   }
@@ -1575,7 +1578,8 @@ void CMSimdCFLower::lowerSimdCF()
     }
     // Insert {NewEM,NewRM,BranchCond} = llvm.genx.simdcf.goto(OldEM,OldRM,~Cond)
      // TODO: rewrite everything below using IRBuilder
-    unsigned SimdWidth = cast<VectorType>(Cond->getType())->getNumElements();
+    unsigned SimdWidth =
+        VCINTR::VectorType::getNumElements(cast<VectorType>(Cond->getType()));
     auto NotCond = BinaryOperator::Create(Instruction::Xor, Cond,
         Constant::getAllOnesValue(Cond->getType()), Cond->getName() + ".not",
         Br);
@@ -1663,7 +1667,8 @@ void CMSimdCFLower::lowerSimdCF()
                     NewBr->getParent());
       // Get the JIP's RM, just to ensure that it knows its SIMD width in case
       // nothing else references it.
-      getRMAddr(JIP, cast<VectorType>(RM->getType())->getNumElements());
+      getRMAddr(JIP, VCINTR::VectorType::getNumElements(
+                         cast<VectorType>(RM->getType())));
     }
   }
 }
@@ -1840,8 +1845,8 @@ Value *CMSimdCFLower::getRMAddr(BasicBlock *JP, unsigned SimdWidth)
                   InsertBefore);
   }
   assert(!SimdWidth ||
-         cast<VectorType>((*RMAddr)->getType()->getPointerElementType())
-                 ->getNumElements() == SimdWidth);
+         VCINTR::VectorType::getNumElements(cast<VectorType>(
+             (*RMAddr)->getType()->getPointerElementType())) == SimdWidth);
   return *RMAddr;
 }
 
