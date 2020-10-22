@@ -1761,31 +1761,23 @@ Imported_Intrinsics = \
 ###
 ### * (Exec_size inferred from element offset type)
 ### * arg0: vXi1 predicate (overloaded)
-###       (block size MBZ, means 1 byte)
 ### * arg1: i32 log2 num blocks, constant (0/1/2 for num blocks 1/2/4)
 ### * arg2: i16 scale, constant
 ### * arg3: i32 surface index
 ### * arg4: i32 global offset in bytes
-### * arg5: vXi32 element offset in bytes (X = 8 or 16) (overloaded)
+### * arg5: vXi32 element offset in bytes (overloaded)
 ### * arg6: old value of the data read
 ###
 ### * Return value: the data read
 ###
 ### The vector width of the element offset arg is the number of elements to
-### read, which must be 8 or 16.
+### read, which must be power of 2 and less than or equal to 32.
 ###
 ### The predicate arg must have the same vector width.
-###
-### The block size must be 1 byte.
-###
-### Only T0 (SLM) and T5 (stateless) are supported.
 ###
 ### The old value of the data read (the return value) must have UD, D or
 ### F type. For 1 and 2 byte (1 x num blocks) reads the upper bytes have
 ### undefined values in the returned value.
-###
-### This instruction is available for SKL+ in general and it works for pre-SKL
-### only when scale is 0.
 ###
     "gather_scaled" : ["anyvector",["anyvector","int","short","int","int","anyint",0],"ReadMem"],
 
@@ -1796,27 +1788,19 @@ Imported_Intrinsics = \
 ### from resulting wrregion.
 ###
 ### * (Exec_size inferred from element offset type)
-###       (block size MBZ, means 1 byte)
 ### * arg0: i32 log2 num blocks, constant (0/1/2 for num blocks 1/2/4)
 ### * arg1: i16 scale, constant
 ### * arg2: i32 surface index
 ### * arg3: i32 global offset in bytes
-### * arg4: vXi32 element offset in bytes (X = 8 or 16)
+### * arg4: vXi32 element offset in bytes (overloaded)
 ###
 ### * Return value: the data read
 ###
 ### The vector width of the element offset arg is the number of elements to
-### read, which must be 8 or 16.
-###
-### The block size must be 1 byte.
-###
-### Only T0 (SLM) and T5 (stateless) are supported.
+### read, which must be power of 2 and less than or equal to 32.
 ###
 ### For 1 and 2 byte (1 x num blocks) reads the upper bytes have
 ### undefined values in the returned value.
-###
-### This instruction is available for SKL+ in general and it works for pre-SKL
-### only when scale is 0.
 ###
     "gather_scaled2" : ["anyvector",["int","short","int","int","anyint"],"ReadMem"],
 
@@ -1995,28 +1979,20 @@ Imported_Intrinsics = \
 ###
 ### * (Exec_size inferred from element offset type)
 ### * arg0: vXi1 predicate (overloaded)
-###       (block size MBZ, means 1 byte)
 ### * arg1: i32 log2 num blocks, constant (0/1/2 for num blocks 1/2/4)
 ### * arg2: i16 scale, constant
 ### * arg3: i32 surface index
 ### * arg4: i32 global offset in bytes
-### * arg5: vXi32 element offset (X = 8 or 16) (overloaded)
+### * arg5: vXi32 element offset (overloaded)
 ### * arg6: data to write (overloaded)
 ###
 ### The vector width of the element offset arg is the number of elements to
-### write, which must be 8 or 16.
+### write, which must be power of 2 and less than or equal to 32.
 ###
 ### The predicate arg must have the same vector width.
 ###
-### The block size must be 1 byte.
-###
-### Only T0 (SLM) and T5 (stateless) are supported.
-###
 ### The data type to write must have UD, D or F type. For 1 and 2 byte (1 x num
 ### blocks) accesses the upper bytes will be ignored.
-###
-### This instruction is available for SKL+ in general and it works for pre-SKL
-### only when scale is 0.
 ###
     "scatter_scaled" : ["void",["anyvector","int","short","int","int","anyint","anyvector"],"None"],
 
