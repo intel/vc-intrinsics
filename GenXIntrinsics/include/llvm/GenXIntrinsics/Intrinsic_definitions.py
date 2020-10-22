@@ -1738,27 +1738,6 @@ Imported_Intrinsics = \
 ###
     "typed_atomic_fcmpwr" : ["anyvector",["anyvector","int",0,0,"anyint",2,2,2],"None"],
 
-### ``llvm.genx.gather.orig.<return type>.<vector type>.<any int>`` : vISA GATHER instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-###
-### * arg0: Elt_size inferred from argument type (overloaded)
-### * arg1: i32 is_modified, constant
-### * (Num_elts inferred from data type)
-### * arg2: i32 surface index
-### * arg3: i32 global offset in elements
-### * arg4: vXi32 element offset in elements (overloaded)
-### * arg5: old value of the data read
-###
-### * Return value: the data read
-###
-### The vector width of the return value is the number of elements to read,
-### which must be 1, 8 or 16.
-###
-### The element offset arg must have the same vector width.
-###
-## (Silly name because of LLVM prefix bug.)
-    "gather_orig" : ["anyvector",["anyvector","int","int","int","anyint",0],"ReadMem"],
-
 ### ``llvm.genx.gather.private.<return type>.<vector type>.<any int>`` : CMC internal, no VISA 
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
@@ -1840,33 +1819,6 @@ Imported_Intrinsics = \
 ### only when scale is 0.
 ###
     "gather_scaled2" : ["anyvector",["int","short","int","int","anyint"],"ReadMem"],
-
-### ``llvm.genx.gather4.orig.<return type>.<vector type>.<any int>`` : vISA GATHER4 instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-###
-### * arg0: i32 channel mask, constant
-### * arg1: i32 is_modified, constant
-### * arg2: vXi1 predicate (Num_elts inferred from element offset type) (overloaded)
-### * arg3: i32 surface index
-### * arg4: i32 global offset in i32s
-### * arg5: vXi32 element offset in i32s (overloaded)
-### * arg6: old value of the data read
-###
-### * Return value: the data read
-###
-### The vector width of the element offset arg is the number of elements to
-### read, which must be 8 or 16.
-###
-### The instruction reads up to 4 channels per element, with the lowest 4
-### bits of the channel mask arg giving the mask of channels _not_ to read.
-### The number of 0 bits in that lower 4 bits of the channel mask arg is the
-### number of channels to read per element.
-### The vector width of the return value must be the number of elements
-### times the number of channels to read per element.
-### The element type of the return value must be i32 or float.
-###
-## (Silly name because of LLVM prefix bug.)
-    "gather4_orig" : ["anyvector",["int","int","anyvector","int","int","anyint",0],"ReadMem"],
 
 ### ``llvm.genx.gather4.scaled.<return type>.<vector type>.<any int>`` : vISA GATHER4_SCALED instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2024,25 +1976,6 @@ Imported_Intrinsics = \
 ###
     "oword_st" : ["void",["int","int","anyvector"],"None"],
 
-### ``llvm.genx.scatter.orig.<vector type>.<any int>.<vector type>`` : vISA SCATTER instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-###
-### * arg0: Elt_size from argument element type (overloaded)
-### * arg1: i32 surface index
-### * arg2: i32 global offset in elements
-### * arg3: vXi32 element offset in elements (overloaded)
-### * arg4: the data to write. The first <num_elts> elements will be used. (overloaded)
-###
-### The operand must have one of UD, D, F type; for 1 and 2 byte accesses the upper
-### bits will be ignored.
-###
-### The vector width of the data to write is the number of elements to write,
-### which must be 1, 8 or 16.
-### The element offset arg must have the same vector width.
-###
-## (Silly name because of LLVM prefix bug.)
-    "scatter_orig" : ["void",["anyvector","int","int","anyint","anyvector"],"None"],
-
 ### ``llvm.genx.scatter.private.<vector type>.<ptr type>.<any int>.<vector type>`` : CM internal, no VISA 
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
@@ -2086,31 +2019,6 @@ Imported_Intrinsics = \
 ### only when scale is 0.
 ###
     "scatter_scaled" : ["void",["anyvector","int","short","int","int","anyint","anyvector"],"None"],
-
-### ``llvm.genx.scatter4.orig.<vector type>.<any int>.<vector type>`` : vISA SCATTER4 instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-###
-### * arg0: i32 channel mask, constant
-### * arg1: vXi1 predicate (Num_elts inferred from element offset type) (overloaded)
-### * arg2: i32 surface index
-### * arg3: i32 global offset in i32s
-### * arg4: vXi32 element offset in i32s (overloaded)
-### * arg5: the data to write (overloaded)
-###
-### The vector width of the element offset arg is the number of elements to
-### read, which must be 8 or 16.
-### The predicate arg must either have the same vector width, or be a scalar
-### i1 constant with value 1.
-### The instruction writes up to 4 channels per element, with the lowest 4
-### bits of the channel mask arg giving the mask of channels _not_ to write.
-### The number of 0 bits in that lower 4 bits of the channel mask arg is the
-### number of channels to write per element.
-### The vector width of the data to write arg must be the number of elements
-### times the number of channels to write per element.
-### The element type of the data to write must be i32 or float.
-###
-## (Silly name because of LLVM prefix bug.)
-    "scatter4_orig" : ["void",["int","anyvector","int","int","anyint","anyvector"],"None"],
 
 ### ``llvm.genx.scatter4.scaled.<vector type>.<any int>.<vector type>`` : vISA SCATTER4_SCALED instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
