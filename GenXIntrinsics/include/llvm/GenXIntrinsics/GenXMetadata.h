@@ -66,6 +66,7 @@ static constexpr const char VCSLMSize[] = "VCSLMSize";
 static constexpr const char VCArgumentKind[] = "VCArgumentKind";
 static constexpr const char VCArgumentDesc[] = "VCArgumentDesc";
 static constexpr const char VCSIMTCall[] = "VCSIMTCall";
+static constexpr const char VCSingleElementVector[] = "VCSingleElementVector";
 } // namespace VCFunctionMD
 
 enum KernelMDOp {
