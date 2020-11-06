@@ -22,23 +22,21 @@
  OTHER DEALINGS IN THE SOFTWARE.
 ======================= end_copyright_notice ==================================*/
 
-///
-/// GenXSPIRVWriterAdaptor
-/// ---------------------------
-/// This pass converts metadata to SPIRV format from whichever used in frontend
+
+//===----------------------------------------------------------------------===//
+//
+// This file declares functions for rewriting single element vectors
+// in GenXSPIRV adaptors
+//
+//===----------------------------------------------------------------------===//
+
+#include "llvm/IR/Module.h"
 
 namespace llvm {
-class ModulePass;
-class PassRegistry;
+namespace genx {
 
-void initializeGenXSPIRVWriterAdaptorPass(PassRegistry &);
+void rewriteSingleElementVectors(Module &M);
+void restoreSingleElementVectors(Module &M);
 
-// Create spirv writer adaptor pass.
-// RewriteTypes -- whether plain types with decorations should be
-// rewritten with native SPIRV types. Defaults to false for
-// compatibility reasons until backend will be able to handle new
-// types.
-ModulePass *
-createGenXSPIRVWriterAdaptorPass(bool RewriteTypes = false,
-                                 bool RewriteSingleElementVectors = false);
+} // namespace genx
 } // namespace llvm

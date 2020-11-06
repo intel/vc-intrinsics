@@ -28,6 +28,7 @@
 /// This pass converts metadata from SPIRV format to whichever used in backend
 
 #include "AdaptorsCommon.h"
+#include "GenXSingleElementVectorUtil.h"
 
 #include "llvm/GenXIntrinsics/GenXIntrinsics.h"
 #include "llvm/GenXIntrinsics/GenXMetadata.h"
@@ -421,6 +422,7 @@ bool GenXSPIRVReaderAdaptor::runOnModule(Module &M) {
   }
 
   rewriteKernelsTypes(M);
+  restoreSingleElementVectors(M);
 
   for (auto &&F : M)
     runOnFunction(F);

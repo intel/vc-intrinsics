@@ -28,6 +28,7 @@
 /// This pass converts metadata to SPIRV format from whichever used in frontend
 
 #include "AdaptorsCommon.h"
+#include "GenXSingleElementVectorUtil.h"
 
 #include "llvm/GenXIntrinsics/GenXSPIRVWriterAdaptor.h"
 #include "llvm/GenXIntrinsics/GenXIntrinsics.h"
@@ -55,11 +56,14 @@ public:
 
 private:
   bool RewriteTypes = true;
+  bool RewriteSingleElementVectors = true;
 
 public:
   explicit GenXSPIRVWriterAdaptor() : ModulePass(ID) {}
-  explicit GenXSPIRVWriterAdaptor(bool RewriteTypes_)
-      : ModulePass(ID), RewriteTypes(RewriteTypes_) {}
+  explicit GenXSPIRVWriterAdaptor(bool RewriteTypes,
+                                  bool RewriteSingleElementVectors)
+      : ModulePass(ID), RewriteTypes(RewriteTypes),
+        RewriteSingleElementVectors(RewriteSingleElementVectors) {}
 
   llvm::StringRef getPassName() const override {
     return "GenX SPIRVWriter Adaptor";
@@ -80,8 +84,10 @@ INITIALIZE_PASS_BEGIN(GenXSPIRVWriterAdaptor, "GenXSPIRVWriterAdaptor",
 INITIALIZE_PASS_END(GenXSPIRVWriterAdaptor, "GenXSPIRVWriterAdaptor",
                     "GenXSPIRVWriterAdaptor", false, false)
 
-ModulePass *llvm::createGenXSPIRVWriterAdaptorPass(bool RewriteTypes) {
-  return new GenXSPIRVWriterAdaptor(RewriteTypes);
+ModulePass *
+llvm::createGenXSPIRVWriterAdaptorPass(bool RewriteTypes,
+                                       bool RewriteSingleElementVectors) {
+  return new GenXSPIRVWriterAdaptor(RewriteTypes, RewriteSingleElementVectors);
 }
 
 void GenXSPIRVWriterAdaptor::getAnalysisUsage(AnalysisUsage &AU) const {
@@ -471,6 +477,9 @@ bool GenXSPIRVWriterAdaptor::runOnModule(Module &M) {
 
   if (RewriteTypes)
     rewriteKernelsTypes(M);
+
+  if (RewriteSingleElementVectors)
+    rewriteSingleElementVectors(M);
 
   return true;
 }

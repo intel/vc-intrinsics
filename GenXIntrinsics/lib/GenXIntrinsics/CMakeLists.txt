@@ -9,6 +9,7 @@ if(BUILD_EXTERNAL)
               GenXIntrinsics.cpp
               GenXRestoreIntrAttr.cpp
               GenXSimdCFLowering.cpp
+              GenXSingleElementVectorUtil.cpp
               GenXSPIRVReaderAdaptor.cpp
               GenXSPIRVWriterAdaptor.cpp
              )
@@ -33,6 +34,7 @@ else()
     GenXIntrinsics.cpp
     GenXRestoreIntrAttr.cpp
     GenXSimdCFLowering.cpp
+    GenXSingleElementVectorUtil.cpp
     GenXSPIRVReaderAdaptor.cpp
     GenXSPIRVWriterAdaptor.cpp
     ADDITIONAL_HEADER_DIRS
