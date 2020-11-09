@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.13.4)
+include(GNUInstallDirs)
 
 set(GENX_INTRINSICS_MAIN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
@@ -33,7 +34,7 @@ endif()
 # this option is to switch on install when we are building not inside IGC
 if(INSTALL_REQUIRED)
   install(DIRECTORY include/llvm
-    DESTINATION include
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     COMPONENT genx-intrinsics-headers
     FILES_MATCHING
     PATTERN "*.h"
@@ -43,7 +44,7 @@ if(INSTALL_REQUIRED)
   # and then "install(DIRECTORY" installs them even if they are empty
   # so generated file has to be installed separetely
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/llvm/GenXIntrinsics/${GENX_INTRINSICS_DESCRIPTION}
-    DESTINATION include/llvm/GenXIntrinsics
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/llvm/GenXIntrinsics
     COMPONENT genx-intrinsics-headers
   )
 
@@ -52,15 +53,15 @@ if(INSTALL_REQUIRED)
   # we need to limit it to external build
   if(BUILD_EXTERNAL)
     install(TARGETS LLVMGenXIntrinsics EXPORT LLVMGenXIntrinsicsTargets
-      LIBRARY DESTINATION lib
-      ARCHIVE DESTINATION lib
-      RUNTIME DESTINATION bin
-      INCLUDES DESTINATION include
+      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+      INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
 
     install(EXPORT LLVMGenXIntrinsicsTargets
       FILE LLVMGenXIntrinsicsConfig.cmake
-      DESTINATION lib/cmake/LLVMGenXIntrinsics
+      DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/LLVMGenXIntrinsics
     )
   endif() # BUILD_EXTERNAL
 endif() # INSTALL_REQUIRED
