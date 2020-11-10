@@ -41,6 +41,7 @@
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/Process.h"
 
 #include "llvmVCWrapper/IR/Function.h"
 #include "llvmVCWrapper/IR/GlobalValue.h"
@@ -59,11 +60,15 @@ private:
   bool RewriteSingleElementVectors = true;
 
 public:
-  explicit GenXSPIRVWriterAdaptor() : ModulePass(ID) {}
+  explicit GenXSPIRVWriterAdaptor() : ModulePass(ID) {
+    overrideOptionsWithEnv();
+  }
   explicit GenXSPIRVWriterAdaptor(bool RewriteTypes,
                                   bool RewriteSingleElementVectors)
       : ModulePass(ID), RewriteTypes(RewriteTypes),
-        RewriteSingleElementVectors(RewriteSingleElementVectors) {}
+        RewriteSingleElementVectors(RewriteSingleElementVectors) {
+    overrideOptionsWithEnv();
+  }
 
   llvm::StringRef getPassName() const override {
     return "GenX SPIRVWriter Adaptor";
@@ -73,6 +78,14 @@ public:
 
 private:
   bool runOnFunction(Function &F);
+
+  // This function overrides options with environment variables
+  // It is used for debugging.
+  void overrideOptionsWithEnv() {
+    auto RewriteSEVOpt = llvm::sys::Process::GetEnv("GENX_REWRITE_SEV");
+    if (RewriteSEVOpt)
+      RewriteSingleElementVectors = RewriteSEVOpt.getValue() == "1";
+  }
 };
 
 } // namespace
