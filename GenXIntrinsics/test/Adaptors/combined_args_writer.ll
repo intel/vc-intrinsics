@@ -3,6 +3,7 @@
 ; in normal flow, though they appear in old cmc.
 
 ; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
+; RUN: opt -S -GenXSPIRVWriterAdaptor -GenXSPIRVWriterAdaptor < %s | FileCheck %s
 
 define void @test(i32 %in, i32 %out, <3 x i32> %__arg_llvm.genx.local.id) {
 ; CHECK-LABEL: @test(
