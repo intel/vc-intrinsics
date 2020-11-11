@@ -378,9 +378,13 @@ static SPIRVArgDesc analyzeArgumentAttributes(ArgKind Kind, StringRef Desc) {
 // In presence of implicit arguments (that is temporary),
 // value can be out of listed in ArgKind enum.
 // Such values are not processed later.
-static ArgKind extractArgumentKind(const Argument &Arg) {
+// Return None if there is no such attribute.
+static Optional<ArgKind> extractArgumentKind(const Argument &Arg) {
   const Function *F = Arg.getParent();
   const AttributeList Attrs = F->getAttributes();
+  if (!Attrs.hasParamAttr(Arg.getArgNo(), VCFunctionMD::VCArgumentKind))
+    return None;
+
   const Attribute Attr =
       Attrs.getParamAttr(Arg.getArgNo(), VCFunctionMD::VCArgumentKind);
   unsigned AttrVal = {};
@@ -400,11 +404,14 @@ static StringRef extractArgumentDesc(const Argument &Arg) {
 
 // Get SPIRV type and access qualifier of kernel argument
 // using its corresponding attributes.
+// Default to None if no information available.
 static SPIRVArgDesc analyzeKernelArg(const Argument &Arg) {
-  const ArgKind Kind = extractArgumentKind(Arg);
-  const StringRef Desc = extractArgumentDesc(Arg);
+  if (auto Kind = extractArgumentKind(Arg)) {
+    const StringRef Desc = extractArgumentDesc(Arg);
+    return analyzeArgumentAttributes(Kind.getValue(), Desc);
+  }
 
-  return analyzeArgumentAttributes(Kind, Desc);
+  return {SPIRVType::None};
 }
 
 static std::vector<SPIRVArgDesc> analyzeKernelArguments(const Function &F) {
@@ -482,11 +489,12 @@ bool GenXSPIRVWriterAdaptor::runOnModule(Module &M) {
     }
   }
 
-  for (auto &&F : M)
-    runOnFunction(F);
-
-  // Old metadata is not needed anymore at this point.
-  M.eraseNamedMetadata(M.getNamedMetadata(FunctionMD::GenXKernels));
+  if (auto *MD = M.getNamedMetadata(FunctionMD::GenXKernels)) {
+    for (auto &&F : M)
+      runOnFunction(F);
+    // Old metadata is not needed anymore at this point.
+    M.eraseNamedMetadata(MD);
+  }
 
   if (RewriteTypes)
     rewriteKernelsTypes(M);

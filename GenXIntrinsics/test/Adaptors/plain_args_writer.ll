@@ -3,6 +3,7 @@
 ; understand. Arguments without annotations are used here (CMRT like).
 
 ; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
+; RUN: opt -S -GenXSPIRVWriterAdaptor -GenXSPIRVWriterAdaptor < %s | FileCheck %s
 
 define spir_kernel void @test(i32 %surf, i32 %samp, i64 %ptr, i32 %gen) {
 ; CHECK-LABEL: @test(

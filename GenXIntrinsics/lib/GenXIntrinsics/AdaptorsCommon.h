@@ -68,7 +68,7 @@ enum class SPIRVType {
   Pointer,
   // Other general types (no arg desc).
   Other,
-  // Old-style decorated types.
+  // Old-style decorated types or already SPIRV type.
   None,
 };
 
