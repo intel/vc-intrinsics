@@ -214,16 +214,25 @@ static std::vector<SPIRVArgDesc> analyzeKernelArguments(Function &F) {
   return Descs;
 }
 
-// SPIRV arguments converted to old style with address convert intrinsic.
-static Instruction *getArgConvIntrinsic(Argument &Arg) {
-  assert(Arg.hasOneUse() == 1 &&
-         "Rewritten signature argument should have one use!");
+static bool isArgConvIntrinsic(const Value *V) {
+  return GenXIntrinsic::getGenXIntrinsicID(V) ==
+         GenXIntrinsic::genx_address_convert;
+}
 
-  User *Intr = Arg.user_back();
-  assert(GenXIntrinsic::getGenXIntrinsicID(Intr) ==
-             GenXIntrinsic::genx_address_convert &&
-         "Expected address convert intrinsic for rewritten type");
-  return cast<Instruction>(Intr);
+// Get original value that should be used in restored kernel.
+// SPIRV arguments converted to old style with address convert intrinsic
+// so if intrinsic is present, then its type should be used instead of
+// current argument. Otherwise argument was not changed.
+static Value *getOriginalValue(Argument &Arg) {
+  if (Arg.hasOneUse()) {
+    User *U = Arg.user_back();
+    if (isArgConvIntrinsic(U))
+      return U;
+  }
+
+  assert(llvm::none_of(Arg.users(), isArgConvIntrinsic) &&
+         "Arg convert can occur as the only user of argument");
+  return &Arg;
 }
 
 static ArgKind mapSPIRVTypeToArgKind(SPIRVType Ty) {
@@ -291,10 +300,6 @@ static std::string mapSPIRVDescToArgDesc(SPIRVArgDesc SPIRVDesc) {
   return Desc;
 }
 
-// Only types with desc require argument rewriting.
-static bool typeRequiresRewriting(SPIRVType Ty) {
-  return Ty != SPIRVType::None && Ty != SPIRVType::Other;
-}
 
 // Create new empty function with restored types based on old function and
 // arguments descriptors.
@@ -302,15 +307,9 @@ static Function *
 transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
   // Collect new kernel argument types.
   std::vector<Type *> NewTypes;
-  for (Argument &Arg : F.args()) {
-    const SPIRVArgDesc Desc = Descs[Arg.getArgNo()];
-    if (typeRequiresRewriting(Desc.Ty))
-      // Arguments that require rewriting have only one user:
-      // "address convert" intrinsic with old type.
-      NewTypes.push_back(getArgConvIntrinsic(Arg)->getType());
-    else
-      NewTypes.push_back(Arg.getType());
-  }
+  std::transform(
+      F.arg_begin(), F.arg_end(), std::back_inserter(NewTypes),
+      [](Argument &Arg) { return getOriginalValue(Arg)->getType(); });
 
   auto *NewFTy = FunctionType::get(F.getReturnType(), NewTypes, false);
   auto *NewF = VCINTR::Function::Create(
@@ -376,12 +375,10 @@ static void rewriteKernelArguments(Function &F) {
     Argument &OldArg = *std::next(F.arg_begin(), i);
     Argument &NewArg = *std::next(NewF->arg_begin(), i);
     NewArg.takeName(&OldArg);
-    if (typeRequiresRewriting(ArgDescs[i].Ty)) {
-      Instruction *Conv = getArgConvIntrinsic(OldArg);
-      Conv->replaceAllUsesWith(&NewArg);
-      Conv->eraseFromParent();
-    } else {
-      OldArg.replaceAllUsesWith(&NewArg);
+    Value *Orig = getOriginalValue(OldArg);
+    Orig->replaceAllUsesWith(&NewArg);
+    if (Orig != &OldArg) {
+      cast<Instruction>(Orig)->eraseFromParent();
     }
   }
 
