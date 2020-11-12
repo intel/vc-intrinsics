@@ -1,4 +1,4 @@
-# VC Intrinsics
+# VC Intrinsics.
 
 ## Introduction
 
