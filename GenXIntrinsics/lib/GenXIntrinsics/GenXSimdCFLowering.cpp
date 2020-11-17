@@ -1701,13 +1701,13 @@ void CMSimdCFLower::lowerUnmaskOps() {
             }
           }
           assert(StoreV);
-          auto CIB = dyn_cast<CallInst>(StoreV->getValueOperand());
+          auto *CIB = cast<CallInst>(StoreV->getValueOperand());
           assert(GenXIntrinsic::getGenXIntrinsicID(CIB) ==
                   GenXIntrinsic::genx_unmask_begin);
           MaskBegins.push_back(CIB);
           MaskEnds.push_back(CIE);
           // put in genx_simdcf_savemask and genx_simdcf_remask
-          auto DL = cast<CallInst>(CIB)->getDebugLoc();
+          auto DL = CIB->getDebugLoc();
           Instruction *OldEM =
               new LoadInst(EMVar->getType()->getPointerElementType(), EMVar,
                            EMVar->getName(), false /* isVolatile */, CIB);
