@@ -3415,6 +3415,18 @@ Imported_Intrinsics = \
 ##
     "address_convert" : ["anyint",["anyptr"],"NoMem"],
 
+## ``llvm.genx.gaddr`` : take an address of a global variable
+## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+##
+## The semantics of this intrinsic is equal to ptrtoint instruction.
+## Only global variable can be an argument of this intrinsic.
+##
+## * arg0: global variable
+##
+## * Return value: i64/i32 (depending on data layout) value of pointer
+##
+    "gaddr" : ["anyint", ["anyptr"], "NoMem"],
+
 ## ``llvm.genx.jump.table`` : CMC internal, no VISA
 ## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ##
