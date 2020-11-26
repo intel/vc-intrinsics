@@ -492,6 +492,10 @@ bool GenXSPIRVWriterAdaptorImpl::runOnFunction(Function &F) {
     F.addFnAttr(VCFunctionMD::VCCallable);
   }
 
+  if (Attrs.hasFnAttribute(FunctionMD::CMEntry)) {
+    F.addFnAttr(VCFunctionMD::VCFCEntry);
+  }
+
   if (Attrs.hasFnAttribute(FunctionMD::CMGenxSIMT)) {
     auto SIMTMode = StringRef();
     SIMTMode =
