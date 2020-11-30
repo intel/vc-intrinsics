@@ -40,6 +40,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/GenXIntrinsics/GenXVersion.h"
 
 namespace llvm {
 
