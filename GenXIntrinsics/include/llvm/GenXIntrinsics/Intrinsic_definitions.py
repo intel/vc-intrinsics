@@ -1804,6 +1804,23 @@ Imported_Intrinsics = \
 ###
     "gather_scaled2" : ["anyvector",["int","short","int","int","anyint"],"ReadMem"],
 
+### ``llvm.genx.gather.masked.scaled2`` : vISA GATHER_SCALED instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+###
+### * (Exec_size inferred from element offset type)
+### * arg0: i32 log2 num blocks, constant (0/1/2 for num blocks 1/2/4)
+### * arg1: i16 scale, constant
+### * arg2: i32 surface index
+### * arg3: i32 global offset in bytes
+### * arg4: vXi32 element offset in bytes (overloaded)
+### * arg5: vXi1 predicate (overloaded)
+###
+### * Return value: the data read
+###
+    "gather_masked_scaled2" : ["anyvector",["int","short","int","int","anyint","anyvector"],"ReadMem"],
+
+
 ### ``llvm.genx.gather4.scaled.<return type>.<vector type>.<any int>`` : vISA GATHER4_SCALED instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
@@ -1858,6 +1875,22 @@ Imported_Intrinsics = \
 ### The element type of the return value must be i32 or float.
 ###
     "gather4_scaled2" : ["anyvector",["int","short","int","int","anyint"],"ReadMem"],
+
+### ``llvm.genx.gather4.masked.scaled2`` : vISA GATHER4_SCALED instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * (Exec_size inferred from element offset type)
+### * arg0: i32 channel mask, constant
+### * arg1: i16 scale, constant
+### * arg2: i32 surface index
+### * arg3: i32 global offset in bytes
+### * arg4: vXi32 element offset in bytes
+### * arg5: vXi1 predicate (overloaded)
+###
+### * Return value: the data read
+###
+    "gather4_masked_scaled2" : ["anyvector",["int","short","int","int","anyint","anyvector"],"ReadMem"],
+
 
 ### ``llvm.genx.gather4.typed.<return type>.<vector type>.<vector type>`` : vISA GATHER4_TYPED instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
