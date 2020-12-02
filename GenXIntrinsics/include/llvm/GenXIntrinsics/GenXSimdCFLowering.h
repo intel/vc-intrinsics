@@ -72,6 +72,12 @@ class CMSimdCFLower {
   std::set<AssertingVH<Value>> AlreadyPredicated;
   // Mask for shufflevector to extract part of EM.
   SmallVector<Constant *, 32> ShuffleMask;
+  // Original predicate for an instruction (if it was changed with AND respect
+  // to EM)
+  std::map<Instruction *, Value *> OriginalPred;
+  // Replicate mask for provided number of channels
+  Value *replicateMask(Value *EM, Instruction *InsertBefore, unsigned SimdWidth,
+                       unsigned NumChannels = 1);
 
 public:
   static const unsigned MAX_SIMD_CF_WIDTH = 32;
@@ -106,7 +112,7 @@ private:
   void lowerSimdCF();
   void lowerUnmaskOps();
   unsigned deduceNumChannels(Instruction *SI);
-  Instruction *loadExecutionMask(Instruction *InsertBefore, unsigned SimdWidth, unsigned NumChannels = 1);
+  Instruction *loadExecutionMask(Instruction *InsertBefore, unsigned SimdWidth);
   Value *getRMAddr(BasicBlock *JP, unsigned SimdWidth);
 };
 

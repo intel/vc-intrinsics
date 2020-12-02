@@ -535,6 +535,14 @@ void CMSimdCFLower::processFunction(Function *ArgF)
   unsigned CMWidth = PredicatedSubroutines[F];
   // Find the simd branches.
   bool FoundSIMD = findSimdBranches(CMWidth);
+
+  // Create shuffle mask for EM adjustment
+  if (ShuffleMask.empty()) {
+    auto I32Ty = Type::getInt32Ty(F->getContext());
+    for (unsigned i = 0; i != 32; ++i)
+      ShuffleMask.push_back(ConstantInt::get(I32Ty, i));
+  }
+
   if (CMWidth > 0 || FoundSIMD) {
     // Determine which basic blocks need to be predicated.
     determinePredicatedBlocks();
@@ -555,10 +563,13 @@ void CMSimdCFLower::processFunction(Function *ArgF)
     lowerSimdCF();
     lowerUnmaskOps();
   }
+
+  ShuffleMask.clear();
   SimdBranches.clear();
   PredicatedBlocks.clear();
   JoinPoints.clear();
   RMAddrs.clear();
+  OriginalPred.clear();
   AlreadyPredicated.clear();
 }
 
@@ -1214,6 +1225,7 @@ unsigned CMSimdCFLower::deduceNumChannels(Instruction *SI) {
   // If it's not a function call then check for a specific instruction
   unsigned IID = GenXIntrinsic::getGenXIntrinsicID(CI);
   switch (IID) {
+  case GenXIntrinsic::genx_gather4_masked_scaled2:
   case GenXIntrinsic::genx_gather4_scaled2: {
     unsigned AddrElems = VCINTR::VectorType::getNumElements(
         cast<VectorType>(CI->getOperand(4)->getType()));
@@ -1262,6 +1274,7 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
   CallInst *WrRegionToPredicate = nullptr;
   Use *U = &SI->getOperandUse(0);
   Use *UseNeedsUpdate = nullptr;
+  Value *ExistingPred = nullptr;
   for (;;) {
     if (auto BC = dyn_cast<BitCastInst>(V)) {
       U = &BC->getOperandUse(0);
@@ -1277,6 +1290,15 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
     unsigned IID = GenXIntrinsic::getGenXIntrinsicID(WrRegion);
     if (IID != GenXIntrinsic::genx_wrregioni
          && IID != GenXIntrinsic::genx_wrregionf) {
+      // genx_gather4_masked_scaled2 is slightly different: it has predicate
+      // operand and its users have to be predicated as well since it returns value
+      // with size greater of execution size
+      if (IID == GenXIntrinsic::genx_gather4_masked_scaled2) {
+        assert(AlreadyPredicated.find(WrRegion) != AlreadyPredicated.end());
+        if (OriginalPred.count(WrRegion))
+          ExistingPred = OriginalPred[WrRegion];
+        break;
+      }
       // Not wrregion. See if it is an intrinsic that has already been
       // predicated; if so do not attempt to predicate the store.
       if (AlreadyPredicated.find(WrRegion) != AlreadyPredicated.end())
@@ -1361,7 +1383,19 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
     Load = CallInst::Create(Fn, Addr, ".simdcfpred.vload", SI);
   }
   Load->setDebugLoc(SI->getDebugLoc());
-  auto EM = loadExecutionMask(SI, SimdWidth, NumChannels);
+  Value *EM = loadExecutionMask(SI, SimdWidth);
+
+  // If there was a predicate already then update it with current EM
+  if (ExistingPred) {
+    EM = BinaryOperator::Create(
+        Instruction::And, ExistingPred, EM,
+        ExistingPred->getName() + ".and." + EM->getName(), SI);
+    cast<Instruction>(EM)->setDebugLoc(SI->getDebugLoc());
+  }
+
+  // Replicate mask for each channel if needed
+  EM = replicateMask(EM, SI, SimdWidth, NumChannels);
+
   auto Select = SelectInst::Create(EM, SI->getOperand(0), Load,
       SI->getOperand(0)->getName() + ".simdcfpred", SI);
   SI->setOperand(0, Select);
@@ -1450,16 +1484,26 @@ void CMSimdCFLower::predicateScatterGather(CallInst *CI, unsigned SimdWidth,
 {
   Value *OldPred = CI->getArgOperand(PredOperandNum);
   assert(OldPred->getType()->getScalarType()->isIntegerTy(1));
-  if (SimdWidth != VCINTR::VectorType::getNumElements(
-                       cast<VectorType>(OldPred->getType()))) {
-    DiagnosticInfoSimdCF::emit(CI, "mismatching SIMD width of scatter/gather inside SIMD control flow");
-    return;
+  switch (GenXIntrinsic::getGenXIntrinsicID(CI)) {
+  case GenXIntrinsic::genx_gather4_masked_scaled2:
+    break;
+  default: {
+    if (SimdWidth != VCINTR::VectorType::getNumElements(
+                         cast<VectorType>(OldPred->getType()))) {
+      DiagnosticInfoSimdCF::emit(
+          CI,
+          "mismatching SIMD width of scatter/gather inside SIMD control flow");
+      return;
+    }
+    break;
+  }
   }
   Instruction *NewPred = loadExecutionMask(CI, SimdWidth);
   if (auto C = dyn_cast<Constant>(OldPred))
     if (C->isAllOnesValue())
       OldPred = nullptr;
   if (OldPred) {
+    OriginalPred[CI] = OldPred;
     auto And = BinaryOperator::Create(Instruction::And, OldPred, NewPred,
         OldPred->getName() + ".and." + NewPred->getName(), CI);
     And->setDebugLoc(CI->getDebugLoc());
@@ -1496,6 +1540,7 @@ CallInst *CMSimdCFLower::predicateWrRegion(CallInst *WrR, unsigned SimdWidth)
   if (!Pred)
     Pred = EM;
   else {
+    OriginalPred[WrR] = Pred;
     auto And = BinaryOperator::Create(Instruction::And, EM, Pred,
         Pred->getName() + ".and." + EM->getName(), WrR);
     And->setDebugLoc(WrR->getDebugLoc());
@@ -1784,38 +1829,45 @@ CallInst *CMSimdCFLower::isSimdCFAny(Value *V)
 }
 
 /***********************************************************************
+ * replicateMask : copy mask for provided number of channels using shufflevector
+ */
+Value *CMSimdCFLower::replicateMask(Value *EM, Instruction *InsertBefore,
+                                    unsigned SimdWidth, unsigned NumChannels) {
+  // No need to replicate the mask for one channel
+  if (NumChannels == 1)
+    return EM;
+
+  SmallVector<Constant *, 128> ChannelMask{SimdWidth * NumChannels};
+  for (unsigned i = 0; i < NumChannels; ++i)
+    std::copy(ShuffleMask.begin(), ShuffleMask.begin() + SimdWidth,
+              ChannelMask.begin() + SimdWidth * i);
+  EM = new ShuffleVectorInst(
+      EM, UndefValue::get(EM->getType()), ConstantVector::get(ChannelMask),
+      Twine("ChannelEM") + Twine(SimdWidth), InsertBefore);
+
+  return EM;
+}
+
+/***********************************************************************
  * loadExecutionMask : create instruction to load EM
  */
 Instruction *CMSimdCFLower::loadExecutionMask(Instruction *InsertBefore,
-    unsigned SimdWidth, unsigned NumChannels)
-{
+                                              unsigned SimdWidth) {
   Instruction *EM =
       new LoadInst(EMVar->getType()->getPointerElementType(), EMVar,
                    EMVar->getName(), false /* isVolatile */, InsertBefore);
-  EM->setDebugLoc(InsertBefore->getDebugLoc());
+
   // If the simd width is not MAX_SIMD_CF_WIDTH, extract the part of EM we want.
-  if (NumChannels == 1 && SimdWidth == MAX_SIMD_CF_WIDTH)
+  if (SimdWidth == MAX_SIMD_CF_WIDTH)
     return EM;
-  if (ShuffleMask.empty()) {
-    auto I32Ty = Type::getInt32Ty(F->getContext());
-    for (unsigned i = 0; i != 32; ++i)
-      ShuffleMask.push_back(ConstantInt::get(I32Ty, i));
-  }
-  if (NumChannels == 1) {
-    ArrayRef<Constant *> Mask = ShuffleMask;
-    EM = new ShuffleVectorInst(EM, UndefValue::get(EM->getType()),
-                               ConstantVector::get(Mask.take_front(SimdWidth)),
-                               Twine("EM") + Twine(SimdWidth), InsertBefore);
-  } else {
-    SmallVector<Constant *, 128> ChannelMask{SimdWidth * NumChannels};
-    for (unsigned i = 0; i < NumChannels; ++i)
-      std::copy(ShuffleMask.begin(), ShuffleMask.begin() + SimdWidth,
-                ChannelMask.begin() + SimdWidth * i);
-    EM = new ShuffleVectorInst(
-        EM, UndefValue::get(EM->getType()), ConstantVector::get(ChannelMask),
-        Twine("ChannelEM") + Twine(SimdWidth), InsertBefore);
-  }
+
+  ArrayRef<Constant *> Mask = ShuffleMask;
+  EM = new ShuffleVectorInst(EM, UndefValue::get(EM->getType()),
+                             ConstantVector::get(Mask.take_front(SimdWidth)),
+                             Twine("EM") + Twine(SimdWidth), InsertBefore);
+
   EM->setDebugLoc(InsertBefore->getDebugLoc());
+
   return EM;
 }
 
