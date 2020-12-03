@@ -19,7 +19,7 @@ if(${LLVM_VERSION_MAJOR} LESS 9)
   add_custom_command(
     OUTPUT "${version_inc}"
     COMMAND
-    ${CMAKE_COMMAND} "-DSOURCE_DIRS=${LLVM_GENX_INTRINSICS_ROOT_DIR}"
+    ${CMAKE_COMMAND} "-DSOURCE_DIRS=${GENX_INTRINSICS_MAIN_DIR}"
                      "-DNAMES=VCI"
                      "-DHEADER_FILE=${version_inc}"
                      -P "${FOUND_VCS}")
@@ -28,7 +28,7 @@ else()
   add_custom_command(
     OUTPUT "${version_inc}"
     COMMAND
-    ${CMAKE_COMMAND} "-DSOURCE_DIR=${LLVM_GENX_INTRINSICS_ROOT_DIR}"
+    ${CMAKE_COMMAND} "-DSOURCE_DIR=${GENX_INTRINSICS_MAIN_DIR}"
                      "-DNAME=VCI"
                      "-DHEADER_FILE=${version_inc}"
                      "-DVCS_SCRIPT=${FOUND_VCS}"
