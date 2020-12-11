@@ -1147,7 +1147,7 @@ void CMSimdCFLower::rewritePredication(CallInst *CI, unsigned SimdWidth)
       EnabledValues->getName() + ".simdcfpred", CI);
   Select->setDebugLoc(CI->getDebugLoc());
   CI->replaceAllUsesWith(Select);
-  CI->eraseFromParent();
+  eraseInstruction(CI);
 }
 
 static bool IsBitCastForLifetimeMark(const Value *V) {
@@ -1290,10 +1290,11 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
     unsigned IID = GenXIntrinsic::getGenXIntrinsicID(WrRegion);
     if (IID != GenXIntrinsic::genx_wrregioni
          && IID != GenXIntrinsic::genx_wrregionf) {
-      // genx_gather4_masked_scaled2 is slightly different: it has predicate
-      // operand and its users have to be predicated as well since it returns value
-      // with size greater of execution size
-      if (IID == GenXIntrinsic::genx_gather4_masked_scaled2) {
+      // genx_gather4_masked_scaled2 and genx_gather_masked_scaled2 are slightly
+      // different: they  have predicate operand and their users have to be
+      // predicated as well.
+      if (IID == GenXIntrinsic::genx_gather4_masked_scaled2 ||
+          IID == GenXIntrinsic::genx_gather_masked_scaled2) {
         assert(AlreadyPredicated.find(WrRegion) != AlreadyPredicated.end());
         if (OriginalPred.count(WrRegion))
           ExistingPred = OriginalPred[WrRegion];
@@ -1354,7 +1355,7 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
     assert(UseNeedsUpdate);
     *UseNeedsUpdate = predicateWrRegion(WrRegionToPredicate, SimdWidth);
     if (WrRegionToPredicate->use_empty())
-      WrRegionToPredicate->eraseFromParent();
+      eraseInstruction(WrRegionToPredicate);
     return;
   }
   // Try to deduce number of channels to fit into
@@ -1469,7 +1470,7 @@ void CMSimdCFLower::predicateSend(CallInst *CI, unsigned IntrinsicID,
 
   auto NewCI = Builder.CreateCall(Decl, Args, CI->getName());
   CI->replaceAllUsesWith(NewCI);
-  CI->eraseFromParent();
+  eraseInstruction(CI);
   // Now we can predicate the new send instruction.
   predicateScatterGather(NewCI, SimdWidth, PredOperandNum);
 }
@@ -1484,19 +1485,12 @@ void CMSimdCFLower::predicateScatterGather(CallInst *CI, unsigned SimdWidth,
 {
   Value *OldPred = CI->getArgOperand(PredOperandNum);
   assert(OldPred->getType()->getScalarType()->isIntegerTy(1));
-  switch (GenXIntrinsic::getGenXIntrinsicID(CI)) {
-  case GenXIntrinsic::genx_gather4_masked_scaled2:
-    break;
-  default: {
     if (SimdWidth != VCINTR::VectorType::getNumElements(
                          cast<VectorType>(OldPred->getType()))) {
       DiagnosticInfoSimdCF::emit(
           CI,
           "mismatching SIMD width of scatter/gather inside SIMD control flow");
       return;
-    }
-    break;
-  }
   }
   Instruction *NewPred = loadExecutionMask(CI, SimdWidth);
   if (auto C = dyn_cast<Constant>(OldPred))
@@ -1593,7 +1587,7 @@ void CMSimdCFLower::lowerSimdCF()
       auto NewBr = Builder.CreateCondBr(
           Constant::getAllOnesValue(Type::getInt1Ty(BB->getContext())), UIP,
           BB->getNextNode());
-      Br->eraseFromParent();
+      eraseInstruction(Br);
       Br = NewBr;
     }
     Value *Cond = Br->getCondition();
@@ -1656,7 +1650,7 @@ void CMSimdCFLower::lowerSimdCF()
     Br->setSuccessor(0, JIP);
     // Erase the old llvm.genx.simdcf.any.
     if (OldCond && OldCond->use_empty())
-      OldCond->eraseFromParent();
+      eraseInstruction(OldCond);
   }
   // Then lower the join points.
   for (auto jpi = JoinPoints.begin(), jpe = JoinPoints.end();
@@ -1702,7 +1696,7 @@ void CMSimdCFLower::lowerSimdCF()
       auto NewBr = BranchInst::Create(JIP, JP->getNextNode(), BranchCond, Br);
       assert(JoinToGoto.count(JP));
       NewBr->setDebugLoc(DL);
-      Br->eraseFromParent();
+      eraseInstruction(Br);
       auto *OrigBranch = cast<BranchInst>(JoinToGoto.at(JP)->getTerminator());
       if (OrigBranch->isConditional())
         fixPHIInput(JIP,
@@ -1795,11 +1789,11 @@ void CMSimdCFLower::lowerUnmaskOps() {
   }
   // erase Mask Ends
   for (auto CIE : MaskEnds) {
-    CIE->eraseFromParent();
+    eraseInstruction(CIE);
   }
   // erase Mask Begins
   for (auto CIB : MaskBegins) {
-    CIB->eraseFromParent();
+    eraseInstruction(CIB);
   }
 }
 
