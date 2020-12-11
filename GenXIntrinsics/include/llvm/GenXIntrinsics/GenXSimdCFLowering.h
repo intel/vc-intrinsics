@@ -39,7 +39,6 @@
 #include "llvm/ADT/MapVector.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/ValueHandle.h"
 #include <algorithm>
 #include <set>
 
@@ -69,7 +68,7 @@ class CMSimdCFLower {
   // Resume mask for each join point.
   std::map<BasicBlock *, AllocaInst *> RMAddrs;
   // Set of intrinsic calls (other than wrregion) that have been predicated.
-  std::set<AssertingVH<Value>> AlreadyPredicated;
+  std::set<Value *> AlreadyPredicated;
   // Mask for shufflevector to extract part of EM.
   SmallVector<Constant *, 32> ShuffleMask;
   // Original predicate for an instruction (if it was changed with AND respect
@@ -78,6 +77,12 @@ class CMSimdCFLower {
   // Replicate mask for provided number of channels
   Value *replicateMask(Value *EM, Instruction *InsertBefore, unsigned SimdWidth,
                        unsigned NumChannels = 1);
+
+  void eraseInstruction(Instruction *I) {
+    assert(!AlreadyPredicated.count(I) &&
+           "Shouldn't erase this instruction as it's predicated");
+    I->eraseFromParent();
+  }
 
 public:
   static const unsigned MAX_SIMD_CF_WIDTH = 32;
