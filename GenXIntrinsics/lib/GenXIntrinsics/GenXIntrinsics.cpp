@@ -61,6 +61,7 @@ static cl::opt<bool> EnableGenXIntrinsicsCache(
     "enable-genx-intrinsics-cache", cl::init(true), cl::Hidden,
     cl::desc("Enable metadata caching of genx intrinsics"));
 
+#define MANGLE(STR) (STR)
 
 /// Intrinsic::isOverloaded(ID) - Returns true if the intrinsic can be
 /// overloaded.
