@@ -46,6 +46,15 @@ namespace VCINTR {
 #endif
   }
 
+  static inline llvm::StructType *getTypeByName(llvm::Module *M,
+                                                llvm::StringRef Name) {
+#if VC_INTR_LLVM_VERSION_MAJOR >= 12
+    return llvm::StructType::getTypeByName(M->getContext(), Name);
+#else
+    return M->getTypeByName(Name);
+#endif
+  }
+
 namespace VectorType {
 
 static unsigned getNumElements(llvm::VectorType *VecType) {

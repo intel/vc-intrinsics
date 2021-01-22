@@ -43,6 +43,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/Process.h"
 
+#include "llvmVCWrapper/IR/DerivedTypes.h"
 #include "llvmVCWrapper/IR/Function.h"
 #include "llvmVCWrapper/IR/GlobalValue.h"
 
@@ -116,7 +117,7 @@ static Type *getGlobalPtrType(LLVMContext &Ctx) {
 // how OCL/SPIRV types are implemented in clang/SPIRV Translator.
 static Type *getOpaquePtrType(Module *M, StringRef Name,
                               unsigned AddressSpace) {
-  StructType *STy = M->getTypeByName(Name);
+  StructType *STy = VCINTR::getTypeByName(M, Name);
   if (!STy)
     STy = StructType::create(M->getContext(), Name);
   return PointerType::get(STy, AddressSpace);
