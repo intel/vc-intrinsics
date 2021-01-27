@@ -103,7 +103,7 @@ def getAttributeList(Attrs):
     and returns a list of the the given attributes
     """
     s = reduce(lambda acc, v: attribute_map[v] | acc, Attrs, set())
-    return ['Attribute::'+x for x in s]
+    return ['Attribute::'+x for x in sorted(s)]
 
 Intrinsics = dict()
 parse = sys.argv
