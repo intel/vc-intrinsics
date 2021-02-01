@@ -45,3 +45,7 @@ else()
       intrinsics_gen
   )
 endif()
+
+if (HOST_LINUX AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-suggest-override")
+endif()

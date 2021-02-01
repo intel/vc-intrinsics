@@ -249,7 +249,6 @@ static ArgKind mapSPIRVTypeToArgKind(SPIRVType Ty) {
   case SPIRVType::Other:
     return ArgKind::General;
   case SPIRVType::None:
-  default:
     llvm_unreachable("Unexpected spirv type");
   }
 }
