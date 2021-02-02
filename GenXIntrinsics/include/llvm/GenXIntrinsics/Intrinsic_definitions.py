@@ -1218,6 +1218,69 @@ Imported_Intrinsics = \
 ###
     "ieee_sqrt" : ["anyfloat",[0],"NoMem"],
 
+### ``llvm.genx.dpas.<return type>.<vector type>.<vector type>`` : dpas instruction (Dot Product Accumulate Systolic)
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0: accumulator, vector integer/float type
+### * arg1: src1 (W), vector integer/float type (overloaded)
+### * arg2: src2 (A), vector integer/float type (overloaded)
+### * arg3: integer, encodes informatioin about the operation type
+###
+### * Return value: result, same type as arg0
+###
+    "dpas" : ["anyvector",[0,"anyvector","anyvector","int"],"NoMem"],
+
+### ``llvm.genx.dpas2.<return type>.<vector type>.<vector type>.<vector type>`` : dpas instruction (Dot Product Accumulate Systolic)
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0: accumulator first input value, vector integer/float type
+### * arg1: src1 input value, vector integer/float type
+### * arg2: src2 fourth input value, integer type
+### * arg3: int information of src1 PresisionType
+### * arg4: int information of src2 PresisionType
+### * arg5: int SystolicDepth
+### * arg6: int RepeatCount
+### * arg7: int sign dst( 0 - unsigned, 1 sign)
+### * arg8: int sign src0
+###
+### * Return value: result
+###
+    "dpas2" : ["anyvector",["anyvector","anyvector","anyvector","int","int", "int", "int", "int", "int"],"NoMem"],
+
+### ``llvm.genx.dpas.nosrc0.<return type>.<vector type>.<vector type>`` : dpas instruction (Dot Product Accumulate Systolic) with no src0
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0: second input value, vector integer/float type (overloaded)
+### * arg1: third input value, vector integer/float type (overloaded)
+### * arg2: fourth input value, integer type
+###
+### * Return value: result
+###
+    "dpas_nosrc0" : ["anyvector",["anyvector","anyvector","int"],"NoMem"],
+
+### ``llvm.genx.dpasw.<return type>.<vector type>.<vector type>`` : dpasw instruction (Dot Product Accumulate Systolic)
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0: first input value, vector integer/float type
+### * arg1: second input value, vector integer/float type (overloaded)
+### * arg2: third input value, vector integer/float type (overloaded)
+### * arg3: fourth input value, integer type
+###
+### * Return value: result, same type as arg0
+###
+    "dpasw" : ["anyvector",[0,"anyvector","anyvector","int"],"NoMem"],
+
+### ``llvm.genx.dpasw.nosrc0.<return type>.<vector type>.<vector type>`` : dpasw instruction (Dot Product Accumulate Systolic) with no src0
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0: second input value, vector integer/float type (overloaded)
+### * arg1: third input value, vector integer/float type (overloaded)
+### * arg2: fourth input value, integer type
+###
+### * Return value: result
+###
+    "dpasw_nosrc0" : ["anyvector",["anyvector","anyvector","int"],"NoMem"],
+
 ### ``llvm.genx.*dp4a*.<return type>.<vector type>.<vector type>.<vector type>`` : dp4a instruction (Dot Product 4 Accumulate)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.ssdp4a`` : result signed, operands signed
@@ -1267,6 +1330,49 @@ Imported_Intrinsics = \
 ### * arg1: second input, same type as arg0
     "subb" : [["anyint", "anyint"], [0, 0], "NoMem"],
 
+### add3
+### ^^^^
+###
+### ``llvm.genx.*add3.<return type>.<any int>`` : add3 instruction without saturation
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * ``llvm.genx.add3`` :
+###
+### * arg0: first input, any scalar/vector integer type, i16/i32 (overloaded)
+### * arg1: second input, same type as arg0
+### * arg2: third input, same type as arg0
+    "add3" : ["anyint",["anyint",1,1],"NoMem"],
+
+### ``llvm.genx.*add3.sat.<return type>.<any int>`` : add3 instruction with saturation
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * ``llvm.genx.ssadd3.sat`` : result signed, operands signed
+### * ``llvm.genx.suadd3.sat`` : result signed, operands unsigned
+### * ``llvm.genx.usadd3.sat`` : result unsigned, operands signed
+### * ``llvm.genx.uuadd3.sat`` : result unsigned, operands unsigned
+###
+### * arg0: first input, any scalar/vector integer type, i16/i32 (overloaded)
+### * arg1: second input, same type as arg0
+### * arg2: third input, same type as arg0
+###
+### * Return value: result, any scalar or vector integer type with same
+###               vector width
+###
+    "ssadd3_sat" : ["anyint",["anyint",1,1],"NoMem"],
+    "suadd3_sat" : ["anyint",["anyint",1,1],"NoMem"],
+    "usadd3_sat" : ["anyint",["anyint",1,1],"NoMem"],
+    "uuadd3_sat" : ["anyint",["anyint",1,1],"NoMem"],
+
+### bfn
+### ^^^
+###
+### ``llvm.genx.bfn.<return type>.<any int>`` : bfn instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * ``llvm.genx.bfn`` :
+###
+### * arg0: first input, any scalar/vector integer type, i16/i32 (overloaded)
+### * arg1: second input, same type as arg0
+### * arg2: third input, same type as arg0
+### * arg3: fourth input, byte, constant
+    "bfn" : ["anyint",["anyint",1,1,"char"],"NoMem"],
 
 ### xor
 ### ^^^
