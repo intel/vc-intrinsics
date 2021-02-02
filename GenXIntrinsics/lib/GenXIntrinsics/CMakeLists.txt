@@ -2,6 +2,7 @@ set(LLVM_COMPONENTS
   CodeGen
   Support
   Core
+  Analysis
   )
 
 if(BUILD_EXTERNAL)
