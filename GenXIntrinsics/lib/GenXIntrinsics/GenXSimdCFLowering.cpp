@@ -272,11 +272,11 @@ public:
   static char ID;
 
   ISPCSimdCFLowering() : ModulePass(ID) {}
-  void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     ModulePass::getAnalysisUsage(AU);
   }
 
-  bool runOnModule(Module &M);
+  bool runOnModule(Module &M) override;
 };
 
 // The CM SIMD CF lowering pass (a function pass)
@@ -287,12 +287,12 @@ public:
   CMSimdCFLowering() : FunctionPass(ID) {
     initializeCMSimdCFLoweringPass(*PassRegistry::getPassRegistry());
   }
-  void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     FunctionPass::getAnalysisUsage(AU);
   }
 
-  virtual bool doInitialization(Module &M);
-  virtual bool runOnFunction(Function &F) { return false; }
+  virtual bool doInitialization(Module &M) override;
+  virtual bool runOnFunction(Function &F) override { return false; }
 private:
   void calculateVisitOrder(Module *M, std::vector<Function *> *VisitOrder);
 };
