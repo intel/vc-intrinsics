@@ -370,9 +370,8 @@ static SPIRVArgDesc analyzeArgumentAttributes(ArgKind Kind, StringRef Desc) {
     return analyzeSamplerArg(Desc);
   case ArgKind::Surface:
     return analyzeSurfaceArg(Desc);
-  default:
-    return {SPIRVType::None};
   }
+  return {SPIRVType::None};
 }
 
 // Extract ArgKind from VCArgumentKind attribute.
