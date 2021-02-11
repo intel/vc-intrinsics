@@ -82,7 +82,7 @@ enum KernelMDOp {
   BarrierCnt    // Barrier count
 };
 
-static MDNode *GetOldStyleKernelMD(Function const &F) {
+inline MDNode *GetOldStyleKernelMD(Function const &F) {
   auto *KernelMD = static_cast<MDNode *>(nullptr);
   auto *KernelMDs = F.getParent()->getNamedMetadata(FunctionMD::GenXKernels);
   if (!KernelMDs)
