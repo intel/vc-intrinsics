@@ -1,3 +1,4 @@
+; XFAIL: llvm13
 ; Test writer translation of implicit argument. Implicit arguments
 ; should not appear in current form after transition from cmc.
 

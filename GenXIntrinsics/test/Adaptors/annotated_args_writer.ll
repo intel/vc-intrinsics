@@ -1,3 +1,4 @@
+; XFAIL: llvm13
 ; Test kernel arguments translation from old style with metadata to
 ; new style with opaque types that SPIRV translator can
 ; understand. Here annotations for OCL runtime are used.

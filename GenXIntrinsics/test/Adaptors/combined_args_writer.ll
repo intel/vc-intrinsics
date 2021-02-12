@@ -1,3 +1,4 @@
+; XFAIL: llvm13
 ; Test combined writer translation: kernel has both annotated explicit
 ; arguments and impicit arguments. Implicit arguments would not show
 ; in normal flow, though they appear in old cmc.

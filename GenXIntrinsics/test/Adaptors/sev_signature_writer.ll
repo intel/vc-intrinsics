@@ -1,3 +1,4 @@
+; XFAIL: llvm13
 ; Test simple signatures tranform
 
 ; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s

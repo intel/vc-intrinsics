@@ -1,3 +1,4 @@
+; XFAIL: llvm13
 ; Test kernel surface argument translation from old style with
 ; metadata to new style with opaque types that SPIRV translator can
 ; understand. This test checks access qualifiers translation.

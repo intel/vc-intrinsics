@@ -1,3 +1,4 @@
+; XFAIL: llvm13
 ; Test reader translation of old-style decorated arguments.
 ; Annotations for these are directly translated from attributes to
 ; kernel metadata without any checks. Required until full transition
