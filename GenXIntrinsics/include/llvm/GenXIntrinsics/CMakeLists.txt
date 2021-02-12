@@ -14,12 +14,18 @@ find_first_existing_vc_file(intrinsics_vc "${GENX_INTRINSICS_MAIN_DIR}")
 
 set(version_inc ${CMAKE_CURRENT_BINARY_DIR}/GenXVersion.inc)
 
+if(LLVM_GENX_INTRINSICS_ROOT_DIR)
+  set(LLVM_GENX_INTRINSICS_REPO_DIR ${LLVM_GENX_INTRINSICS_ROOT_DIR})
+else()
+  set(LLVM_GENX_INTRINSICS_REPO_DIR ${GENX_INTRINSICS_MAIN_DIR})
+endif()
+
 if(${LLVM_VERSION_MAJOR} LESS 9)
   find_file(FOUND_VCS GetSVN.cmake PATHS ${LLVM_CMAKE_DIR} REQUIRED)
   add_custom_command(
     OUTPUT "${version_inc}"
     COMMAND
-    ${CMAKE_COMMAND} "-DSOURCE_DIRS=${GENX_INTRINSICS_MAIN_DIR}"
+    ${CMAKE_COMMAND} "-DSOURCE_DIRS=${LLVM_GENX_INTRINSICS_REPO_DIR}"
                      "-DNAMES=VCI"
                      "-DHEADER_FILE=${version_inc}"
                      -P "${FOUND_VCS}")
@@ -28,7 +34,7 @@ else()
   add_custom_command(
     OUTPUT "${version_inc}"
     COMMAND
-    ${CMAKE_COMMAND} "-DSOURCE_DIR=${GENX_INTRINSICS_MAIN_DIR}"
+    ${CMAKE_COMMAND} "-DSOURCE_DIR=${LLVM_GENX_INTRINSICS_REPO_DIR}"
                      "-DNAME=VCI"
                      "-DHEADER_FILE=${version_inc}"
                      "-DVCS_SCRIPT=${FOUND_VCS}"
