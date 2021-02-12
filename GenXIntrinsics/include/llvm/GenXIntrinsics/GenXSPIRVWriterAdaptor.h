@@ -23,7 +23,7 @@
 ======================= end_copyright_notice ==================================*/
 
 ///
-/// GenXSPIRVWriterAdaptor
+/// GenXSPIRVWriterAdaptor -- legacy PM version
 /// ---------------------------
 /// This pass converts metadata to SPIRV format from whichever used in frontend
 
@@ -31,7 +31,7 @@ namespace llvm {
 class ModulePass;
 class PassRegistry;
 
-void initializeGenXSPIRVWriterAdaptorPass(PassRegistry &);
+void initializeGenXSPIRVWriterAdaptorLegacyPass(PassRegistry &);
 
 // Create spirv writer adaptor pass.
 // RewriteTypes -- whether plain types with decorations should be
