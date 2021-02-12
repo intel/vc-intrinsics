@@ -164,6 +164,7 @@ static Type *getTypeFreeFromSingleElementVector(Type *T) {
 // U*...**...* ---> <1 x U*...*>*...*
 static Type *getTypeWithSingleElementVector(Type *T, size_t InnerPointers = 0) {
   if (auto *VecTy = dyn_cast<VectorType>(T)) {
+    (void) VecTy;
     assert(InnerPointers == 0);
     assert(VCINTR::VectorType::getNumElements(VecTy) == 1 &&
            "Cannot put vector type inside another vector!");
