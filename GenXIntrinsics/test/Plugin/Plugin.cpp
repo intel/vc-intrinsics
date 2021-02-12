@@ -37,7 +37,7 @@ static int initializePasses() {
 
   initializeCMSimdCFLoweringPass(PR);
   initializeGenXSPIRVReaderAdaptorPass(PR);
-  initializeGenXSPIRVWriterAdaptorPass(PR);
+  initializeGenXSPIRVWriterAdaptorLegacyPass(PR);
 
   return 0;
 }

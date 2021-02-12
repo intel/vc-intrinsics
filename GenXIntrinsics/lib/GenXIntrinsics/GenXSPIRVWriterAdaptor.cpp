@@ -52,34 +52,22 @@ using namespace genx;
 
 namespace {
 
-class GenXSPIRVWriterAdaptor final : public ModulePass {
-public:
-  static char ID;
-
+class GenXSPIRVWriterAdaptorImpl final {
 private:
   bool RewriteTypes = true;
   bool RewriteSingleElementVectors = true;
 
 public:
-  explicit GenXSPIRVWriterAdaptor() : ModulePass(ID) {
-    overrideOptionsWithEnv();
-  }
-  explicit GenXSPIRVWriterAdaptor(bool RewriteTypes,
-                                  bool RewriteSingleElementVectors)
-      : ModulePass(ID), RewriteTypes(RewriteTypes),
-        RewriteSingleElementVectors(RewriteSingleElementVectors) {
+  explicit GenXSPIRVWriterAdaptorImpl(bool RewriteTypesIn,
+                                      bool RewriteSingleElementVectorsIn)
+      : RewriteTypes(RewriteTypesIn),
+        RewriteSingleElementVectors(RewriteSingleElementVectorsIn) {
     overrideOptionsWithEnv();
   }
 
-  llvm::StringRef getPassName() const override {
-    return "GenX SPIRVWriter Adaptor";
-  }
-  void getAnalysisUsage(AnalysisUsage &AU) const override;
-  bool runOnModule(Module &M) override;
+  bool run(Module &M);
 
 private:
-  bool runOnFunction(Function &F);
-
   // This function overrides options with environment variables
   // It is used for debugging.
   void overrideOptionsWithEnv() {
@@ -87,26 +75,11 @@ private:
     if (RewriteSEVOpt)
       RewriteSingleElementVectors = RewriteSEVOpt.getValue() == "1";
   }
+
+  bool runOnFunction(Function &F);
 };
 
 } // namespace
-
-char GenXSPIRVWriterAdaptor::ID = 0;
-
-INITIALIZE_PASS_BEGIN(GenXSPIRVWriterAdaptor, "GenXSPIRVWriterAdaptor",
-                      "GenXSPIRVWriterAdaptor", false, false)
-INITIALIZE_PASS_END(GenXSPIRVWriterAdaptor, "GenXSPIRVWriterAdaptor",
-                    "GenXSPIRVWriterAdaptor", false, false)
-
-ModulePass *
-llvm::createGenXSPIRVWriterAdaptorPass(bool RewriteTypes,
-                                       bool RewriteSingleElementVectors) {
-  return new GenXSPIRVWriterAdaptor(RewriteTypes, RewriteSingleElementVectors);
-}
-
-void GenXSPIRVWriterAdaptor::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.setPreservesCFG();
-}
 
 // Get some pointer to global address space.
 static Type *getGlobalPtrType(LLVMContext &Ctx) {
@@ -469,7 +442,7 @@ static void rewriteKernelsTypes(Module &M) {
       rewriteKernelArguments(*F);
 }
 
-bool GenXSPIRVWriterAdaptor::runOnModule(Module &M) {
+bool GenXSPIRVWriterAdaptorImpl::run(Module &M) {
   auto TargetTriple = StringRef(M.getTargetTriple());
   if (TargetTriple.startswith("genx")) {
     if (TargetTriple.startswith("genx32"))
@@ -505,7 +478,7 @@ bool GenXSPIRVWriterAdaptor::runOnModule(Module &M) {
   return true;
 }
 
-bool GenXSPIRVWriterAdaptor::runOnFunction(Function &F) {
+bool GenXSPIRVWriterAdaptorImpl::runOnFunction(Function &F) {
   if (F.isIntrinsic() && !GenXIntrinsic::isGenXIntrinsic(&F))
     return true;
   F.addFnAttr(VCFunctionMD::VCFunction);
@@ -624,4 +597,52 @@ bool GenXSPIRVWriterAdaptor::runOnFunction(Function &F) {
   }
 
   return true;
+}
+
+// Legacy PM support.
+namespace {
+class GenXSPIRVWriterAdaptorLegacy final : public ModulePass {
+public:
+  static char ID;
+
+  bool RewriteTypes = true;
+  bool RewriteSingleElementVectors = true;
+
+public:
+  explicit GenXSPIRVWriterAdaptorLegacy() : ModulePass(ID) {}
+  explicit GenXSPIRVWriterAdaptorLegacy(bool RewriteTypesIn,
+                                        bool RewriteSingleElementVectorsIn)
+      : ModulePass(ID), RewriteTypes(RewriteTypesIn),
+        RewriteSingleElementVectors(RewriteSingleElementVectorsIn) {}
+
+  llvm::StringRef getPassName() const override {
+    return "GenX SPIRVWriter Adaptor";
+  }
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  bool runOnModule(Module &M) override;
+};
+
+} // namespace
+
+char GenXSPIRVWriterAdaptorLegacy::ID = 0;
+
+INITIALIZE_PASS_BEGIN(GenXSPIRVWriterAdaptorLegacy, "GenXSPIRVWriterAdaptor",
+                      "GenXSPIRVWriterAdaptor", false, false)
+INITIALIZE_PASS_END(GenXSPIRVWriterAdaptorLegacy, "GenXSPIRVWriterAdaptor",
+                    "GenXSPIRVWriterAdaptor", false, false)
+
+ModulePass *
+llvm::createGenXSPIRVWriterAdaptorPass(bool RewriteTypes,
+                                       bool RewriteSingleElementVectors) {
+  return new GenXSPIRVWriterAdaptorLegacy(RewriteTypes,
+                                          RewriteSingleElementVectors);
+}
+
+void GenXSPIRVWriterAdaptorLegacy::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesCFG();
+}
+
+bool GenXSPIRVWriterAdaptorLegacy::runOnModule(Module &M) {
+  GenXSPIRVWriterAdaptorImpl Impl(RewriteTypes, RewriteSingleElementVectors);
+  return Impl.run(M);
 }
