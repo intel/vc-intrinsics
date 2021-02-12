@@ -1,3 +1,4 @@
+; XFAIL: llvm13
 ; Test that reader treats only global pointer as svmptr type
 ; and ignores other address spaces.
 

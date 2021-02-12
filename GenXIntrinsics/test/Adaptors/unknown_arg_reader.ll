@@ -1,3 +1,4 @@
+; XFAIL: llvm13
 ; Test reader translation of implicit argument with argument kind
 ; decoration.
 

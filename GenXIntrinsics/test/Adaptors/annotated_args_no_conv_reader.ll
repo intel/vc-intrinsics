@@ -1,3 +1,4 @@
+; XFAIL: llvm13
 ; Test that reader correctly restores metadata and does
 ; not change other things if there is no address conversion
 ; but correct SPIRV types in signature.

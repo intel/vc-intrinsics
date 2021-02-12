@@ -1,3 +1,4 @@
+; XFAIL: llvm13
 ; Test that reader ignores signature rewriting for kernels
 ; that are not VCFunction.
 

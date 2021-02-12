@@ -1,3 +1,4 @@
+; XFAIL: llvm13
 ; RUN: opt -S -cmsimdcflowering < %s | FileCheck %s
 
 ; CHECK: @EM = internal global <32 x i1> 

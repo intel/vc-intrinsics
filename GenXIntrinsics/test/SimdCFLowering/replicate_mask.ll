@@ -1,3 +1,4 @@
+; XFAIL: llvm13
 ; RUN: opt -S -cmsimdcflowering < %s | FileCheck %s
 
 @g1 = internal global <64 x i32> undef
