@@ -599,7 +599,24 @@ bool GenXSPIRVWriterAdaptorImpl::runOnFunction(Function &F) {
   return true;
 }
 
-// Legacy PM support.
+//-----------------------------------------------------------------------------
+// New PM support
+//-----------------------------------------------------------------------------
+PreservedAnalyses llvm::GenXSPIRVWriterAdaptor::run(Module &M,
+                                                    ModuleAnalysisManager &) {
+  GenXSPIRVWriterAdaptorImpl Impl(RewriteTypes, RewriteSingleElementVectors);
+
+  if (!Impl.run(M))
+    return PreservedAnalyses::all();
+
+  PreservedAnalyses PA;
+  PA.preserveSet<CFGAnalyses>();
+  return PA;
+}
+
+//-----------------------------------------------------------------------------
+// Legacy PM support
+//-----------------------------------------------------------------------------
 namespace {
 class GenXSPIRVWriterAdaptorLegacy final : public ModulePass {
 public:
@@ -616,7 +633,7 @@ public:
         RewriteSingleElementVectors(RewriteSingleElementVectorsIn) {}
 
   llvm::StringRef getPassName() const override {
-    return "GenX SPIRVWriter Adaptor";
+    return GenXSPIRVWriterAdaptor::getArgString();
   }
   void getAnalysisUsage(AnalysisUsage &AU) const override;
   bool runOnModule(Module &M) override;
@@ -626,10 +643,9 @@ public:
 
 char GenXSPIRVWriterAdaptorLegacy::ID = 0;
 
-INITIALIZE_PASS_BEGIN(GenXSPIRVWriterAdaptorLegacy, "GenXSPIRVWriterAdaptor",
-                      "GenXSPIRVWriterAdaptor", false, false)
-INITIALIZE_PASS_END(GenXSPIRVWriterAdaptorLegacy, "GenXSPIRVWriterAdaptor",
-                    "GenXSPIRVWriterAdaptor", false, false)
+INITIALIZE_PASS(GenXSPIRVWriterAdaptorLegacy,
+                GenXSPIRVWriterAdaptor::getArgString(),
+                GenXSPIRVWriterAdaptor::getArgString(), false, false)
 
 ModulePass *
 llvm::createGenXSPIRVWriterAdaptorPass(bool RewriteTypes,

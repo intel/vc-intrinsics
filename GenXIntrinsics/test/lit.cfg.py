@@ -37,7 +37,19 @@ config.substitutions.append(('%PATH%', config.environment['PATH']))
 tool_dirs = [config.llvm_tools_dir]
 
 # Add extra args for opt to remove boilerplate from tests.
-args_load_plugin = ['-load', config.vc_intrinsics_plugin]
-tools = [ToolSubst('opt', extra_args=args_load_plugin)]
+opt_extra_args = ['-load', config.vc_intrinsics_plugin]
+
+# Add option for new pass manager plugins. Extension instead of
+# replacement is needed to hack option parsing mechanism. Argument of
+# '-load' is processed during initial option parsing and all passes
+# from plugin are registed in legacy PM. This registration allows to
+# add passes to new PM via command line options in the same way as
+# with old PM. Otherwise, -passes=<pass> option will be used for new PM and
+# -<pass> for old PM. Additionally, LLVM will load plugin only once
+# because it permanently loads libraries with caching behavior.
+if int(config.llvm_version_major) >= 13:
+    opt_extra_args.extend(['-load-pass-plugin', config.vc_intrinsics_plugin])
+
+tools = [ToolSubst('opt', extra_args=opt_extra_args)]
 
 llvm_config.add_tool_substitutions(tools, tool_dirs)

@@ -1,4 +1,3 @@
-; XFAIL: llvm13
 ; Test empty kernel metadata translation: old -> new.
 
 ; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
