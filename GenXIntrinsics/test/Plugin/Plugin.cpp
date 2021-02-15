@@ -28,9 +28,48 @@
 #include "llvm/GenXIntrinsics/GenXSPIRVWriterAdaptor.h"
 
 #include "llvm/PassRegistry.h"
+#include "llvm/Passes/PassBuilder.h"
+#include "llvm/Passes/PassPlugin.h"
 
 using namespace llvm;
 
+//-----------------------------------------------------------------------------
+// New PM support
+//-----------------------------------------------------------------------------
+// Add callback to create plugin pass to pass builder.
+// PassArgs - arguments for pass construction, passed by value to avoid
+// dangling references in callbacks.
+template <typename PassT, typename... ArgsT>
+static void registerModulePass(PassBuilder &PB, ArgsT... PassArgs) {
+  auto Reg = [PassArgs...](StringRef Name, ModulePassManager &MPM,
+                           ArrayRef<PassBuilder::PipelineElement>) {
+    if (Name != PassT::getArgString())
+      return false;
+    MPM.addPass(PassT{PassArgs...});
+    return true;
+  };
+  PB.registerPipelineParsingCallback(Reg);
+}
+
+static void registerPasses(PassBuilder &PB) {
+  registerModulePass<GenXSPIRVWriterAdaptor>(
+      PB, /*RewriteTypes=*/true, /*RewriteSingleElementVectors=*/true);
+}
+
+static PassPluginLibraryInfo getIntrinsicsPluginInfo() {
+  return {LLVM_PLUGIN_API_VERSION, "VC intrinsics plugin", "v1",
+          registerPasses};
+}
+
+// Entry point for plugin in new PM infrastructure.
+extern "C" ::llvm::PassPluginLibraryInfo LLVM_ATTRIBUTE_WEAK
+llvmGetPassPluginInfo() {
+  return getIntrinsicsPluginInfo();
+}
+
+//-----------------------------------------------------------------------------
+// Legacy PM support
+//-----------------------------------------------------------------------------
 // Register intrinsics passes on dynamic loading of plugin library.
 static int initializePasses() {
   PassRegistry &PR = *PassRegistry::getPassRegistry();

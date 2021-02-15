@@ -1,4 +1,3 @@
-; XFAIL: llvm13
 ; Test messy annnotations translation in writer. First valid
 ; annotation should be matched.
 

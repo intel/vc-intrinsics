@@ -23,14 +23,39 @@
 ======================= end_copyright_notice ==================================*/
 
 ///
-/// GenXSPIRVWriterAdaptor -- legacy PM version
+/// GenXSPIRVWriterAdaptor
 /// ---------------------------
 /// This pass converts metadata to SPIRV format from whichever used in frontend
+
+#include "llvm/IR/PassManager.h"
 
 namespace llvm {
 class ModulePass;
 class PassRegistry;
 
+//-----------------------------------------------------------------------------
+// New PM support
+//-----------------------------------------------------------------------------
+// Writer adaptor for new PM.
+class GenXSPIRVWriterAdaptor final
+    : public PassInfoMixin<GenXSPIRVWriterAdaptor> {
+  bool RewriteTypes = true;
+  bool RewriteSingleElementVectors = true;
+
+public:
+  GenXSPIRVWriterAdaptor(bool RewriteTypesIn,
+                         bool RewriteSingleElementVectorsIn)
+      : RewriteTypes(RewriteTypesIn),
+        RewriteSingleElementVectors(RewriteSingleElementVectorsIn) {}
+
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
+
+  static StringRef getArgString() { return "GenXSPIRVWriterAdaptor"; }
+};
+
+//-----------------------------------------------------------------------------
+// Legacy PM support
+//-----------------------------------------------------------------------------
 void initializeGenXSPIRVWriterAdaptorLegacyPass(PassRegistry &);
 
 // Create spirv writer adaptor pass.

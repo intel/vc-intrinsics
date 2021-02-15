@@ -1,4 +1,3 @@
-; XFAIL: llvm13
 ; Test that writer does not changes signature if correct
 ; types are already used. Just drop all annotations.
 
