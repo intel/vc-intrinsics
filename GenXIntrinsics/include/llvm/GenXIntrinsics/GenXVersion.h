@@ -41,7 +41,7 @@ namespace GenXIntrinsic {
 std::string getVCIntrinsicsRevision();
 std::string getVCIntrinsicsRepository();
 
-}; // namespace GenXIntrinsic
-}; // namespace llvm
+} // namespace GenXIntrinsic
+} // namespace llvm
 
 #endif
