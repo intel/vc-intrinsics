@@ -34,6 +34,12 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 else(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   set(BUILD_EXTERNAL NO)
 
+  # LLVM_CMAKE_DIR is not set for non-standalone builds. Use LLVM_CMAKE_PATH
+  # instead. (see clang/CMakeLists.txt)
+  if (NOT LLVM_CMAKE_DIR)
+    set(LLVM_CMAKE_DIR ${LLVM_CMAKE_PATH})
+  endif()
+
   # we require include_directories because other components may include intrinsics headers.
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/GenXIntrinsics/include)
   include_directories(${CMAKE_CURRENT_BINARY_DIR}/GenXIntrinsics/include)
