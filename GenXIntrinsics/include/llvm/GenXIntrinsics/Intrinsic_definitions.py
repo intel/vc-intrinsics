@@ -1498,6 +1498,31 @@ Imported_Intrinsics = \
 ### otherwise looks dead and also to prevent any kind of code motion optimisation
     "dummy_mov" : ["void",["short"],"None"],
 
+### The following 2 predef.reg intrinsics aren't translated directly to read/writes of the reg,
+### instead they're baled together with rd/wrregions and in fact indicate that those rdr/wrrs
+### should use predefined VISA registers as their sources/dests
+###
+### ``llvm.genx.read.predef.reg.<return type>`` : read predefined vISA reg
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0: ID of the reg (1 dword)
+### * arg1: value that could affect the reg being read (e.g. stackcall), may be undef
+###
+### * Return value:  value read
+###
+###
+    "read_predef_reg" : ["any",["int", "any"],"ReadMem"],
+
+### ``llvm.write.predef.reg.<return type>.<input_type>`` : write value to predefined vISA reg
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0: ID of the reg (1 dword)
+### * arg1: data to write (1 dword)
+###
+### * Return value:  value written
+###
+    "write_predef_reg" : ["any",["int", "any"],"WriteMem"],
+
 ## --------------------------
 ### Shared function intrinsics
 ### --------------------------

@@ -379,6 +379,43 @@ static inline bool isVLoadStore(const Value *V) {
   return isVLoadStore(getGenXIntrinsicID(V));
 }
 
+static inline bool isReadPredefReg(unsigned IntrinID) {
+  return IntrinID == GenXIntrinsic::genx_read_predef_reg;
+}
+
+static inline bool isReadPredefReg(const Function *F) {
+  return isReadPredefReg(getGenXIntrinsicID(F));
+}
+
+static inline bool isReadPredefReg(const Value *V) {
+  return isReadPredefReg(getGenXIntrinsicID(V));
+}
+
+static inline bool isWritePredefReg(unsigned IntrinID) {
+  return IntrinID == GenXIntrinsic::genx_write_predef_reg;
+}
+
+static inline bool isWritePredefReg(const Function *F) {
+  return isWritePredefReg(getGenXIntrinsicID(F));
+}
+
+static inline bool isWritePredefReg(const Value *V) {
+  return isWritePredefReg(getGenXIntrinsicID(V));
+}
+
+static inline bool isReadWritePredefReg(unsigned IntrinID) {
+  return isWritePredefReg(IntrinID) || isReadPredefReg(IntrinID);
+}
+
+static inline bool isReadWritePredefReg(const Value *V) {
+  return isWritePredefReg(getGenXIntrinsicID(V)) ||
+         isReadPredefReg(getGenXIntrinsicID(V));
+}
+
+static inline bool isReadWritePredefReg(const Function *F) {
+  return isWritePredefReg(getGenXIntrinsicID(F)) ||
+         isReadPredefReg(getGenXIntrinsicID(F));
+}
 
 } // namespace GenXIntrinsic
 
