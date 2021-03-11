@@ -86,7 +86,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: i64 address ready to be consumed by an indirect call
 ###
-    "faddr" : ["long", ["any"], "None"],
+    "faddr" : ["long", ["any"], "NoMem"],
 
 ## --------------------------------
 ### Region/element access intrinsics
