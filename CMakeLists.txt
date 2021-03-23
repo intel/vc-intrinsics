@@ -59,5 +59,3 @@ endif()
 
 
 add_subdirectory(GenXIntrinsics)
-
-
