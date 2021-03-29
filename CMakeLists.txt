@@ -41,10 +41,6 @@ else(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   if (NOT LLVM_CMAKE_DIR)
     set(LLVM_CMAKE_DIR ${LLVM_CMAKE_PATH})
   endif()
-
-  # we require include_directories because other components may include intrinsics headers.
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/GenXIntrinsics/include)
-  include_directories(${CMAKE_CURRENT_BINARY_DIR}/GenXIntrinsics/include)
 endif(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
 include(FindPythonInterp)
