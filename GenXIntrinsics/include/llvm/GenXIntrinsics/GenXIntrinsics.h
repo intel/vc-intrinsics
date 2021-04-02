@@ -271,7 +271,14 @@ static inline Function *getAnyDeclaration(Module *M, unsigned id,
   }
 }
 
-
+/// GenXIntrinsic::getGenXMulIID(S1, S2) - returns GenXIntrinsic::ID for
+/// the enx_XXmul opertation, where XX is is defined by the input arguments
+/// which represent signs of the operands
+static inline GenXIntrinsic::ID getGenXMulIID(bool LHSign, bool RHSign) {
+  return LHSign
+             ? (RHSign ? GenXIntrinsic::genx_ssmul : GenXIntrinsic::genx_sumul)
+             : (RHSign ? GenXIntrinsic::genx_usmul : GenXIntrinsic::genx_uumul);
+}
 
 static inline bool isRdRegion(unsigned IntrinID) {
   switch (IntrinID) {
