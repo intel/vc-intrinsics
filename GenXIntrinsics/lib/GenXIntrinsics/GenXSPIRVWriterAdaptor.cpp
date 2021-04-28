@@ -205,6 +205,7 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
   NewF->copyAttributesFrom(&F);
   NewF->takeName(&F);
   NewF->copyMetadata(&F, 0);
+  NewF->setComdat(F.getComdat());
 
   // Remove no more needed attributes.
   for (int i = 0, e = Descs.size(); i != e; ++i) {
