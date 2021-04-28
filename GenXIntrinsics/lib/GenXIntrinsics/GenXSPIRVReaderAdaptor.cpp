@@ -320,6 +320,7 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
   NewF->copyAttributesFrom(&F);
   NewF->takeName(&F);
   NewF->copyMetadata(&F, 0);
+  NewF->setComdat(F.getComdat());
 
   // Set appropriate argument attributes related to kind and desc.
   std::string ArgDesc;
