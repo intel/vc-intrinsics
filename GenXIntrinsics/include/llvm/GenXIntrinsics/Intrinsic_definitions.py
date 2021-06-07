@@ -43,7 +43,7 @@
 #IntrinsicsProperties = ["None", "NoMem", "ReadArgMem", "ReadMem", "ReadWriteArgMem", "NoReturn", "NoDuplicate", "Convergent"]
 #IntrinsicsProperties may be specified as a comma separated list(e.g., "Convergent,NoMem")
 #
-# EX. "blah": [{return_type}, [arg1_type, arg2_type.....], Property]
+# EX. "blah": {"result" : {return_type}, "arguments" : [arg1_type, arg2_type.....], "attributes" : Property }
 #
 # The "any" type can be followed by a default type if a type is not explicitly specified : Ex. "any:int"
 #
@@ -58,8 +58,8 @@ Imported_Intrinsics = \
 ##--------------------------------------------------------------------
 ## Start and end markers of the genx intrinsic enum values. This relies on
 ## tablegen outputting the intrinsics in sorted by name order.
-    "aaaabegin" : ["anyvector",[],"None"],
-    "zzzzend" : ["anyvector",[],"None"],
+    "aaaabegin" : { "result" : "anyvector", "arguments" : [], "attributes" : "None"},
+    "zzzzend" : { "result" : "anyvector", "arguments" : [], "attributes" : "None"},
 
 ### ``llvm.genx.alloca.<any type>`` : CMC internal, no VISA
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -70,7 +70,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: offset in stack surface
 ###
-    "alloca" : ["anyint",["any"],"None"],
+    "alloca" : { "result" : "anyint", "arguments" : ["any"], "attributes" : "None"},
 
 ### ``llvm.genx.faddr.<any type>`` : take an address of the function provided
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -82,7 +82,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: i64 address ready to be consumed by an indirect call
 ###
-    "faddr" : ["long", ["any"], "NoMem"],
+    "faddr" : { "result" : "long", "arguments" :  ["any"], "attributes" :  "NoMem"},
 
 ## --------------------------------
 ### Region/element access intrinsics
@@ -128,8 +128,8 @@ Imported_Intrinsics = \
 ### cross a multiple of parent width boundary. This is used by the backend
 ### to determine whether the region can be collapsed into another region.
 ###
-    "rdregioni" : ["anyint",["anyvector","int","int","int","anyint","int"],"NoMem"],
-    "rdregionf" : ["anyfloat",["anyvector","int","int","int","anyint","int"],"NoMem"],
+    "rdregioni" : { "result" : "anyint", "arguments" : ["anyvector","int","int","int","anyint","int"], "attributes" : "NoMem"},
+    "rdregionf" : { "result" : "anyfloat", "arguments" : ["anyvector","int","int","int","anyint","int"], "attributes" : "NoMem"},
 
 ### ``llvm.genx.wrregion*`` : write a region, direct or single-indirect
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -185,8 +185,8 @@ Imported_Intrinsics = \
 ### cross a multiple of parent width boundary. This is used by the backend
 ### to determine whether the region can be collapsed into another region.
 ###
-    "wrregioni" : ["anyvector",[0,"anyint","int","int","int","anyint","int","anyint"],"NoMem"],
-    "wrregionf" : ["anyvector",[0,"anyfloat","int","int","int","anyint","int","anyint"],"NoMem"],
+    "wrregioni" : { "result" : "anyvector", "arguments" : [0,"anyint","int","int","int","anyint","int","anyint"], "attributes" : "NoMem"},
+    "wrregionf" : { "result" : "anyvector", "arguments" : [0,"anyfloat","int","int","int","anyint","int","anyint"], "attributes" : "NoMem"},
 
 ### ``llvm.genx.vstore.<vector type>.<ptr type>`` : store a vector value into memory
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -199,7 +199,7 @@ Imported_Intrinsics = \
 ### * arg0: the vector to read from
 ### * arg1: the memory to be accessed
 ###
-    "vstore" : ["void",["anyvector","anyptr"],"None"],
+    "vstore" : { "result" : "void", "arguments" : ["anyvector","anyptr"], "attributes" : "None"},
 
 ### ``llvm.genx.vload.<return type>.<ptr type>`` : load a vector value from memory
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -212,7 +212,7 @@ Imported_Intrinsics = \
 ### * arg0: the memory to be accessed (overloaded)
 ### * Return value: the vector value read
 ###
-    "vload" : ["anyvector",["anyptr"],"None"],
+    "vload" : { "result" : "anyvector", "arguments" : ["anyptr"], "attributes" : "None"},
 
 ## ------------------------------
 ### ALU type conversion intrinsics
@@ -226,7 +226,7 @@ Imported_Intrinsics = \
 ### * Return value: converted value, any scalar or vector integer type
 ###               (treated as signed) with same vector width as arg0
 ###
-    "fptosi_sat" : ["anyint",["anyfloat"],"NoMem"],
+    "fptosi_sat" : { "result" : "anyint", "arguments" : ["anyfloat"], "attributes" : "NoMem"},
 
 ### ``llvm.genx.fptoui.sat.<return type>.<any float>`` : convert floating point to unsigned integer with saturate
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -236,7 +236,7 @@ Imported_Intrinsics = \
 ### * Return value: converted value, any scalar or vector integer type
 ###               (treated as unsigned) with same vector width as arg0
 ###
-    "fptoui_sat" : ["anyint",["anyfloat"],"NoMem"],
+    "fptoui_sat" : { "result" : "anyint", "arguments" : ["anyfloat"], "attributes" : "NoMem"},
 
 ### ``llvm.genx.sat.<return type>.<return type>`` : floating point saturate
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -254,7 +254,7 @@ Imported_Intrinsics = \
 ### Instead, any integer operation that supports saturation needs an
 ### intrinsic for the saturating variant.
 ###
-    "sat" : ["anyfloat",[0],"NoMem"],
+    "sat" : { "result" : "anyfloat", "arguments" : [0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.*trunc.sat.<return type>.<any int>`` : integer truncation with saturation
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -268,10 +268,10 @@ Imported_Intrinsics = \
 ### * Return value: truncated value, any scalar or vector integer type
 ###               with same vector width as arg0
 ###
-    "sstrunc_sat" : ["anyint",["anyint"],"NoMem"],
-    "sutrunc_sat" : ["anyint",["anyint"],"NoMem"],
-    "ustrunc_sat" : ["anyint",["anyint"],"NoMem"],
-    "uutrunc_sat" : ["anyint",["anyint"],"NoMem"],
+    "sstrunc_sat" : { "result" : "anyint", "arguments" : ["anyint"], "attributes" : "NoMem"},
+    "sutrunc_sat" : { "result" : "anyint", "arguments" : ["anyint"], "attributes" : "NoMem"},
+    "ustrunc_sat" : { "result" : "anyint", "arguments" : ["anyint"], "attributes" : "NoMem"},
+    "uutrunc_sat" : { "result" : "anyint", "arguments" : ["anyint"], "attributes" : "NoMem"},
 
 ## -------------------
 ### Modifier intrinsics
@@ -289,8 +289,8 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "absf" : ["anyfloat",[0],"NoMem"],
-    "absi" : ["anyint",[0],"NoMem"],
+    "absf" : { "result" : "anyfloat", "arguments" : [0], "attributes" : "NoMem"},
+    "absi" : { "result" : "anyint", "arguments" : [0], "attributes" : "NoMem"},
 
 ## ----------------------------
 ### Boolean reduction intrinsics
@@ -303,7 +303,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: i1 result
 ###
-    "all" : ["bool",["anyint"],"NoMem"],
+    "all" : { "result" : "bool", "arguments" : ["anyint"], "attributes" : "NoMem"},
 
 ### ``llvm.genx.any.<any int>`` : true if any input element is true
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -312,7 +312,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: i1 result
 ###
-    "any" : ["bool",["anyint"],"NoMem"],
+    "any" : { "result" : "bool", "arguments" : ["anyint"], "attributes" : "NoMem"},
 
 ## ----------------------------
 ### SIMD control flow intrinsics
@@ -492,7 +492,7 @@ Imported_Intrinsics = \
 ### Note that SimdCond has the same sense as in the Gen goto instruction, but
 ### the opposite sense to that in a vISA forward goto instruction.
 ###
-    "simdcf_goto" : [["anyvector","anyvector","bool"],[0,1,1],"NoMem"],
+    "simdcf_goto" : { "result" : ["anyvector","anyvector","bool"], "arguments" : [0,1,1], "attributes" : "NoMem"},
 
 ### ``llvm.genx.simdcf.join.<return type>.<vector type>`` : join instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -535,14 +535,14 @@ Imported_Intrinsics = \
 ### still disabled, then BranchCond is true and the conditional branch in which it
 ### is used branches to the next join point in sequence.
 ###
-    "simdcf_join" : [["anyvector","bool"],[0,"anyvector"],"None"],
+    "simdcf_join" : { "result" : ["anyvector","bool"], "arguments" : [0,"anyvector"], "attributes" : "None"},
 
 ### ``llvm.genx.simdcf.savemask.<any vector>`` :
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: OldEM (old execution mask): v32i1 (overloaded)
 ### * ret:  temp i32 for saving the oldEM
-    "simdcf_savemask" : ["int",["anyvector"],"WriteMem,SideEffects"],
+    "simdcf_savemask" : { "result" : "int", "arguments" : ["anyvector"], "attributes" : "WriteMem,SideEffects"},
 
 ### ``llvm.genx.simdcf.unmask.<return type>`` :
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -550,7 +550,7 @@ Imported_Intrinsics = \
 ### * arg0: temp i32 from savemask
 ### * arg1: i32 constant, should be all-one
 ### * ret:  NewEM (updated execution mask, all-one): v32i1
-    "simdcf_unmask" : ["anyvector",["int","int"],"WriteMem,SideEffects"],
+    "simdcf_unmask" : { "result" : "anyvector", "arguments" : ["int","int"], "attributes" : "WriteMem,SideEffects"},
 
 ### ``llvm.genx.simdcf.remask.<return type>`` :
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -560,7 +560,7 @@ Imported_Intrinsics = \
 ###
 ### Return value: NewEM (updated execution mask): v32i1
 ###
-    "simdcf_remask" : ["anyvector",[0,"int"],"WriteMem,SideEffects"],
+    "simdcf_remask" : { "result" : "anyvector", "arguments" : [0,"int"], "attributes" : "WriteMem,SideEffects"},
 
 ### ``llvm.genx.simdcf.get.em`` :
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -578,7 +578,7 @@ Imported_Intrinsics = \
 ### EM is different in different locations even when the
 ### dominance of DF is not corrupted.
 ###
-    "simdcf_get_em" : ["anyvector",[0],"WriteMem,SideEffects"],
+    "simdcf_get_em" : { "result" : "anyvector", "arguments" : [0], "attributes" : "WriteMem,SideEffects"},
 
 ### --------------
 ### ALU intrinsics
@@ -607,10 +607,10 @@ Imported_Intrinsics = \
 ### For an fp add, use the LLVM IR FAdd instruction, followed by
 ### llvm.genx.sat if saturation is required.
 ###
-    "ssadd_sat" : ["anyint",["anyint",1],"NoMem"],
-    "suadd_sat" : ["anyint",["anyint",1],"NoMem"],
-    "usadd_sat" : ["anyint",["anyint",1],"NoMem"],
-    "uuadd_sat" : ["anyint",["anyint",1],"NoMem"],
+    "ssadd_sat" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "suadd_sat" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "usadd_sat" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "uuadd_sat" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
 
 ### asr
 ### ^^^
@@ -632,10 +632,10 @@ Imported_Intrinsics = \
 ### * Return value: result, any scalar/vector integer type (not i64)
 ###               with same vector width
 ###
-    "ssavg" : ["anyint",["anyint",1],"NoMem"],
-    "suavg" : ["anyint",["anyint",1],"NoMem"],
-    "usavg" : ["anyint",["anyint",1],"NoMem"],
-    "uuavg" : ["anyint",["anyint",1],"NoMem"],
+    "ssavg" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "suavg" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "usavg" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "uuavg" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
 
 ### ``llvm.genx.*avg.sat.<return type>.<any int>`` : integer averaging with saturation
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -650,10 +650,10 @@ Imported_Intrinsics = \
 ### * Return value: result, any scalar/vector integer type (not i64)
 ###               with same vector width
 ###
-    "ssavg_sat" : ["anyint",["anyint",1],"NoMem"],
-    "suavg_sat" : ["anyint",["anyint",1],"NoMem"],
-    "usavg_sat" : ["anyint",["anyint",1],"NoMem"],
-    "uuavg_sat" : ["anyint",["anyint",1],"NoMem"],
+    "ssavg_sat" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "suavg_sat" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "usavg_sat" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "uuavg_sat" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
 
 ### ``llvm.genx.*bfe.<return type>`` : bitfield extract
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -666,8 +666,8 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type as arg0
 ###
-    "sbfe" : ["anyint",[0,0,0],"NoMem"],
-    "ubfe" : ["anyint",[0,0,0],"NoMem"],
+    "sbfe" : { "result" : "anyint", "arguments" : [0,0,0], "attributes" : "NoMem"},
+    "ubfe" : { "result" : "anyint", "arguments" : [0,0,0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.bfi.<return type>`` : bitfield insert
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -679,7 +679,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type as arg0
 ###
-    "bfi" : ["anyint",[0,0,0,0],"NoMem"],
+    "bfi" : { "result" : "anyint", "arguments" : [0,0,0,0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.bfrev.<return type>`` : reverse bits
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -688,7 +688,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type as arg0
 ###
-    "bfrev" : ["anyint",[0],"NoMem"],
+    "bfrev" : { "result" : "anyint", "arguments" : [0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.cbit.<return type>.<any int>`` : count set bits
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -697,7 +697,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, int32 of same width as arg0
 ###
-    "cbit" : ["anyint",["anyint"],"NoMem"],
+    "cbit" : { "result" : "anyint", "arguments" : ["anyint"], "attributes" : "NoMem"},
 
 ### cmp
 ### ^^^
@@ -712,7 +712,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "cos" : ["anyfloat",[0],"NoMem"],
+    "cos" : { "result" : "anyfloat", "arguments" : [0], "attributes" : "NoMem"},
 
 ### div
 ### ^^^
@@ -728,7 +728,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "ieee_div" : ["anyfloat",[0,0],"NoMem"],
+    "ieee_div" : { "result" : "anyfloat", "arguments" : [0,0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.dp2.<return type>`` : dp2 instruction (dot product on groups of 4 elements)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -738,7 +738,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "dp2" : ["anyfloat",[0,0],"NoMem"],
+    "dp2" : { "result" : "anyfloat", "arguments" : [0,0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.dp3.<return type>`` : dp3 instruction (dot product on groups of 3 elements)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -748,7 +748,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "dp3" : ["anyfloat",[0,0],"NoMem"],
+    "dp3" : { "result" : "anyfloat", "arguments" : [0,0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.dp4.<return type>`` : dp4 instruction (dot product on groups of 4 elements)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -758,7 +758,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "dp4" : ["anyfloat",[0,0],"NoMem"],
+    "dp4" : { "result" : "anyfloat", "arguments" : [0,0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.dph.<return type>`` : dph instruction (dot product homogenous)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -768,7 +768,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "dph" : ["anyfloat",[0,0],"NoMem"],
+    "dph" : { "result" : "anyfloat", "arguments" : [0,0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.exp.<return type>`` : base 2 exponent
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -777,7 +777,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "exp" : ["anyfloat",[0],"NoMem"],
+    "exp" : { "result" : "anyfloat", "arguments" : [0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.*fbh.<return type>`` : find bit high
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -788,8 +788,8 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "sfbh" : ["anyint",[0],"NoMem"],
-    "ufbh" : ["anyint",[0],"NoMem"],
+    "sfbh" : { "result" : "anyint", "arguments" : [0], "attributes" : "NoMem"},
+    "ufbh" : { "result" : "anyint", "arguments" : [0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.fbl.<return type>`` : find bit low
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -798,7 +798,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "fbl" : ["anyint",[0],"NoMem"],
+    "fbl" : { "result" : "anyint", "arguments" : [0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.frc.<return type>`` : fractional part
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -807,7 +807,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "frc" : ["anyfloat",[0],"NoMem"],
+    "frc" : { "result" : "anyfloat", "arguments" : [0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.inv.<return type>`` : reciprocal
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -816,7 +816,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "inv" : ["anyfloat",[0],"NoMem"],
+    "inv" : { "result" : "anyfloat", "arguments" : [0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.line.<return type>`` : linear equation
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -826,7 +826,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type as arg1
 ###
-    "line" : ["anyfloat",["float4",0],"NoMem"],
+    "line" : { "result" : "anyfloat", "arguments" : ["float4",0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.log.<return type>`` : base 2 logarithm
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -835,7 +835,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "log" : ["anyfloat",[0],"NoMem"],
+    "log" : { "result" : "anyfloat", "arguments" : [0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.lrp.<return type>`` : linear interpolation
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -846,7 +846,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "lrp" : ["anyfloat",[0,0,0],"NoMem"],
+    "lrp" : { "result" : "anyfloat", "arguments" : [0,0,0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.lzd.<return type>`` : leading zero detection
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -855,7 +855,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "lzd" : ["anyint",[0],"NoMem"],
+    "lzd" : { "result" : "anyint", "arguments" : [0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.*mad.<return type>.<any int>`` : mad instruction, no saturation
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -873,10 +873,10 @@ Imported_Intrinsics = \
 ### * arg1: second input, same type as arg0
 ### * arg2: third input, same type as result
 ###
-    "ssmad" : ["anyint",["anyint",1,0],"NoMem"],
-    "sumad" : ["anyint",["anyint",1,0],"NoMem"],
-    "usmad" : ["anyint",["anyint",1,0],"NoMem"],
-    "uumad" : ["anyint",["anyint",1,0],"NoMem"],
+    "ssmad" : { "result" : "anyint", "arguments" : ["anyint",1,0], "attributes" : "NoMem"},
+    "sumad" : { "result" : "anyint", "arguments" : ["anyint",1,0], "attributes" : "NoMem"},
+    "usmad" : { "result" : "anyint", "arguments" : ["anyint",1,0], "attributes" : "NoMem"},
+    "uumad" : { "result" : "anyint", "arguments" : ["anyint",1,0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.*mad.sat.<return type>.<any int>`` : mad instruction with saturation
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -894,10 +894,10 @@ Imported_Intrinsics = \
 ### * arg1: second input, same type as arg0
 ### * arg2: third input, same type as result
 ###
-    "ssmad_sat" : ["anyint",["anyint",1,0],"NoMem"],
-    "sumad_sat" : ["anyint",["anyint",1,0],"NoMem"],
-    "usmad_sat" : ["anyint",["anyint",1,0],"NoMem"],
-    "uumad_sat" : ["anyint",["anyint",1,0],"NoMem"],
+    "ssmad_sat" : { "result" : "anyint", "arguments" : ["anyint",1,0], "attributes" : "NoMem"},
+    "sumad_sat" : { "result" : "anyint", "arguments" : ["anyint",1,0], "attributes" : "NoMem"},
+    "usmad_sat" : { "result" : "anyint", "arguments" : ["anyint",1,0], "attributes" : "NoMem"},
+    "uumad_sat" : { "result" : "anyint", "arguments" : ["anyint",1,0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.*max.<return type>.<any int>`` : max instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -916,9 +916,9 @@ Imported_Intrinsics = \
 ### by this non-saturating max followed by the applicable one of the
 ### saturating trunc intrinsics.
 ###
-    "smax" : ["anyint",["anyint",1],"NoMem"],
-    "umax" : ["anyint",["anyint",1],"NoMem"],
-    "fmax" : ["anyfloat",["anyfloat",1],"NoMem"],
+    "smax" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "umax" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "fmax" : { "result" : "anyfloat", "arguments" : ["anyfloat",1], "attributes" : "NoMem"},
 
 ### ``llvm.genx.*min.<return type>`` : min instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -937,9 +937,9 @@ Imported_Intrinsics = \
 ### by this non-saturating min followed by the applicable one of the
 ### saturating trunc intrinsics.
 ###
-    "smin" : ["anyint",["anyint",1],"NoMem"],
-    "umin" : ["anyint",["anyint",1],"NoMem"],
-    "fmin" : ["anyfloat",["anyfloat",1],"NoMem"],
+    "smin" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "umin" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "fmin" : { "result" : "anyfloat", "arguments" : ["anyfloat",1], "attributes" : "NoMem"},
 
 ### mod
 ### ^^^
@@ -967,10 +967,10 @@ Imported_Intrinsics = \
 ### * arg0: first input, any scalar/vector integer type (not i64) (overloaded)
 ### * arg1: second input, same type as arg0
 ###
-    "ssmul" : ["anyint",["anyint",1],"NoMem"],
-    "sumul" : ["anyint",["anyint",1],"NoMem"],
-    "usmul" : ["anyint",["anyint",1],"NoMem"],
-    "uumul" : ["anyint",["anyint",1],"NoMem"],
+    "ssmul" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "sumul" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "usmul" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "uumul" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
 
 ### ``llvm.genx.*mul.sat.<return type>.<any int>`` : mul instruction with saturation
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -988,10 +988,10 @@ Imported_Intrinsics = \
 ### For an fp mul, use the LLVM IR FMul instruction, followed by
 ### llvm.genx.sat if saturation is required.
 ###
-    "ssmul_sat" : ["anyint",["anyint",1],"NoMem"],
-    "sumul_sat" : ["anyint",["anyint",1],"NoMem"],
-    "usmul_sat" : ["anyint",["anyint",1],"NoMem"],
-    "uumul_sat" : ["anyint",["anyint",1],"NoMem"],
+    "ssmul_sat" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "sumul_sat" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "usmul_sat" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "uumul_sat" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
 
 ### ``llvm.genx.*mulh.<return type>.<any int>`` : mulh instruction, no saturation
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1003,8 +1003,8 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type as arg0
 ###
-    "smulh" : ["anyint",["anyint",1],"NoMem"],
-    "umulh" : ["anyint",["anyint",1],"NoMem"],
+    "smulh" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "umulh" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
 
 ### not
 ### ^^^
@@ -1024,7 +1024,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, vector float with half as many elements as arg1
 ###
-    "pln" : ["anyfloat",["float4","anyfloat"],"NoMem"],
+    "pln" : { "result" : "anyfloat", "arguments" : ["float4","anyfloat"], "attributes" : "NoMem"},
 
 ### ``llvm.genx.pow.<return type>`` : power
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1034,7 +1034,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "pow" : ["anyfloat",[0,0],"NoMem"],
+    "pow" : { "result" : "anyfloat", "arguments" : [0,0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.rndd.<return type>`` : round down
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1043,7 +1043,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "rndd" : ["anyfloat",[0],"NoMem"],
+    "rndd" : { "result" : "anyfloat", "arguments" : [0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.rnde.<return type>`` : round to even
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1052,7 +1052,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "rnde" : ["anyfloat",[0],"NoMem"],
+    "rnde" : { "result" : "anyfloat", "arguments" : [0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.rndu.<return type>`` : round up
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1061,7 +1061,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "rndu" : ["anyfloat",[0],"NoMem"],
+    "rndu" : { "result" : "anyfloat", "arguments" : [0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.rndz.<return type>`` : round to zero
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1070,7 +1070,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "rndz" : ["anyfloat",[0],"NoMem"],
+    "rndz" : { "result" : "anyfloat", "arguments" : [0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.rsqrt.<return type>`` : reciprocal square root
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1079,7 +1079,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "rsqrt" : ["anyfloat",[0],"NoMem"],
+    "rsqrt" : { "result" : "anyfloat", "arguments" : [0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.*sad2.<return type>.<any int>`` : two-wide sum of absolute differences
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1091,8 +1091,8 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, vector of i16 of same vector width
 ###
-    "ssad2" : ["anyint",["anyint",1],"NoMem"],
-    "usad2" : ["anyint",["anyint",1],"NoMem"],
+    "ssad2" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "usad2" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
 
 ### ``llvm.genx.*sad2add.<return type>.<any int>`` : two-wide sum of absolute differences and add
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1107,10 +1107,10 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type as arg2
 ###
-    "sssad2add" : ["anyint",["anyint",1,0],"NoMem"],
-    "uusad2add" : ["anyint",["anyint",1,0],"NoMem"],
-    "ussad2add" : ["anyint",["anyint",1,0],"NoMem"],
-    "susad2add" : ["anyint",["anyint",1,0],"NoMem"],
+    "sssad2add" : { "result" : "anyint", "arguments" : ["anyint",1,0], "attributes" : "NoMem"},
+    "uusad2add" : { "result" : "anyint", "arguments" : ["anyint",1,0], "attributes" : "NoMem"},
+    "ussad2add" : { "result" : "anyint", "arguments" : ["anyint",1,0], "attributes" : "NoMem"},
+    "susad2add" : { "result" : "anyint", "arguments" : ["anyint",1,0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.*sad2add.sat.<return type>.<any int>`` : two-wide sum of absolute differences and add, saturated
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1125,10 +1125,10 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type as arg2
 ###
-    "sssad2add_sat" : ["anyint",["anyint",1,0],"NoMem"],
-    "uusad2add_sat" : ["anyint",["anyint",1,0],"NoMem"],
-    "ussad2add_sat" : ["anyint",["anyint",1,0],"NoMem"],
-    "susad2add_sat" : ["anyint",["anyint",1,0],"NoMem"],
+    "sssad2add_sat" : { "result" : "anyint", "arguments" : ["anyint",1,0], "attributes" : "NoMem"},
+    "uusad2add_sat" : { "result" : "anyint", "arguments" : ["anyint",1,0], "attributes" : "NoMem"},
+    "ussad2add_sat" : { "result" : "anyint", "arguments" : ["anyint",1,0], "attributes" : "NoMem"},
+    "susad2add_sat" : { "result" : "anyint", "arguments" : ["anyint",1,0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.*shl.<return type>.<any int>`` : shl instruction, no saturation
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1143,10 +1143,10 @@ Imported_Intrinsics = \
 ### * Return value: result, any scalar or vector integer type with same
 ###               vector width, even i64
 ###
-    "ssshl" : ["anyint",["anyint",1],"NoMem"],
-    "sushl" : ["anyint",["anyint",1],"NoMem"],
-    "usshl" : ["anyint",["anyint",1],"NoMem"],
-    "uushl" : ["anyint",["anyint",1],"NoMem"],
+    "ssshl" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "sushl" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "usshl" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "uushl" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
 
 ### ``llvm.genx.*shl.sat.<return type>.<any int>`` : shl instruction with saturation
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1161,10 +1161,10 @@ Imported_Intrinsics = \
 ### * Return value: result, any scalar/vector integer type with same
 ###               vector width, even i64
 ###
-    "ssshl_sat" : ["anyint",["anyint",1],"NoMem"],
-    "sushl_sat" : ["anyint",["anyint",1],"NoMem"],
-    "usshl_sat" : ["anyint",["anyint",1],"NoMem"],
-    "uushl_sat" : ["anyint",["anyint",1],"NoMem"],
+    "ssshl_sat" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "sushl_sat" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "usshl_sat" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "uushl_sat" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
 
 ### shr
 ### ^^^
@@ -1184,8 +1184,8 @@ Imported_Intrinsics = \
 ### * Return value: result, any scalar or vector integer type with same
 ###               vector width (even i64)
 ###
-    "rol" : ["anyint",["anyint",1],"NoMem"],
-    "ror" : ["anyint",["anyint",1],"NoMem"],
+    "rol" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
+    "ror" : { "result" : "anyint", "arguments" : ["anyint",1], "attributes" : "NoMem"},
 
 ### ``llvm.genx.sin.<return type>`` : reciprocal square root
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1194,7 +1194,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "sin" : ["anyfloat",[0],"NoMem"],
+    "sin" : { "result" : "anyfloat", "arguments" : [0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.sqrt.<return type>`` : reciprocal square root
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1203,7 +1203,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "sqrt" : ["anyfloat",[0],"NoMem"],
+    "sqrt" : { "result" : "anyfloat", "arguments" : [0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.ieee.sqrt.<return type>`` : reciprocal square root, IEEE variant
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1212,7 +1212,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type
 ###
-    "ieee_sqrt" : ["anyfloat",[0],"NoMem"],
+    "ieee_sqrt" : { "result" : "anyfloat", "arguments" : [0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.dpas.<return type>.<vector type>.<vector type>`` : dpas instruction (Dot Product Accumulate Systolic)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1224,7 +1224,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type as arg0
 ###
-    "dpas" : ["anyvector",[0,"anyvector","anyvector","int"],"NoMem"],
+    "dpas" : { "result" : "anyvector", "arguments" : [0,"anyvector","anyvector","int"], "attributes" : "NoMem"},
 
 ### ``llvm.genx.dpas2.<return type>.<vector type>.<vector type>.<vector type>`` : dpas instruction (Dot Product Accumulate Systolic)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1241,7 +1241,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result
 ###
-    "dpas2" : ["anyvector",["anyvector","anyvector","anyvector","int","int", "int", "int", "int", "int"],"NoMem"],
+    "dpas2" : { "result" : "anyvector", "arguments" : ["anyvector","anyvector","anyvector","int","int", "int", "int", "int", "int"], "attributes" : "NoMem"},
 
 ### ``llvm.genx.dpas.nosrc0.<return type>.<vector type>.<vector type>`` : dpas instruction (Dot Product Accumulate Systolic) with no src0
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1252,7 +1252,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result
 ###
-    "dpas_nosrc0" : ["anyvector",["anyvector","anyvector","int"],"NoMem"],
+    "dpas_nosrc0" : { "result" : "anyvector", "arguments" : ["anyvector","anyvector","int"], "attributes" : "NoMem"},
 
 ### ``llvm.genx.dpasw.<return type>.<vector type>.<vector type>`` : dpasw instruction (Dot Product Accumulate Systolic)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1264,7 +1264,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, same type as arg0
 ###
-    "dpasw" : ["anyvector",[0,"anyvector","anyvector","int"],"NoMem"],
+    "dpasw" : { "result" : "anyvector", "arguments" : [0,"anyvector","anyvector","int"], "attributes" : "NoMem"},
 
 ### ``llvm.genx.dpasw.nosrc0.<return type>.<vector type>.<vector type>`` : dpasw instruction (Dot Product Accumulate Systolic) with no src0
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1275,7 +1275,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result
 ###
-    "dpasw_nosrc0" : ["anyvector",["anyvector","anyvector","int"],"NoMem"],
+    "dpasw_nosrc0" : { "result" : "anyvector", "arguments" : ["anyvector","anyvector","int"], "attributes" : "NoMem"},
 
 ### ``llvm.genx.*dp4a*.<return type>.<vector type>.<vector type>.<vector type>`` : dp4a instruction (Dot Product 4 Accumulate)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1295,14 +1295,14 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, vector integer type
 ###
-    "ssdp4a" : ["anyvector",["anyvector","anyvector","anyvector"],"NoMem"],
-    "sudp4a" : ["anyvector",["anyvector","anyvector","anyvector"],"NoMem"],
-    "usdp4a" : ["anyvector",["anyvector","anyvector","anyvector"],"NoMem"],
-    "uudp4a" : ["anyvector",["anyvector","anyvector","anyvector"],"NoMem"],
-    "ssdp4a_sat" : ["anyvector",["anyvector","anyvector","anyvector"],"NoMem"],
-    "sudp4a_sat" : ["anyvector",["anyvector","anyvector","anyvector"],"NoMem"],
-    "usdp4a_sat" : ["anyvector",["anyvector","anyvector","anyvector"],"NoMem"],
-    "uudp4a_sat" : ["anyvector",["anyvector","anyvector","anyvector"],"NoMem"],
+    "ssdp4a" : { "result" : "anyvector", "arguments" : ["anyvector","anyvector","anyvector"], "attributes" : "NoMem"},
+    "sudp4a" : { "result" : "anyvector", "arguments" : ["anyvector","anyvector","anyvector"], "attributes" : "NoMem"},
+    "usdp4a" : { "result" : "anyvector", "arguments" : ["anyvector","anyvector","anyvector"], "attributes" : "NoMem"},
+    "uudp4a" : { "result" : "anyvector", "arguments" : ["anyvector","anyvector","anyvector"], "attributes" : "NoMem"},
+    "ssdp4a_sat" : { "result" : "anyvector", "arguments" : ["anyvector","anyvector","anyvector"], "attributes" : "NoMem"},
+    "sudp4a_sat" : { "result" : "anyvector", "arguments" : ["anyvector","anyvector","anyvector"], "attributes" : "NoMem"},
+    "usdp4a_sat" : { "result" : "anyvector", "arguments" : ["anyvector","anyvector","anyvector"], "attributes" : "NoMem"},
+    "uudp4a_sat" : { "result" : "anyvector", "arguments" : ["anyvector","anyvector","anyvector"], "attributes" : "NoMem"},
 
 ### addc
 ### ^^^^
@@ -1313,7 +1313,7 @@ Imported_Intrinsics = \
 ###
 ### * arg0: first input, i32 scalar/vector integer type
 ### * arg1: second input, same type as arg0
-    "addc" : [["anyint", "anyint"], [0, 0], "NoMem"],
+    "addc" : { "result" : ["anyint", "anyint"], "arguments" :  [0, 0], "attributes" :  "NoMem"},
 
 ### subb
 ### ^^^^
@@ -1324,7 +1324,7 @@ Imported_Intrinsics = \
 ###
 ### * arg0: first input, i32 scalar/vector integer type
 ### * arg1: second input, same type as arg0
-    "subb" : [["anyint", "anyint"], [0, 0], "NoMem"],
+    "subb" : { "result" : ["anyint", "anyint"], "arguments" :  [0, 0], "attributes" :  "NoMem"},
 
 ### add3
 ### ^^^^
@@ -1336,7 +1336,7 @@ Imported_Intrinsics = \
 ### * arg0: first input, any scalar/vector integer type, i16/i32 (overloaded)
 ### * arg1: second input, same type as arg0
 ### * arg2: third input, same type as arg0
-    "add3" : ["anyint",["anyint",1,1],"NoMem"],
+    "add3" : { "result" : "anyint", "arguments" : ["anyint",1,1], "attributes" : "NoMem"},
 
 ### ``llvm.genx.*add3.sat.<return type>.<any int>`` : add3 instruction with saturation
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1352,10 +1352,10 @@ Imported_Intrinsics = \
 ### * Return value: result, any scalar or vector integer type with same
 ###               vector width
 ###
-    "ssadd3_sat" : ["anyint",["anyint",1,1],"NoMem"],
-    "suadd3_sat" : ["anyint",["anyint",1,1],"NoMem"],
-    "usadd3_sat" : ["anyint",["anyint",1,1],"NoMem"],
-    "uuadd3_sat" : ["anyint",["anyint",1,1],"NoMem"],
+    "ssadd3_sat" : { "result" : "anyint", "arguments" : ["anyint",1,1], "attributes" : "NoMem"},
+    "suadd3_sat" : { "result" : "anyint", "arguments" : ["anyint",1,1], "attributes" : "NoMem"},
+    "usadd3_sat" : { "result" : "anyint", "arguments" : ["anyint",1,1], "attributes" : "NoMem"},
+    "uuadd3_sat" : { "result" : "anyint", "arguments" : ["anyint",1,1], "attributes" : "NoMem"},
 
 ### bfn
 ### ^^^
@@ -1368,7 +1368,7 @@ Imported_Intrinsics = \
 ### * arg1: second input, same type as arg0
 ### * arg2: third input, same type as arg0
 ### * arg3: fourth input, byte, constant
-    "bfn" : ["anyint",["anyint",1,1,"char"],"NoMem"],
+    "bfn" : { "result" : "anyint", "arguments" : ["anyint",1,1,"char"], "attributes" : "NoMem"},
 
 ### xor
 ### ^^^
@@ -1386,8 +1386,8 @@ Imported_Intrinsics = \
 ###
 ### * Return value:  i16 the value read
 ###
-    "thread_x" : ["short",[],"NoMem"],
-    "thread_y" : ["short",[],"NoMem"],
+    "thread_x" : { "result" : "short", "arguments" : [], "attributes" : "NoMem"},
+    "thread_y" : { "result" : "short", "arguments" : [], "attributes" : "NoMem"},
 
 ### ``llvm.genx.group.id.*`` : read group ID register
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1397,9 +1397,9 @@ Imported_Intrinsics = \
 ###
 ### * Return value:  i32 the value read
 ###
-    "group_id_x" : ["int",[],"NoMem"],
-    "group_id_y" : ["int",[],"NoMem"],
-    "group_id_z" : ["int",[],"NoMem"],
+    "group_id_x" : { "result" : "int", "arguments" : [], "attributes" : "NoMem"},
+    "group_id_y" : { "result" : "int", "arguments" : [], "attributes" : "NoMem"},
+    "group_id_z" : { "result" : "int", "arguments" : [], "attributes" : "NoMem"},
 
 ### ``llvm.genx.timestamp.<return type>`` : read vISA v11 (%timestamp)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1408,7 +1408,7 @@ Imported_Intrinsics = \
 ###
 ### The vector width must be power of 2 and no larger than 4.
 ###
-    "timestamp" : ["anyint",[],"None"],
+    "timestamp" : { "result" : "anyint", "arguments" : [], "attributes" : "None"},
 
 ### ``llvm.genx.r0.<return type>`` : read vISA v12 (%r0)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1417,7 +1417,7 @@ Imported_Intrinsics = \
 ###
 ### The vector width must be power of 2 and no larger than 8.
 ###
-    "r0" : ["anyint",[],"ReadMem"],
+    "r0" : { "result" : "anyint", "arguments" : [], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.sr0.<return type>`` : read vISA v13 (%sr0)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1427,7 +1427,7 @@ Imported_Intrinsics = \
 ### The vector width must be 4
 ###
 ###
-    "sr0" : ["anyint",[],"ReadMem"],
+    "sr0" : { "result" : "anyint", "arguments" : [], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.set.sr0.2`` : write vISA v13(0, 2) (%sr0.2)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1436,7 +1436,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value:  void
 ###
-    "set_sr0_2" : ["void",["int"],"None"],
+    "set_sr0_2" : { "result" : "void", "arguments" : ["int"], "attributes" : "None"},
 
 ### ``llvm.genx.get.color`` : read color value of the thread origin
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1446,21 +1446,21 @@ Imported_Intrinsics = \
 ### This may not be the most appropriate way to access this value,
 ### but is a stop-gap solution.
 ###
-    "get_color" : ["short",[],"NoMem"],
+    "get_color" : { "result" : "short", "arguments" : [], "attributes" : "NoMem"},
 
 ### ``llvm.genx.get.hwid`` : read hw_id value
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### Return Value: i32 the value read
 ###
-    "get_hwid" : ["int",[],"NoMem"],
+    "get_hwid" : { "result" : "int", "arguments" : [], "attributes" : "NoMem"},
 
 ### ``llvm.genx.ce0`` : read channel-enable register
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### Return Value: i32 the value read
 ###
-    "ce0" : ["int",[],"ReadMem"],
+    "ce0" : { "result" : "int", "arguments" : [], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.set.pause`` : set the pause register (v11.4)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1475,7 +1475,7 @@ Imported_Intrinsics = \
 ###
 ### We set this intrinsic to have side-effects (last field empty) to stop it being removed as it
 ### otherwise looks dead
-    "set_pause" : ["void",["short"],"None"],
+    "set_pause" : { "result" : "void", "arguments" : ["short"], "attributes" : "None"},
 
 ### ``llvm.genx.dummy.mov`` : insert a dummy mov to v0
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1492,7 +1492,7 @@ Imported_Intrinsics = \
 ###
 ### We set this intrinsic to have side-effects (last field empty) to stop it being removed as it
 ### otherwise looks dead and also to prevent any kind of code motion optimisation
-    "dummy_mov" : ["void",["short"],"None"],
+    "dummy_mov" : { "result" : "void", "arguments" : ["short"], "attributes" : "None"},
 
 ### The following 2 predef.reg intrinsics aren't translated directly to read/writes of the reg,
 ### instead they're baled together with rd/wrregions and in fact indicate that those rdr/wrrs
@@ -1507,7 +1507,7 @@ Imported_Intrinsics = \
 ### * Return value:  value read
 ###
 ###
-    "read_predef_reg" : ["any",["int", "any"],"ReadMem"],
+    "read_predef_reg" : { "result" : "any", "arguments" : ["int", "any"], "attributes" : "ReadMem"},
 
 ### ``llvm.write.predef.reg.<return type>.<input_type>`` : write value to predefined vISA reg
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1517,7 +1517,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value:  value written
 ###
-    "write_predef_reg" : ["any",["int", "any"],"WriteMem"],
+    "write_predef_reg" : { "result" : "any", "arguments" : ["int", "any"], "attributes" : "WriteMem"},
 
 ## --------------------------
 ### Shared function intrinsics
@@ -1551,16 +1551,16 @@ Imported_Intrinsics = \
 ### Predicate, element offset, src, and the return value must all have the
 ### same vector width, which must be 1, 8 or 16.
 ###
-    "dword_atomic_add" : ["anyvector",["anyvector","int","anyint",0,0],"None"],
-    "dword_atomic_sub" : ["anyvector",["anyvector","int","anyint",0,0],"None"],
-    "dword_atomic_min" : ["anyvector",["anyvector","int","anyint",0,0],"None"],
-    "dword_atomic_max" : ["anyvector",["anyvector","int","anyint",0,0],"None"],
-    "dword_atomic_xchg" : ["anyvector",["anyvector","int","anyint",0,0],"None"],
-    "dword_atomic_and" : ["anyvector",["anyvector","int","anyint",0,0],"None"],
-    "dword_atomic_or" : ["anyvector",["anyvector","int","anyint",0,0],"None"],
-    "dword_atomic_xor" : ["anyvector",["anyvector","int","anyint",0,0],"None"],
-    "dword_atomic_imin" : ["anyvector",["anyvector","int","anyint",0,0],"None"],
-    "dword_atomic_imax" : ["anyvector",["anyvector","int","anyint",0,0],"None"],
+    "dword_atomic_add" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0,0], "attributes" : "None"},
+    "dword_atomic_sub" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0,0], "attributes" : "None"},
+    "dword_atomic_min" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0,0], "attributes" : "None"},
+    "dword_atomic_max" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0,0], "attributes" : "None"},
+    "dword_atomic_xchg" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0,0], "attributes" : "None"},
+    "dword_atomic_and" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0,0], "attributes" : "None"},
+    "dword_atomic_or" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0,0], "attributes" : "None"},
+    "dword_atomic_xor" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0,0], "attributes" : "None"},
+    "dword_atomic_imin" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0,0], "attributes" : "None"},
+    "dword_atomic_imax" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0,0], "attributes" : "None"},
 
 ### ``llvm.genx.dword.atomic2.*.<return type>.<vector type.<any int>`` : dword atomic with binary operator (variant with no oldval)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1586,16 +1586,16 @@ Imported_Intrinsics = \
 ### Predicate, element offset, src, and the return value must all have the
 ### same vector width, which must be 1, 8 or 16.
 ###
-    "dword_atomic2_add" : ["anyvector",["anyvector","int","anyint",0],"None"],
-    "dword_atomic2_sub" : ["anyvector",["anyvector","int","anyint",0],"None"],
-    "dword_atomic2_min" : ["anyvector",["anyvector","int","anyint",0],"None"],
-    "dword_atomic2_max" : ["anyvector",["anyvector","int","anyint",0],"None"],
-    "dword_atomic2_xchg" : ["anyvector",["anyvector","int","anyint",0],"None"],
-    "dword_atomic2_and" : ["anyvector",["anyvector","int","anyint",0],"None"],
-    "dword_atomic2_or" : ["anyvector",["anyvector","int","anyint",0],"None"],
-    "dword_atomic2_xor" : ["anyvector",["anyvector","int","anyint",0],"None"],
-    "dword_atomic2_imin" : ["anyvector",["anyvector","int","anyint",0],"None"],
-    "dword_atomic2_imax" : ["anyvector",["anyvector","int","anyint",0],"None"],
+    "dword_atomic2_add" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0], "attributes" : "None"},
+    "dword_atomic2_sub" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0], "attributes" : "None"},
+    "dword_atomic2_min" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0], "attributes" : "None"},
+    "dword_atomic2_max" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0], "attributes" : "None"},
+    "dword_atomic2_xchg" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0], "attributes" : "None"},
+    "dword_atomic2_and" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0], "attributes" : "None"},
+    "dword_atomic2_or" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0], "attributes" : "None"},
+    "dword_atomic2_xor" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0], "attributes" : "None"},
+    "dword_atomic2_imin" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0], "attributes" : "None"},
+    "dword_atomic2_imax" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0], "attributes" : "None"},
 
 ### ``llvm.genx.dword.atomic.*.<return type>.<vector type>.<any int>`` : dword atomic with fmin/fmax operation
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1614,8 +1614,8 @@ Imported_Intrinsics = \
 ### Predicate, element offset, src, and the return value must all have the
 ### same vector width, which must be 1, 8 or 16.
 ###
-    "dword_atomic_fmin" : ["anyvector",["anyvector","int","anyint",0,0],"None"],
-    "dword_atomic_fmax" : ["anyvector",["anyvector","int","anyint",0,0],"None"],
+    "dword_atomic_fmin" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0,0], "attributes" : "None"},
+    "dword_atomic_fmax" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0,0], "attributes" : "None"},
 
 ### ``llvm.genx.dword.atomic2.*.<return type>.<vector type>.<any int>`` : dword atomic with fmin/fmax operation (variant with no oldval)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1633,8 +1633,8 @@ Imported_Intrinsics = \
 ### Predicate, element offset, src, and the return value must all have the
 ### same vector width, which must be 1, 8 or 16.
 ###
-    "dword_atomic2_fmin" : ["anyvector",["anyvector","int","anyint",0],"None"],
-    "dword_atomic2_fmax" : ["anyvector",["anyvector","int","anyint",0],"None"],
+    "dword_atomic2_fmin" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0], "attributes" : "None"},
+    "dword_atomic2_fmax" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0], "attributes" : "None"},
 
 
 ### ``llvm.genx.dword.atomic.*.<return type>.<any vector>`` : dword atomic with inc/dec operation
@@ -1653,8 +1653,8 @@ Imported_Intrinsics = \
 ### Predicate, element offset, src, and the return value must all have the
 ### same vector width, which must be 1, 8 or 16.
 ###
-    "dword_atomic_inc" : ["anyvector",["anyvector","int",0,0],"None"],
-    "dword_atomic_dec" : ["anyvector",["anyvector","int",0,0],"None"],
+    "dword_atomic_inc" : { "result" : "anyvector", "arguments" : ["anyvector","int",0,0], "attributes" : "None"},
+    "dword_atomic_dec" : { "result" : "anyvector", "arguments" : ["anyvector","int",0,0], "attributes" : "None"},
 
 ### ``llvm.genx.dword.atomic2.*.<return type>.<any vector>`` : dword atomic with inc/dec operation (variant with no oldval)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1671,8 +1671,8 @@ Imported_Intrinsics = \
 ### Predicate, element offset, src, and the return value must all have the
 ### same vector width, which must be 1, 8 or 16.
 ###
-    "dword_atomic2_inc" : ["anyvector",["anyvector","int",0],"None"],
-    "dword_atomic2_dec" : ["anyvector",["anyvector","int",0],"None"],
+    "dword_atomic2_inc" : { "result" : "anyvector", "arguments" : ["anyvector","int",0], "attributes" : "None"},
+    "dword_atomic2_dec" : { "result" : "anyvector", "arguments" : ["anyvector","int",0], "attributes" : "None"},
 
 ### ``llvm.genx.dword.atomic.cmpxchg.<return type>.<vector type>`` : vISA DWORD_ATOMIC CMPXCHG instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1690,7 +1690,7 @@ Imported_Intrinsics = \
 ### Predicate, element offset, src, and the return value must all have the
 ### same vector width, which must be 1, 8 or 16.
 ###
-    "dword_atomic_cmpxchg" : ["anyvector",["anyvector","int",0,0,0,0],"None"],
+    "dword_atomic_cmpxchg" : { "result" : "anyvector", "arguments" : ["anyvector","int",0,0,0,0], "attributes" : "None"},
 
 ### ``llvm.genx.dword.atomic2.cmpxchg.<return type>.<vector type>`` : vISA DWORD_ATOMIC CMPXCHG instruction (variant with no oldval)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1707,7 +1707,7 @@ Imported_Intrinsics = \
 ### Predicate, element offset, src, and the return value must all have the
 ### same vector width, which must be 1, 8 or 16.
 ###
-    "dword_atomic2_cmpxchg" : ["anyvector",["anyvector","int",0,0,0],"None"],
+    "dword_atomic2_cmpxchg" : { "result" : "anyvector", "arguments" : ["anyvector","int",0,0,0], "attributes" : "None"},
 
 ### ``llvm.genx.dword.atomic.fcmpwr.<return type>.<vector type>.<any int>`` : vISA DWORD_ATOMIC FCMPWR instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1725,7 +1725,7 @@ Imported_Intrinsics = \
 ### Predicate, element offset, src, and the return value must all have the
 ### same vector width, which must be 1, 8 or 16.
 ###
-    "dword_atomic_fcmpwr" : ["anyvector",["anyvector","int","anyint",0,0,0],"None"],
+    "dword_atomic_fcmpwr" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0,0,0], "attributes" : "None"},
 
 ### ``llvm.genx.dword.atomic2.fcmpwr.<return type>.<vector type>.<any int>`` : vISA DWORD_ATOMIC FCMPWR instruction (variant with no oldval)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1742,7 +1742,7 @@ Imported_Intrinsics = \
 ### Predicate, element offset, src, and the return value must all have the
 ### same vector width, which must be 1, 8 or 16.
 ###
-    "dword_atomic2_fcmpwr" : ["anyvector",["anyvector","int","anyint",0,0],"None"],
+    "dword_atomic2_fcmpwr" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0,0], "attributes" : "None"},
 
 ### ``llvm.genx.typed.atomic.*.<return type>.<vector type>.<any int>`` : atomic typed with binary operator
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1771,16 +1771,16 @@ Imported_Intrinsics = \
 ### Predicate, element offset, src, and the return value must all have the
 ### same vector width (which in reality must be 8)
 ###
-    "typed_atomic_add" : ["anyvector",["anyvector","int",0,"anyint",2,2,2],"None"],
-    "typed_atomic_sub" : ["anyvector",["anyvector","int",0,"anyint",2,2,2],"None"],
-    "typed_atomic_min" : ["anyvector",["anyvector","int",0,"anyint",2,2,2],"None"],
-    "typed_atomic_max" : ["anyvector",["anyvector","int",0,"anyint",2,2,2],"None"],
-    "typed_atomic_xchg" : ["anyvector",["anyvector","int",0,"anyint",2,2,2],"None"],
-    "typed_atomic_and" : ["anyvector",["anyvector","int",0,"anyint",2,2,2],"None"],
-    "typed_atomic_or" : ["anyvector",["anyvector","int",0,"anyint",2,2,2],"None"],
-    "typed_atomic_xor" : ["anyvector",["anyvector","int",0,"anyint",2,2,2],"None"],
-    "typed_atomic_imin" : ["anyvector",["anyvector","int",0,"anyint",2,2,2],"None"],
-    "typed_atomic_imax" : ["anyvector",["anyvector","int",0,"anyint",2,2,2],"None"],
+    "typed_atomic_add" : { "result" : "anyvector", "arguments" : ["anyvector","int",0,"anyint",2,2,2], "attributes" : "None"},
+    "typed_atomic_sub" : { "result" : "anyvector", "arguments" : ["anyvector","int",0,"anyint",2,2,2], "attributes" : "None"},
+    "typed_atomic_min" : { "result" : "anyvector", "arguments" : ["anyvector","int",0,"anyint",2,2,2], "attributes" : "None"},
+    "typed_atomic_max" : { "result" : "anyvector", "arguments" : ["anyvector","int",0,"anyint",2,2,2], "attributes" : "None"},
+    "typed_atomic_xchg" : { "result" : "anyvector", "arguments" : ["anyvector","int",0,"anyint",2,2,2], "attributes" : "None"},
+    "typed_atomic_and" : { "result" : "anyvector", "arguments" : ["anyvector","int",0,"anyint",2,2,2], "attributes" : "None"},
+    "typed_atomic_or" : { "result" : "anyvector", "arguments" : ["anyvector","int",0,"anyint",2,2,2], "attributes" : "None"},
+    "typed_atomic_xor" : { "result" : "anyvector", "arguments" : ["anyvector","int",0,"anyint",2,2,2], "attributes" : "None"},
+    "typed_atomic_imin" : { "result" : "anyvector", "arguments" : ["anyvector","int",0,"anyint",2,2,2], "attributes" : "None"},
+    "typed_atomic_imax" : { "result" : "anyvector", "arguments" : ["anyvector","int",0,"anyint",2,2,2], "attributes" : "None"},
 
 ### ``llvm.genx.typed.atomic.*.<return type>.<vector type>.<any int>`` : atomic typed with fmin/fmax operation
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1801,8 +1801,8 @@ Imported_Intrinsics = \
 ### Predicate, element offset, src, and the return value must all have the
 ### same vector width (which in reality must be 8)
 ###
-    "typed_atomic_fmin" : ["anyvector",["anyvector","int",0,"anyint",2,2,2],"None"],
-    "typed_atomic_fmax" : ["anyvector",["anyvector","int",0,"anyint",2,2,2],"None"],
+    "typed_atomic_fmin" : { "result" : "anyvector", "arguments" : ["anyvector","int",0,"anyint",2,2,2], "attributes" : "None"},
+    "typed_atomic_fmax" : { "result" : "anyvector", "arguments" : ["anyvector","int",0,"anyint",2,2,2], "attributes" : "None"},
 
 ### ``llvm.genx.typed.atomic.*.<return type>.<vector type>.<any int>`` : atomic typed with inc/dec operation
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1822,8 +1822,8 @@ Imported_Intrinsics = \
 ### Predicate, element offset, src, and the return value must all have the
 ### same vector width (which in reality must be 8)
 ###
-    "typed_atomic_inc" : ["anyvector",["anyvector","int","anyint",2,2,2],"None"],
-    "typed_atomic_dec" : ["anyvector",["anyvector","int","anyint",2,2,2],"None"],
+    "typed_atomic_inc" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",2,2,2], "attributes" : "None"},
+    "typed_atomic_dec" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",2,2,2], "attributes" : "None"},
 
 ### ``llvm.genx.typed.atomic.cmpxchg.<return type>.<vector type>.<any int>`` : vISA TYPED_ATOMIC CMPXCHG instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1843,7 +1843,7 @@ Imported_Intrinsics = \
 ### Predicate, element offset, src, and the return value must all have the
 ### same vector width (which in reality must be 8)
 ###
-    "typed_atomic_cmpxchg" : ["anyvector",["anyvector","int",0,0,"anyint",2,2,2],"None"],
+    "typed_atomic_cmpxchg" : { "result" : "anyvector", "arguments" : ["anyvector","int",0,0,"anyint",2,2,2], "attributes" : "None"},
 
 ### ``llvm.genx.typed.atomic.fcmpwr.<return type>.<vector type>.<any int>`` : vISA TYPED_ATOMIC FCMPWR instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1863,7 +1863,7 @@ Imported_Intrinsics = \
 ### Predicate, element offset, src, and the return value must all have the
 ### same vector width (which in reality must be 8)
 ###
-    "typed_atomic_fcmpwr" : ["anyvector",["anyvector","int",0,0,"anyint",2,2,2],"None"],
+    "typed_atomic_fcmpwr" : { "result" : "anyvector", "arguments" : ["anyvector","int",0,0,"anyint",2,2,2], "attributes" : "None"},
 
 ### ``llvm.genx.gather.private.<return type>.<vector type>.<any int>`` : CMC internal, no VISA
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1881,7 +1881,7 @@ Imported_Intrinsics = \
 ###
 ### The element offset arg must have the same vector width.
 ###
-    "gather_private" : ["anyvector",["anyvector","anyptr","anyint",0],"ReadMem"],
+    "gather_private" : { "result" : "anyvector", "arguments" : ["anyvector","anyptr","anyint",0], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.gather.scaled.<return type>.<vector type>.<any int>`` : vISA GATHER_SCALED instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1906,7 +1906,7 @@ Imported_Intrinsics = \
 ### F type. For 1 and 2 byte (1 x num blocks) reads the upper bytes have
 ### undefined values in the returned value.
 ###
-    "gather_scaled" : ["anyvector",["anyvector","int","short","int","int","anyint",0],"ReadMem"],
+    "gather_scaled" : { "result" : "anyvector", "arguments" : ["anyvector","int","short","int","int","anyint",0], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.gather.scaled2`` : vISA GATHER_SCALED instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1929,7 +1929,7 @@ Imported_Intrinsics = \
 ### For 1 and 2 byte (1 x num blocks) reads the upper bytes have
 ### undefined values in the returned value.
 ###
-    "gather_scaled2" : ["anyvector",["int","short","int","int","anyint"],"ReadMem"],
+    "gather_scaled2" : { "result" : "anyvector", "arguments" : ["int","short","int","int","anyint"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.gather.masked.scaled2`` : vISA GATHER_SCALED instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1945,7 +1945,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: the data read
 ###
-    "gather_masked_scaled2" : ["anyvector",["int","short","int","int","anyint","anyvector"],"ReadMem"],
+    "gather_masked_scaled2" : { "result" : "anyvector", "arguments" : ["int","short","int","int","anyint","anyvector"], "attributes" : "ReadMem"},
 
 
 ### ``llvm.genx.gather4.scaled.<return type>.<vector type>.<any int>`` : vISA GATHER4_SCALED instruction
@@ -1973,7 +1973,7 @@ Imported_Intrinsics = \
 ### times the number of channels to read per element.
 ### The element type of the return value must be i32 or float.
 ###
-    "gather4_scaled" : ["anyvector",["anyvector","int","short","int","int","anyint",0],"ReadMem"],
+    "gather4_scaled" : { "result" : "anyvector", "arguments" : ["anyvector","int","short","int","int","anyint",0], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.gather4.scaled2`` : vISA GATHER4_SCALED instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2001,7 +2001,7 @@ Imported_Intrinsics = \
 ### times the number of channels to read per element.
 ### The element type of the return value must be i32 or float.
 ###
-    "gather4_scaled2" : ["anyvector",["int","short","int","int","anyint"],"ReadMem"],
+    "gather4_scaled2" : { "result" : "anyvector", "arguments" : ["int","short","int","int","anyint"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.gather4.masked.scaled2`` : vISA GATHER4_SCALED instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2016,7 +2016,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: the data read
 ###
-    "gather4_masked_scaled2" : ["anyvector",["int","short","int","int","anyint","anyvector"],"ReadMem"],
+    "gather4_masked_scaled2" : { "result" : "anyvector", "arguments" : ["int","short","int","int","anyint","anyvector"], "attributes" : "ReadMem"},
 
 
 ### ``llvm.genx.gather4.typed.<return type>.<vector type>.<vector type>`` : vISA GATHER4_TYPED instruction
@@ -2044,7 +2044,7 @@ Imported_Intrinsics = \
 ### times the number of channels to read per element.
 ### The element type of the return value must be i32 or float.
 ###
-    "gather4_typed" : ["anyvector",["int","anyvector","int","anyvector",2,2,0],"ReadMem"],
+    "gather4_typed" : { "result" : "anyvector", "arguments" : ["int","anyvector","int","anyvector",2,2,0], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.media.ld.<return type>`` : vISA MEDIA_LD instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2067,7 +2067,7 @@ Imported_Intrinsics = \
 ### The block width has a maximum of 32 (64 on BDW+). The maxmimum byte
 ### size of the return type is 256.
 ###
-    "media_ld" : ["anyvector",["int","int","int","int","int","int"],"ReadMem"],
+    "media_ld" : { "result" : "anyvector", "arguments" : ["int","int","int","int","int","int"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.media.st.<vector type>`` : vISA MEDIA_ST instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2089,7 +2089,7 @@ Imported_Intrinsics = \
 ### The block width has a maximum of 32 (64 on BDW+). The maxmimum byte
 ### size of the data to write is 256.
 ###
-    "media_st" : ["void",["int","int","int","int","int","int","anyvector"],"None"],
+    "media_st" : { "result" : "void", "arguments" : ["int","int","int","int","int","int","anyvector"], "attributes" : "None"},
 
 ### ``llvm.genx.oword.ld*.<return type>`` : oword load instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2105,8 +2105,8 @@ Imported_Intrinsics = \
 ###
 ### The byte size of the return type must be 16, 32, 64, or 128.
 ###
-    "oword_ld" : ["anyvector",["int","int","int"],"ReadMem"],
-    "oword_ld_unaligned" : ["anyvector",["int","int","int"],"ReadMem"],
+    "oword_ld" : { "result" : "anyvector", "arguments" : ["int","int","int"], "attributes" : "ReadMem"},
+    "oword_ld_unaligned" : { "result" : "anyvector", "arguments" : ["int","int","int"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.oword.st.<vector type>`` : vISA OWORD_ST instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2118,7 +2118,7 @@ Imported_Intrinsics = \
 ###
 ### The byte size of the data to write must be 16, 32, 64, or 128.
 ###
-    "oword_st" : ["void",["int","int","anyvector"],"None"],
+    "oword_st" : { "result" : "void", "arguments" : ["int","int","anyvector"], "attributes" : "None"},
 
 ### ``llvm.genx.scatter.private.<vector type>.<ptr type>.<any int>.<vector type>`` : CM internal, no VISA
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2132,7 +2132,7 @@ Imported_Intrinsics = \
 ### which must be 1, 8 or 16.
 ### The element offset arg must have the same vector width.
 ###
-    "scatter_private" : ["void",["anyvector","anyptr","anyint","anyvector"],"None"],
+    "scatter_private" : { "result" : "void", "arguments" : ["anyvector","anyptr","anyint","anyvector"], "attributes" : "None"},
 
 ### ``llvm.genx.scatter.scaled.<vector type>.<any int>.<vector type>`` : vISA SCATTER_SCALED instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2154,7 +2154,7 @@ Imported_Intrinsics = \
 ### The data type to write must have UD, D or F type. For 1 and 2 byte (1 x num
 ### blocks) accesses the upper bytes will be ignored.
 ###
-    "scatter_scaled" : ["void",["anyvector","int","short","int","int","anyint","anyvector"],"None"],
+    "scatter_scaled" : { "result" : "void", "arguments" : ["anyvector","int","short","int","int","anyint","anyvector"], "attributes" : "None"},
 
 ### ``llvm.genx.scatter4.scaled.<vector type>.<any int>.<vector type>`` : vISA SCATTER4_SCALED instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2180,7 +2180,7 @@ Imported_Intrinsics = \
 ### times the number of channels to write per element.
 ### The element type of the data to write must be i32 or float.
 ###
-    "scatter4_scaled" : ["void",["anyvector","int","short","int","int","anyint","anyvector"],"None"],
+    "scatter4_scaled" : { "result" : "void", "arguments" : ["anyvector","int","short","int","int","anyint","anyvector"], "attributes" : "None"},
 
 ### ``llvm.genx.scatter4.typed.<vector type>.<vector type>.<vector type>`` : vISA SCATTER4_TYPED instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2205,7 +2205,7 @@ Imported_Intrinsics = \
 ### times the number of channels to read per element.
 ### The element type of the source value must be i32 or float.
 ###
-    "scatter4_typed" : ["void",["int","anyvector","int","anyvector",1,1,"anyvector"],"None"],
+    "scatter4_typed" : { "result" : "void", "arguments" : ["int","anyvector","int","anyvector",1,1,"anyvector"], "attributes" : "None"},
 
 ### ``llvm.genx.transpose.ld.<return type>`` : vISA TRANSPOSE_LD instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2223,7 +2223,7 @@ Imported_Intrinsics = \
 ### inferred from those values.
 ### The element type of the return value must be i32 or float.
 ###
-    "transpose_ld" : ["anyvector",["int","int","int","int"],"ReadMem"],
+    "transpose_ld" : { "result" : "anyvector", "arguments" : ["int","int","int","int"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.untyped.atomic.*.<return type>.<vector type>`` : vISA UNTYPED_ATOMIC with binary operator
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2250,16 +2250,16 @@ Imported_Intrinsics = \
 ### Predicate, element offset, src, and the return value must all have the
 ##same vector / width, which must be 8 or 16.
 ###
-    "untyped_atomic_add" : ["anyvector",["anyvector","int","int",0,0,0],"None"],
-    "untyped_atomic_sub" : ["anyvector",["anyvector","int","int",0,0,0],"None"],
-    "untyped_atomic_min" : ["anyvector",["anyvector","int","int",0,0,0],"None"],
-    "untyped_atomic_max" : ["anyvector",["anyvector","int","int",0,0,0],"None"],
-    "untyped_atomic_xchg" : ["anyvector",["anyvector","int","int",0,0,0],"None"],
-    "untyped_atomic_and" : ["anyvector",["anyvector","int","int",0,0,0],"None"],
-    "untyped_atomic_or" : ["anyvector",["anyvector","int","int",0,0,0],"None"],
-    "untyped_atomic_xor" : ["anyvector",["anyvector","int","int",0,0,0],"None"],
-    "untyped_atomic_imin" : ["anyvector",["anyvector","int","int",0,0,0],"None"],
-    "untyped_atomic_imax" : ["anyvector",["anyvector","int","int",0,0,0],"None"],
+    "untyped_atomic_add" : { "result" : "anyvector", "arguments" : ["anyvector","int","int",0,0,0], "attributes" : "None"},
+    "untyped_atomic_sub" : { "result" : "anyvector", "arguments" : ["anyvector","int","int",0,0,0], "attributes" : "None"},
+    "untyped_atomic_min" : { "result" : "anyvector", "arguments" : ["anyvector","int","int",0,0,0], "attributes" : "None"},
+    "untyped_atomic_max" : { "result" : "anyvector", "arguments" : ["anyvector","int","int",0,0,0], "attributes" : "None"},
+    "untyped_atomic_xchg" : { "result" : "anyvector", "arguments" : ["anyvector","int","int",0,0,0], "attributes" : "None"},
+    "untyped_atomic_and" : { "result" : "anyvector", "arguments" : ["anyvector","int","int",0,0,0], "attributes" : "None"},
+    "untyped_atomic_or" : { "result" : "anyvector", "arguments" : ["anyvector","int","int",0,0,0], "attributes" : "None"},
+    "untyped_atomic_xor" : { "result" : "anyvector", "arguments" : ["anyvector","int","int",0,0,0], "attributes" : "None"},
+    "untyped_atomic_imin" : { "result" : "anyvector", "arguments" : ["anyvector","int","int",0,0,0], "attributes" : "None"},
+    "untyped_atomic_imax" : { "result" : "anyvector", "arguments" : ["anyvector","int","int",0,0,0], "attributes" : "None"},
 
 ### ``llvm.genx.untyped.atomic.*.<return type>.<vector type>`` : vISA UNTYPED_ATOMIC with inc/dec
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2277,8 +2277,8 @@ Imported_Intrinsics = \
 ### Predicate, element offset and the return value must have the same vector
 ### width, which must be 8 or 16.
 ###
-    "untyped_atomic_inc" : ["anyvector",["anyvector","int","int",0,0],"None"],
-    "untyped_atomic_dec" : ["anyvector",["anyvector","int","int",0,0],"None"],
+    "untyped_atomic_inc" : { "result" : "anyvector", "arguments" : ["anyvector","int","int",0,0], "attributes" : "None"},
+    "untyped_atomic_dec" : { "result" : "anyvector", "arguments" : ["anyvector","int","int",0,0], "attributes" : "None"},
 
 ### ``llvm.genx.untyped.atomic.cmpxchg.<return type>.<vector type>`` : vISA UNTYPED_ATOMIC CMPXCHG instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2296,7 +2296,7 @@ Imported_Intrinsics = \
 ### Predicate, element offset, src0, src1, and the return value must all have
 ### the same vector width, which must be 8 or 16.
 ###
-    "untyped_atomic_cmpxchg" : ["anyvector",["anyvector","int","int",0,0,0,0],"None"],
+    "untyped_atomic_cmpxchg" : { "result" : "anyvector", "arguments" : ["anyvector","int","int",0,0,0,0], "attributes" : "None"},
 
 ### ``llvm.genx.svm.block.ld*.<return type>.<address type>`` : vISA SVM BLOCK_LD instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2313,8 +2313,8 @@ Imported_Intrinsics = \
 ### The data read must have a size that is a power of two from 16 to 128
 ### bytes.
 ###
-    "svm_block_ld" : ["anyvector",["anyint"],"ReadMem"],
-    "svm_block_ld_unaligned" : ["anyvector",["anyint"],"ReadMem"],
+    "svm_block_ld" : { "result" : "anyvector", "arguments" : ["anyint"], "attributes" : "ReadMem"},
+    "svm_block_ld_unaligned" : { "result" : "anyvector", "arguments" : ["anyint"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.svm.block.st.<address type><vector type>`` : vISA SVM BLOCK_ST instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2326,7 +2326,7 @@ Imported_Intrinsics = \
 ### The data to write must have a size that is a power of two from 16 to 128
 ### bytes.
 ###
-    "svm_block_st" : ["void",["anyint","anyvector"],"None"],
+    "svm_block_st" : { "result" : "void", "arguments" : ["anyint","anyvector"], "attributes" : "None"},
 
 ### ``llvm.genx.svm.gather.<return type>.<vector type>.<any int>`` : vISA SVM GATHER instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2345,7 +2345,7 @@ Imported_Intrinsics = \
 ### The return value vector width is the address vector width times
 ### number of blocks (rounded up to 4 if block size is 1).
 ###
-    "svm_gather" : ["anyvector",["anyvector","int","anyint",0],"ReadMem"],
+    "svm_gather" : { "result" : "anyvector", "arguments" : ["anyvector","int","anyint",0], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.svm.gather4.scaled.<return type>.<vector type>.<any int>`` : vISA SVM GATHER4_SCALED instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2372,7 +2372,7 @@ Imported_Intrinsics = \
 ### times the number of channels to read per element.
 ### The element type of the return value must be i32 or float.
 ###
-    "svm_gather4_scaled" : ["anyvector",["anyvector","int","short","long","anyint",0],"ReadMem"],
+    "svm_gather4_scaled" : { "result" : "anyvector", "arguments" : ["anyvector","int","short","long","anyint",0], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.svm.scatter.<vector type>.<any int>.<vector type>`` : vISA SVM SCATTER instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2389,7 +2389,7 @@ Imported_Intrinsics = \
 ### The data vector width is the address vector width times
 ### number of blocks (rounded up to 4 if block size is 1).
 ###
-    "svm_scatter" : ["void",["anyvector","int","anyint","anyvector"],"None"],
+    "svm_scatter" : { "result" : "void", "arguments" : ["anyvector","int","anyint","anyvector"], "attributes" : "None"},
 
 ### ``llvm.genx.svm.scatter4.scaled.<vector type>.<any int>.<vector type>`` : vISA SVM SCATTER4_SCALED instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2414,7 +2414,7 @@ Imported_Intrinsics = \
 ### times the number of channels to read per element.
 ### The element type of the data to write arg must be i32 or float.
 ###
-    "svm_scatter4_scaled" : ["void",["anyvector","int","short","long","anyint","anyvector"],"None"],
+    "svm_scatter4_scaled" : { "result" : "void", "arguments" : ["anyvector","int","short","long","anyint","anyvector"], "attributes" : "None"},
 
 ### ``llvm.genx.svm.atomic.*.<return type>.<vector type>.<any int>`` : vISA SVM_ATOMIC with binary operator
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2439,16 +2439,16 @@ Imported_Intrinsics = \
 ### Predicate, element offset, src, and the return value must all have the
 ### same vector width, which must be 1, 2, 4, or 8.
 ###
-    "svm_atomic_add" : ["anyvector",["anyvector","anyint",0,0],"None"],
-    "svm_atomic_sub" : ["anyvector",["anyvector","anyint",0,0],"None"],
-    "svm_atomic_min" : ["anyvector",["anyvector","anyint",0,0],"None"],
-    "svm_atomic_max" : ["anyvector",["anyvector","anyint",0,0],"None"],
-    "svm_atomic_xchg" : ["anyvector",["anyvector","anyint",0,0],"None"],
-    "svm_atomic_and" : ["anyvector",["anyvector","anyint",0,0],"None"],
-    "svm_atomic_or" : ["anyvector",["anyvector","anyint",0,0],"None"],
-    "svm_atomic_xor" : ["anyvector",["anyvector","anyint",0,0],"None"],
-    "svm_atomic_imin" : ["anyvector",["anyvector","anyint",0,0],"None"],
-    "svm_atomic_imax" : ["anyvector",["anyvector","anyint",0,0],"None"],
+    "svm_atomic_add" : { "result" : "anyvector", "arguments" : ["anyvector","anyint",0,0], "attributes" : "None"},
+    "svm_atomic_sub" : { "result" : "anyvector", "arguments" : ["anyvector","anyint",0,0], "attributes" : "None"},
+    "svm_atomic_min" : { "result" : "anyvector", "arguments" : ["anyvector","anyint",0,0], "attributes" : "None"},
+    "svm_atomic_max" : { "result" : "anyvector", "arguments" : ["anyvector","anyint",0,0], "attributes" : "None"},
+    "svm_atomic_xchg" : { "result" : "anyvector", "arguments" : ["anyvector","anyint",0,0], "attributes" : "None"},
+    "svm_atomic_and" : { "result" : "anyvector", "arguments" : ["anyvector","anyint",0,0], "attributes" : "None"},
+    "svm_atomic_or" : { "result" : "anyvector", "arguments" : ["anyvector","anyint",0,0], "attributes" : "None"},
+    "svm_atomic_xor" : { "result" : "anyvector", "arguments" : ["anyvector","anyint",0,0], "attributes" : "None"},
+    "svm_atomic_imin" : { "result" : "anyvector", "arguments" : ["anyvector","anyint",0,0], "attributes" : "None"},
+    "svm_atomic_imax" : { "result" : "anyvector", "arguments" : ["anyvector","anyint",0,0], "attributes" : "None"},
 
 ### ``llvm.genx.svm.atomic.*.<return type>.<vector type>.<any int>`` : vISA SVM_ATOMIC with inc/dec
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2464,8 +2464,8 @@ Imported_Intrinsics = \
 ### Predicate, element offset and the return value must have the same vector
 ### width, which must be 1, 2, 4 or 8.
 ###
-    "svm_atomic_inc" : ["anyvector",["anyvector","anyint",0],"None"],
-    "svm_atomic_dec" : ["anyvector",["anyvector","anyint",0],"None"],
+    "svm_atomic_inc" : { "result" : "anyvector", "arguments" : ["anyvector","anyint",0], "attributes" : "None"},
+    "svm_atomic_dec" : { "result" : "anyvector", "arguments" : ["anyvector","anyint",0], "attributes" : "None"},
 
 ### ``llvm.genx.svm.atomic.cmpxchg.<return type>.<vector type>.<any int>`` : vISA SVM_ATOMIC CMPXCHG instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2481,7 +2481,7 @@ Imported_Intrinsics = \
 ### Predicate, element offset, src0, src1, and the return value must all have
 ### the same vector width, which must be 1, 2, 4 or 8.
 ###
-    "svm_atomic_cmpxchg" : ["anyvector",["anyvector","anyint",0,0,0],"None"],
+    "svm_atomic_cmpxchg" : { "result" : "anyvector", "arguments" : ["anyvector","anyint",0,0,0], "attributes" : "None"},
 
 ### ``llvm.genx.svm.atomic.*.<return type>.<vector type>.<any int>`` : vISA SVM_ATOMIC with binary operator
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2498,8 +2498,8 @@ Imported_Intrinsics = \
 ### Predicate, element offset, src, and the return value must all have the
 ### same vector width, which must be 1, 2, 4, or 8.
 ###
-    "svm_atomic_fmin" : ["anyvector",["anyvector","anyint",0,0],"None"],
-    "svm_atomic_fmax" : ["anyvector",["anyvector","anyint",0,0],"None"],
+    "svm_atomic_fmin" : { "result" : "anyvector", "arguments" : ["anyvector","anyint",0,0], "attributes" : "None"},
+    "svm_atomic_fmax" : { "result" : "anyvector", "arguments" : ["anyvector","anyint",0,0], "attributes" : "None"},
 
 ### ``llvm.genx.svm.atomic.fcmpwr.<return type>.<vector type>.<any int>`` : vISA SVM_ATOMIC FCMPWR instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2515,7 +2515,7 @@ Imported_Intrinsics = \
 ### Predicate, element offset, src0, src1, and the return value must all have
 ### the same vector width, which must be 1, 2, 4 or 8.
 ###
-    "svm_atomic_fcmpwr" : ["anyvector",["anyvector","anyint",0,0,0],"None"],
+    "svm_atomic_fcmpwr" : { "result" : "anyvector", "arguments" : ["anyvector","anyint",0,0,0], "attributes" : "None"},
 
 ### ``llvm.genx.load.<return type>.<any int>`` : vISA LOAD (sampler load) instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2542,7 +2542,7 @@ Imported_Intrinsics = \
 ###
 ### The element type of the return value must be i32 or float.
 ###
-    "load" : ["anyvector",["int","int","anyint",1,1],"ReadMem"],
+    "load" : { "result" : "anyvector", "arguments" : ["int","int","anyint",1,1], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.sample.<return type>.<any float>`` : vISA SAMPLE instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2570,7 +2570,7 @@ Imported_Intrinsics = \
 ###
 ### The element type of the return value must be i32 or float.
 ###
-    "sample" : ["anyvector",["int","int","int","anyfloat",1,1],"ReadMem"],
+    "sample" : { "result" : "anyvector", "arguments" : ["int","int","int","anyfloat",1,1], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.sample.<return type>.unorm`` : vISA SAMPLE_UNORM instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2590,7 +2590,7 @@ Imported_Intrinsics = \
 ### The number of 0 bits in that lower 4 bits of the channel mask arg is the
 ### number of channels to read per element.
 ###
-    "sample_unorm" : ["anyvector",["int","int","int","float","float","float","float"],"ReadMem"],
+    "sample_unorm" : { "result" : "anyvector", "arguments" : ["int","int","int","float","float","float","float"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.3d.sample.<return type>.<vector type>....`` : vISA 3D_SAMPLE instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2605,7 +2605,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: the data read
 ###
-    "3d_sample" : ["anyvector",["int","anyvector","int","short","int","int","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector"],"ReadMem"],
+    "3d_sample" : { "result" : "anyvector", "arguments" : ["int","anyvector","int","short","int","int","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.3d.load.<return type>.<vector type>....`` : vISA 3D_LOAD instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2619,7 +2619,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: the data read
 ###
-    "3d_load" : ["anyvector",["int","anyvector","int","short","int","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector"],"ReadMem"],
+    "3d_load" : { "result" : "anyvector", "arguments" : ["int","anyvector","int","short","int","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.avs.<return type>`` : vISA AVS instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2647,44 +2647,44 @@ Imported_Intrinsics = \
 ###
 ### SIMD Control Flow: channel enable is ignored.
 ###
-    "avs" : ["anyvector",["int","int","int","float","float","float","float","float","int","int","int","float","int","char"],"ReadMem"],
+    "avs" : { "result" : "anyvector", "arguments" : ["int","int","int","float","float","float","float","float","int","int","int","float","int","char"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.barrier`` : vISA BARRIER instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
-    "barrier" : ["void",[],"Convergent"],
+    "barrier" : { "result" : "void", "arguments" : [], "attributes" : "Convergent"},
 
 ### ``llvm.genx.sbarrier`` : vISA SBARRIER instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i8 signal flag, constant
 ###
-    "sbarrier" : ["void",["char"],"Convergent"],
+    "sbarrier" : { "result" : "void", "arguments" : ["char"], "attributes" : "Convergent"},
 
 
 ### ``llvm.genx.cache.flush`` : vISA CACHE_FLUSH instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
-    "cache_flush" : ["void",[],"None"],
+    "cache_flush" : { "result" : "void", "arguments" : [], "attributes" : "None"},
 
 ### ``llvm.genx.fence`` : vISA FENCE instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i8 mask, constant
 ###
-    "fence" : ["void",["char"],"None"],
+    "fence" : { "result" : "void", "arguments" : ["char"], "attributes" : "None"},
 
 ### ``llvm.genx.wait`` : vISA WAIT instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i8 thread mask
 ###
-    "wait" : ["void",["char"],"None"],
+    "wait" : { "result" : "void", "arguments" : ["char"], "attributes" : "None"},
 
 ### ``llvm.genx.yield`` : vISA YIELD instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
-    "yield" : ["void",[],"None"],
+    "yield" : { "result" : "void", "arguments" : [], "attributes" : "None"},
 
 ### ``llvm.genx.raw.send.<return type>.<any int>.<vector type>`` : vISA RAW_SEND instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2717,7 +2717,7 @@ Imported_Intrinsics = \
 ### predicatable. For a predicatable message, it must be a vector of i1 with
 ### width determining the execution size.
 ###
-    "raw_send" : ["anyvector",["int","anyint","int","int","anyvector",0],"None"],
+    "raw_send" : { "result" : "anyvector", "arguments" : ["int","anyint","int","int","anyvector",0], "attributes" : "None"},
 
 ### ``llvm.genx.raw.send.noresult.<any int>.<vector type>`` : vISA RAW_SEND instruction with no result
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2739,7 +2739,7 @@ Imported_Intrinsics = \
 ### predicatable. For a predicatable message, it must be a vector of i1 with
 ### width determining the execution size.
 ###
-    "raw_send_noresult" : ["void",["int","anyint","int","int","anyvector"],"None"],
+    "raw_send_noresult" : { "result" : "void", "arguments" : ["int","anyint","int","int","anyvector"], "attributes" : "None"},
 
 ### ``llvm.genx.raw.sends.<return type>.<any int>.<vector type>.<vector type>`` : vISA RAW_SENDS instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2775,7 +2775,7 @@ Imported_Intrinsics = \
 ### predicatable. For a predicatable message, it must be a vector of i1 with
 ### width determining the execution size.
 ###
-    "raw_sends" : ["anyvector",["int","anyint","char","int","int","anyvector","anyvector",0],"None"],
+    "raw_sends" : { "result" : "anyvector", "arguments" : ["int","anyint","char","int","int","anyvector","anyvector",0], "attributes" : "None"},
 
 ### ``llvm.genx.raw.sends.noresult.<any int>.<vector type>.<vector type>`` : vISA RAW_SENDS instruction with no result
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2801,7 +2801,7 @@ Imported_Intrinsics = \
 ### predicatable. For a predicatable message, it must be a vector of i1 with
 ### width determining the execution size.
 ###
-    "raw_sends_noresult" : ["void",["int","anyint","char","int","int","anyvector","anyvector"],"None"],
+    "raw_sends_noresult" : { "result" : "void", "arguments" : ["int","anyint","char","int","int","anyvector","anyvector"], "attributes" : "None"},
 
 ### ``llvm.genx.raw.send2.<return type>.<vector type>.<vector type>`` : vISA RAW_SEND instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2822,7 +2822,7 @@ Imported_Intrinsics = \
 ###
 ### This intrinsic supports full encoding of the vISA raw_send instruction.
 ###
-    "raw_send2" : ["anyvector",["char","char","anyvector","char","char","char","int","int","anyvector",0],"None"],
+    "raw_send2" : { "result" : "anyvector", "arguments" : ["char","char","anyvector","char","char","char","int","int","anyvector",0], "attributes" : "None"},
 
 ### ``llvm.genx.raw.send2.noresult.<vector type>.<vector type>`` : vISA RAW_SEND instruction with no result
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2841,7 +2841,7 @@ Imported_Intrinsics = \
 ###
 ### This intrinsic supports full encoding of the vISA raw_send instruction with no result.
 ###
-    "raw_send2_noresult" : ["void",["char","char","anyvector","char","char","int","int","anyvector"],"None"],
+    "raw_send2_noresult" : { "result" : "void", "arguments" : ["char","char","anyvector","char","char","int","int","anyvector"], "attributes" : "None"},
 
 ### ``llvm.genx.raw.sends2.<return type>.<vector type>.<vector type>.<vector type>`` : vISA RAW_SENDS instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2863,7 +2863,7 @@ Imported_Intrinsics = \
 ###
 ### This intrinsic supports full encoding of the vISA raw_sends instruction.
 ###
-    "raw_sends2" : ["anyvector",["char","char","anyvector","char","char","char","char","int","int","anyvector","anyvector",0],"None"],
+    "raw_sends2" : { "result" : "anyvector", "arguments" : ["char","char","anyvector","char","char","char","char","int","int","anyvector","anyvector",0], "attributes" : "None"},
 
 ### ``llvm.genx.raw.sends2.noresult.<vector type>.<vector type>.<vector type>`` : vISA RAW_SENDS instruction with no result
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2882,7 +2882,7 @@ Imported_Intrinsics = \
 ###
 ### This intrinsic supports full encoding of the vISA raw_sends instruction with no result.
 ###
-    "raw_sends2_noresult" : ["void",["char","char","anyvector","char","char","char","int","int","anyvector","anyvector"],"None"],
+    "raw_sends2_noresult" : { "result" : "void", "arguments" : ["char","char","anyvector","char","char","char","int","int","anyvector","anyvector"], "attributes" : "None"},
 
 ## ---------------------------
 ### Video Analytics Instrinsics
@@ -2899,7 +2899,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: v64i16 or v16i16 matrix, depending on properties value
 ###
-    "va_convolve2d" : ["anyint",["int","int","float","float","int"],"ReadMem"],
+    "va_convolve2d" : { "result" : "anyint", "arguments" : ["int","int","float","float","int"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.va.hdc.convolve2d`` vISA VA HDC 2d Convolve instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2913,7 +2913,7 @@ Imported_Intrinsics = \
 ### * arg6: i16 destination surface x-offset
 ### * arg7: i16 destination surface y-offset
 ###
-    "va_hdc_convolve2d" : ["void",["int","int","float","float","int","int","short","short"],"None"],
+    "va_hdc_convolve2d" : { "result" : "void", "arguments" : ["int","int","float","float","int","int","short","short"], "attributes" : "None"},
 
 ### ``llvm.genx.va.erode.<return type>`` vISA VA Erode instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2926,7 +2926,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: vXi32
 ###
-    "va_erode" : ["anyint",["int","int","float","float","int"],"ReadMem"],
+    "va_erode" : { "result" : "anyint", "arguments" : ["int","int","float","float","int"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.va.hdc.erode`` vISA VA HDC Erode instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2939,7 +2939,7 @@ Imported_Intrinsics = \
 ### * arg5: i16 destination surface x-offset
 ### * arg6: i16 destination surface y-offset
 ###
-    "va_hdc_erode" : ["void",["int","int","float","float","int","short","short"],"None"],
+    "va_hdc_erode" : { "result" : "void", "arguments" : ["int","int","float","float","int","short","short"], "attributes" : "None"},
 
 ### ``llvm.genx.va.dilate.<return type>`` vISA VA Dilate instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2952,7 +2952,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: vXi32
 ###
-    "va_dilate" : ["anyint",["int","int","float","float","int"],"ReadMem"],
+    "va_dilate" : { "result" : "anyint", "arguments" : ["int","int","float","float","int"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.va.hdc.dilate`` vISA VA HDC Dilate instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2965,7 +2965,7 @@ Imported_Intrinsics = \
 ### * arg5: i16 destination surface x-offset
 ### * arg6: i16 destination surface y-offset
 ###
-    "va_hdc_dilate" : ["void",["int","int","float","float","int","short","short"],"None"],
+    "va_hdc_dilate" : { "result" : "void", "arguments" : ["int","int","float","float","int","short","short"], "attributes" : "None"},
 
 ### ``llvm.genx.va.minmax.<return type>`` vISA MinMax instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2977,7 +2977,7 @@ Imported_Intrinsics = \
 ###
 ### * Return: v32i8 or v16i16 depending on the surface format
 ###
-    "va_minmax" : ["anyint",["int","float","float","int"],"ReadMem"],
+    "va_minmax" : { "result" : "anyint", "arguments" : ["int","float","float","int"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.va.minmax.filter.<return type>`` vISA MinMax Filter instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2992,7 +2992,7 @@ Imported_Intrinsics = \
 ###
 ### * Return: vXi8 or vXi16 depending on return data size and format
 ###
-    "va_minmax_filter" : ["anyint",["int","int","float","float","int","int","int"],"ReadMem"],
+    "va_minmax_filter" : { "result" : "anyint", "arguments" : ["int","int","float","float","int","int","int"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.va.hdc.minmax.filter`` vISA HDC MinMax Filter instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3007,7 +3007,7 @@ Imported_Intrinsics = \
 ### * arg7: i16 destination surface x-offset
 ### * arg8: i16 destination surface y-offset
 ###
-    "va_hdc_minmax_filter" : ["void",["int","int","float","float","int","int","int","short","short"],"None"],
+    "va_hdc_minmax_filter" : { "result" : "void", "arguments" : ["int","int","float","float","int","int","int","short","short"], "attributes" : "None"},
 
 ### ``llvm.genx.va.bool.centroid.<return type>`` vISA Boolean Centroid instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3020,7 +3020,7 @@ Imported_Intrinsics = \
 ###
 ### * Return: v16i8 or v16i16 depending on surface format
 ###
-    "va_bool_centroid" : ["anyint",["int","float","float","char","char"],"ReadMem"],
+    "va_bool_centroid" : { "result" : "anyint", "arguments" : ["int","float","float","char","char"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.va.centroid.<return type>`` vISA Centroid instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3032,7 +3032,7 @@ Imported_Intrinsics = \
 ###
 ### * Return: v32i32
 ###
-    "va_centroid" : ["anyint",["int","float","float","char"],"ReadMem"],
+    "va_centroid" : { "result" : "anyint", "arguments" : ["int","float","float","char"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.va.1d.convolve.horizontal.<return type>`` vISA 1d convolve horizontal instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3045,7 +3045,7 @@ Imported_Intrinsics = \
 ###
 ### * Return: v16i16 or v64i16 depending on mode
 ###
-    "va_1d_convolve_horizontal" : ["anyint",["int","int","float","float","int"],"ReadMem"],
+    "va_1d_convolve_horizontal" : { "result" : "anyint", "arguments" : ["int","int","float","float","int"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.va.hdc.1d.convolve.horizontal`` vISA HDC 1d convolve horizontal instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3059,7 +3059,7 @@ Imported_Intrinsics = \
 ### * arg6: i16 destination surface x-offset
 ### * arg7: i16 destination surface y-offset
 ###
-    "va_hdc_1d_convolve_horizontal" : ["void",["int","int","float","float","int","int","short","short"],"None"],
+    "va_hdc_1d_convolve_horizontal" : { "result" : "void", "arguments" : ["int","int","float","float","int","int","short","short"], "attributes" : "None"},
 
 ### ``llvm.genx.va.1d.convolve.vertical.<return type>`` vISA 1d convolve vertical instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3072,7 +3072,7 @@ Imported_Intrinsics = \
 ###
 ### * Return: v16i16 or v64i16 depending on mode
 ###
-    "va_1d_convolve_vertical" : ["anyint",["int","int","float","float","int"],"ReadMem"],
+    "va_1d_convolve_vertical" : { "result" : "anyint", "arguments" : ["int","int","float","float","int"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.va.hdc.1d.convolve.vertical`` vISA HDC 1d convolve vertical instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3086,7 +3086,7 @@ Imported_Intrinsics = \
 ### * arg6: i16 destination surface x-offset
 ### * arg7: i16 destination surface y-offset
 ###
-    "va_hdc_1d_convolve_vertical" : ["void",["int","int","float","float","int","int","short","short"],"None"],
+    "va_hdc_1d_convolve_vertical" : { "result" : "void", "arguments" : ["int","int","float","float","int","int","short","short"], "attributes" : "None"},
 
 ### ``llvm.genx.va.1pixel.convolve.<return type>.<any int>`` vISA 1 Pixel Convolve instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3100,7 +3100,7 @@ Imported_Intrinsics = \
 ###
 ### * Return: v64i16 or v16i16 depending on mode.
 ###
-    "va_1pixel_convolve" : ["anyint",["int","int","float","float","int","anyint"],"ReadMem"],
+    "va_1pixel_convolve" : { "result" : "anyint", "arguments" : ["int","int","float","float","int","anyint"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.va.hdc.1pixel.convolve`` vISA HDC 1 Pixel Convolve instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3115,7 +3115,7 @@ Imported_Intrinsics = \
 ### * arg7: i16 destination surface x-offset
 ### * arg8: i16 destination surface y-offset
 ###
-    "va_hdc_1pixel_convolve" : ["void",["int","int","float","float","int","anyint","int","short","short"],"None"],
+    "va_hdc_1pixel_convolve" : { "result" : "void", "arguments" : ["int","int","float","float","int","anyint","int","short","short"], "attributes" : "None"},
 
 ### ``llvm.genx.va.1pixel.convolve.1x1mode.<return type>`` vISA 1 Pixel Convolve (1x1 mode) instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3127,7 +3127,7 @@ Imported_Intrinsics = \
 ###
 ### * Return: v64i16 or v16i16 depending on mode.
 ###
-    "va_1pixel_convolve_1x1mode" : ["anyint",["int","int","float","float"],"ReadMem"],
+    "va_1pixel_convolve_1x1mode" : { "result" : "anyint", "arguments" : ["int","int","float","float"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.va.lbp.creation.<return type>`` vISA LBP Creation instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3139,7 +3139,7 @@ Imported_Intrinsics = \
 ###
 ### * Return: v64i8 or v128i8 depending on mode
 ###
-    "va_lbp_creation" : ["anyint",["int","float","float","int"],"ReadMem"],
+    "va_lbp_creation" : { "result" : "anyint", "arguments" : ["int","float","float","int"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.va.hdc.lbp.creation`` vISA HDC LBP Creation instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3152,7 +3152,7 @@ Imported_Intrinsics = \
 ### * arg5: i16 destination surface x-offset
 ### * arg6: i16 destination surface y-offset
 ###
-    "va_hdc_lbp_creation" : ["void",["int","float","float","int","int","short","short"],"None"],
+    "va_hdc_lbp_creation" : { "result" : "void", "arguments" : ["int","float","float","int","int","short","short"], "attributes" : "None"},
 
 ### ``llvm.genx.va.lbp.correlation.<return type>`` vISA LBP Correlation instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3164,7 +3164,7 @@ Imported_Intrinsics = \
 ###
 ### * Return: v64i8
 ###
-    "va_lbp_correlation" : ["anyint",["int","float","float","short"],"ReadMem"],
+    "va_lbp_correlation" : { "result" : "anyint", "arguments" : ["int","float","float","short"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.va.hdc.lbp.correlation`` vISA HDC LBP Correlation instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3177,7 +3177,7 @@ Imported_Intrinsics = \
 ### * arg5: i16 destination surface x-offset
 ### * arg6: i16 destination surface y-offset
 ###
-    "va_hdc_lbp_correlation" : ["void",["int","float","float","short","int","short","short"],"None"],
+    "va_hdc_lbp_correlation" : { "result" : "void", "arguments" : ["int","float","float","short","int","short","short"], "attributes" : "None"},
 
 ### ``llvm.genx.va.correlation.search.<return type>`` vISA Correlation Search instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3194,7 +3194,7 @@ Imported_Intrinsics = \
 ###
 ### * Return: vXi32
 ###
-    "va_correlation_search" : ["anyint",["int","float","float","float","float","char","char","char","char"],"ReadMem"],
+    "va_correlation_search" : { "result" : "anyint", "arguments" : ["int","float","float","float","float","char","char","char","char"], "attributes" : "ReadMem"},
 
 ### ``llvm.genx.va.flood.fill.<return type>.<any int>`` vISA Flood Fill instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3207,7 +3207,7 @@ Imported_Intrinsics = \
 ###
 ### * Return: v8i16
 ###
-    "va_flood_fill" : ["anyint",["char","anyint","short","short","short"],"ReadMem"],
+    "va_flood_fill" : { "result" : "anyint", "arguments" : ["char","anyint","short","short","short"], "attributes" : "ReadMem"},
 
 ##--------------------------------------------------------------------
 ### CM codegen internal intrinsics
@@ -3225,7 +3225,7 @@ Imported_Intrinsics = \
 ### reduction functions (cm_sum etc) whose behavior is sensitive to the
 ### surrounding SIMD CF context. It is lowered by the CMSimdCFLowering pass.
 ###
-    "simdcf_predicate" : ["anyvector",[0,0],"None"],
+    "simdcf_predicate" : { "result" : "anyvector", "arguments" : [0,0], "attributes" : "None"},
 
 ### llvm.genx.simdcf.any.<vector type> : simd cf marker intrinsic.
 ###
@@ -3239,7 +3239,7 @@ Imported_Intrinsics = \
 ### This is generated by clang codegen in the implementation of SIMD control
 ### flow, and lowered by the CMSimdCFLowering pass.
 ###
-    "simdcf_any" : ["bool",["anyvector"],"None"],
+    "simdcf_any" : { "result" : "bool", "arguments" : ["anyvector"], "attributes" : "None"},
 
 ### ``llvm.genx.unmask.begin`` : simd-unmask region begin
 ###
@@ -3250,7 +3250,7 @@ Imported_Intrinsics = \
 ### the old mask in a temp.
 ### this intrinsic will be replaced by genx.simdcf.unmask by SimdCFLowering
 ###
-    "unmask_begin" : ["int",[],"WriteMem,SideEffects"],
+    "unmask_begin" : { "result" : "int", "arguments" : [], "attributes" : "WriteMem,SideEffects"},
 
 ### ``llvm.genx.unmask.end`` : simd-unmask region end
 ###
@@ -3261,7 +3261,7 @@ Imported_Intrinsics = \
 ### region, set execution mask back using the temp value from unmask-begin.
 ### this intrinsic will be replaced by genx.simdcf.remask by SimdCFLowering
 ###
-    "unmask_end" : ["void",["int"],"WriteMem,SideEffects"],
+    "unmask_end" : { "result" : "void", "arguments" : ["int"], "attributes" : "WriteMem,SideEffects"},
 
 ### ``llvm.genx.lane.id`` : implicit lane-id in the simd-fork statement
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3269,7 +3269,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value:  i32
 ###
-    "lane_id" : ["int",[],"NoMem"],
+    "lane_id" : { "result" : "int", "arguments" : [], "attributes" : "NoMem"},
 
 ### ``llvm.genx.local.*.<return type>`` : read local ID register
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3282,9 +3282,9 @@ Imported_Intrinsics = \
 ###
 ### This is generated by clang codegen and lowered by CMImpParam.
 ###
-    "local_id" : ["anyvector",[],"NoMem"],
-    "local_id16" : ["anyvector",[],"NoMem"],
-    "local_size" : ["anyvector",[],"NoMem"],
+    "local_id" : { "result" : "anyvector", "arguments" : [], "attributes" : "NoMem"},
+    "local_id16" : { "result" : "anyvector", "arguments" : [], "attributes" : "NoMem"},
+    "local_size" : { "result" : "anyvector", "arguments" : [], "attributes" : "NoMem"},
 
 ### ``llvm.genx.group.or.local.size`` : read local or group size register
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3296,7 +3296,7 @@ Imported_Intrinsics = \
 ### This is generated by CMImpParam. This is to match OpenCL thread
 ### payload layout.
 ###
-    "group_or_local_size" : ["int8",[],"NoMem"],
+    "group_or_local_size" : { "result" : "int8", "arguments" : [], "attributes" : "NoMem"},
 
 ### ``llvm.genx.local.id.*`` : read local ID register
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3309,9 +3309,9 @@ Imported_Intrinsics = \
 ### This is generated by CMImpParam. This is to match OpenCL thread
 ### payload layout.
 ###
-    "local_id_x" : ["short8",[],"NoMem"],
-    "local_id_y" : ["short8",[],"NoMem"],
-    "local_id_z" : ["short8",[],"NoMem"],
+    "local_id_x" : { "result" : "short8", "arguments" : [], "attributes" : "NoMem"},
+    "local_id_y" : { "result" : "short8", "arguments" : [], "attributes" : "NoMem"},
+    "local_id_z" : { "result" : "short8", "arguments" : [], "attributes" : "NoMem"},
 
 ### ``llvm.genx.group.count.<return type>`` : read group count register
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3321,7 +3321,7 @@ Imported_Intrinsics = \
 ###
 ### This is generated by clang codegen and lowered by CMImpParam.
 ###
-    "group_count" : ["anyvector",[],"NoMem"],
+    "group_count" : { "result" : "anyvector", "arguments" : [], "attributes" : "NoMem"},
 
 ### ``llvm.genx.get.scoreboard.bti`` : get scoreboard surface implicit
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3330,7 +3330,7 @@ Imported_Intrinsics = \
 ###
 ###This is generated by clang codegen and lowered by CMImpParam.
 ###
-    "get_scoreboard_bti" : ["int",[],"NoMem"],
+    "get_scoreboard_bti" : { "result" : "int", "arguments" : [], "attributes" : "NoMem"},
 
 ### ``llvm.genx.get.scoreboard.deltas`` : get scoreboard deltas
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3339,7 +3339,7 @@ Imported_Intrinsics = \
 ###
 ### This is generated by clang codegen and lowered by CMImpParam.
 ###
-    "get_scoreboard_deltas" : ["char16",[],"NoMem"],
+    "get_scoreboard_deltas" : { "result" : "char16", "arguments" : [], "attributes" : "NoMem"},
 
 ### ``llvm.genx.get.scoreboard.depcnt`` : get the maximal scoreboard dependency count
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3348,7 +3348,7 @@ Imported_Intrinsics = \
 ###
 ### This is generated by clang codegen and lowered by CMImpParam.
 ###
-    "get_scoreboard_depcnt" : ["int",[],"NoMem"],
+    "get_scoreboard_depcnt" : { "result" : "int", "arguments" : [], "attributes" : "NoMem"},
 
 ### ``llvm.genx.predefined.surface`` : get predefined surface
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3357,7 +3357,7 @@ Imported_Intrinsics = \
 ###
 ### This is generated by clang codegen when predefined surface is accessed.
 ###
-    "predefined_surface" : ["int",["int"],"NoMem"],
+    "predefined_surface" : { "result" : "int", "arguments" : ["int"], "attributes" : "NoMem"},
 
 ##--------------------------------------------------------------------
 ### GenX backend internal intrinsics
@@ -3379,8 +3379,8 @@ Imported_Intrinsics = \
 ### There are two variants simply because there is no way of saying here
 ### that an argument can have any scalar or vector type.
 ###
-    "constanti" : ["anyint",[0],"NoMem"],
-    "constantf" : ["anyfloat",[0],"NoMem"],
+    "constanti" : { "result" : "anyint", "arguments" : [0], "attributes" : "NoMem"},
+    "constantf" : { "result" : "anyfloat", "arguments" : [0], "attributes" : "NoMem"},
 
 ### llvm.genx.convert.<return type> : convert register category (non address)
 ###
@@ -3398,7 +3398,7 @@ Imported_Intrinsics = \
 ### of a value of category other than general. Thus the input and output
 ### might be both the same category, but not both general.
 ###
-    "convert" : ["anyint",[0],"NoMem"],
+    "convert" : { "result" : "anyint", "arguments" : [0], "attributes" : "NoMem"},
 
 ### llvm.genx.convert.addr.<return type> : convert to address register category
 ###
@@ -3414,7 +3414,7 @@ Imported_Intrinsics = \
 ### stop the address conversion falling outside of the register into which it
 ### points to avoid going out of spec (bug 4395).
 ###
-    "convert_addr" : ["anyint",[0,"short"],"NoMem"],
+    "convert_addr" : { "result" : "anyint", "arguments" : [0,"short"], "attributes" : "NoMem"},
 
 ### llvm.genx.constantpred.<return type> : load constant predicate (i1 or vector of i1)
 ###
@@ -3426,7 +3426,7 @@ Imported_Intrinsics = \
 ### We could just use a bitcast, except that EarlyCSE follows
 ### GenXConstantMaterialization and it has a habit of putting the constant
 ### back in the wrregion.
-    "constantpred" : ["anyint",[0],"NoMem"],
+    "constantpred" : { "result" : "anyint", "arguments" : [0], "attributes" : "NoMem"},
 
 ### llvm.genx.add.addr.<return type>.<any int> : add an offset onto an address register
 ###
@@ -3439,7 +3439,7 @@ Imported_Intrinsics = \
 ### a region access, GenXCategoryConversion converts it into this intrinsic
 ### so that it will be considered an add to an address register.
 ###
-    "add_addr" : ["anyint",["anyint",0],"NoMem"],
+    "add_addr" : { "result" : "anyint", "arguments" : ["anyint",0], "attributes" : "NoMem"},
 
 ### llvm.genx.rdpredregion.<return type>.<any int> : read region at specified offset from a predicate
 ###
@@ -3452,7 +3452,7 @@ Imported_Intrinsics = \
 ### in the return type, and must be 4, 8 or 16.
 ### The offset must be a multiple of the number of elements.
 ###
-    "rdpredregion" : ["anyint",["anyint","int"],"NoMem"],
+    "rdpredregion" : { "result" : "anyint", "arguments" : ["anyint","int"], "attributes" : "NoMem"},
 
 ### llvm.genx.wrpredregion.<return type>.<any int> : write region at specified offset into a predicate
 ###
@@ -3466,7 +3466,7 @@ Imported_Intrinsics = \
 ### in the "subvector to write" arg, and must be 4, 8 or 16.
 ### The offset must be a multiple of the number of elements.
 ###
-    "wrpredregion" : ["anyint",[0,"anyint","int"],"NoMem"],
+    "wrpredregion" : { "result" : "anyint", "arguments" : [0,"anyint","int"], "attributes" : "NoMem"},
 
 ### llvm.genx.wrpredpredregion.<return type>.<any int> : predicated write region at specified offset
 ### into a predicate
@@ -3486,7 +3486,7 @@ Imported_Intrinsics = \
 ### intrinsic is valid only if the predicate is an EM value, and the subvector
 ### operand is the result of a cmp (which is then baled in).
 ###
-    "wrpredpredregion" : ["anyint",[0,"anyint","int",0],"NoMem"],
+    "wrpredpredregion" : { "result" : "anyint", "arguments" : [0,"anyint","int",0], "attributes" : "NoMem"},
 
 ### ``llvm.genx.wrconstregion.<return type>.<vector type>.<any int>.<any int>`` : write a constant region
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3515,7 +3515,7 @@ Imported_Intrinsics = \
 ### The operands are the same as llvm.genx.wrregion so it can mostly be handled
 ### by the same code as llvm.genx.wrregion.
 ###
-    "wrconstregion" : ["anyvector",[0,"anyvector","int","int","int","anyint","int","anyint"],"NoMem"],
+    "wrconstregion" : { "result" : "anyvector", "arguments" : [0,"anyvector","int","int","int","anyint","int","anyint"], "attributes" : "NoMem"},
 
 ### ``llvm.genx.output`` : Mark output arguments
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3526,7 +3526,7 @@ Imported_Intrinsics = \
 ### This intrinsic call only extends the live range of marked arguments and
 ### emits no code.
 ###
-    "output" : ["void",["vararg"],"None"],
+    "output" : { "result" : "void", "arguments" : ["vararg"], "attributes" : "None"},
 
 ### ``llvm.genx.output.1.<any type>`` : Mark output argument
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3539,7 +3539,7 @@ Imported_Intrinsics = \
 ### This intrinsic call only extends the live range of marked argument and
 ### emits no code.
 ###
-    "output_1" : ["void",["any"],"None"],
+    "output_1" : { "result" : "void", "arguments" : ["any"], "attributes" : "None"},
 
 ## ``llvm.genx.print.buffer`` : read stateless pointer to print buffer
 ## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3549,7 +3549,7 @@ Imported_Intrinsics = \
 ##
 ## this is generated by clang codegen and lowered by cmimpparam.
 ##
-    "print_buffer" : ["long",[],"None"],
+    "print_buffer" : { "result" : "long", "arguments" : [], "attributes" : "None"},
 
 ## ``llvm.genx.print.format.index`` : add printf format string to collection
 ## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3559,7 +3559,7 @@ Imported_Intrinsics = \
 ##
 ## * Return value: the vector value read
 ##
-    "print_format_index" : ["int",["anyptr"],"NoMem"],
+    "print_format_index" : { "result" : "int", "arguments" : ["anyptr"], "attributes" : "NoMem"},
 
 ## ``llvm.genx.address.convert`` : convert dataport address to integer
 ## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3573,7 +3573,7 @@ Imported_Intrinsics = \
 ## used across all memory instructions.  This is needed to encode
 ## SPIRV with appropriate types for kernel arguments.
 ##
-    "address_convert" : ["anyint",["anyptr"],"NoMem"],
+    "address_convert" : { "result" : "anyint", "arguments" : ["anyptr"], "attributes" : "NoMem"},
 
 ## ``llvm.genx.gaddr`` : take an address of a global variable
 ## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3585,7 +3585,7 @@ Imported_Intrinsics = \
 ##
 ## * Return value: i64/i32 (depending on data layout) value of pointer
 ##
-    "gaddr" : ["anyint", ["anyptr"], "NoMem"],
+    "gaddr" : { "result" : "anyint", "arguments" :  ["anyptr"], "attributes" :  "NoMem"},
 
 ## ``llvm.genx.jump.table`` : CMC internal, no VISA
 ## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3599,5 +3599,5 @@ Imported_Intrinsics = \
 ## will be used by visa switchjmp as index. Return value and arg1-N are
 ## used to make ir semantically legal.
 ##
-    "jump_table" : ["anyptr", ["anyint", "vararg"], "NoMem"]
+    "jump_table" : { "result" : "anyptr", "arguments" :  ["anyint", "vararg"], "attributes" :  "NoMem"}
 }
