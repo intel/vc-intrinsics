@@ -298,16 +298,17 @@ def createOverloadTable():
             f.write(",\n  0")
         isOverloadable = False
         genISA_Intrinsic = Intrinsics[ID_array[i]]
-        for j in range(3):
-            if isinstance(genISA_Intrinsic[j],list):
-                for z in range(len(genISA_Intrinsic[j])):
-                    if isinstance(genISA_Intrinsic[j][z],int):
+        for key in genISA_Intrinsic:
+            val = genISA_Intrinsic[key] 
+            if isinstance(val,list):
+                for z in range(len(val)):
+                    if isinstance(val[z],int):
                         continue
-                    elif "any" in genISA_Intrinsic[j][z]:
+                    elif "any" in val[z]:
                         isOverloadable = True
                         break
             else:
-                if "any" in genISA_Intrinsic[j]:
+                if "any" in val:
                     isOverloadable = True
                     break
         if isOverloadable:
@@ -329,11 +330,12 @@ def createOverloadRetTable():
     for i in range(len(ID_array)):
         genISA_Intrinsic = Intrinsics[ID_array[i]]
         isOverloadable = False
-        if "any" in genISA_Intrinsic[0]:
+        ret = genISA_Intrinsic["result"]
+        if "any" in ret:
             isOverloadable = True
-        elif isinstance(genISA_Intrinsic[0], list):
-            for j in range(len(genISA_Intrinsic[0])):
-                if "any" in genISA_Intrinsic[0][j]:
+        elif isinstance(ret, list):
+            for j in range(len(ret)):
+                if "any" in ret[j]:
                     isOverloadable = True
         if isOverloadable:
             f.write("case GenXIntrinsic::genx_" + ID_array[i] + ":\n")
@@ -353,15 +355,16 @@ def createOverloadArgsTable():
         f.write("case GenXIntrinsic::genx_" + ID_array[i]+": ")
         argNums = []
         genISA_Intrinsic = Intrinsics[ID_array[i]]
-        if isinstance(genISA_Intrinsic[1],list):
-            for z in range(len(genISA_Intrinsic[1])):
-                if isinstance(genISA_Intrinsic[1][z],int):
+        args  = genISA_Intrinsic["arguments"]
+        if isinstance(args,list):
+            for z in range(len(args)):
+                if isinstance(args[z],int):
                     continue
-                elif "any" in genISA_Intrinsic[1][z]:
+                elif "any" in args[z]:
                     argNums.append(z)
         else:
-            if "any" in genISA_Intrinsic[1]:
-                append.append(0)
+            if "any" in args:
+                argNums.append(0)
         if not argNums:
             f.write("\n   return false;\n")
         else:
@@ -429,8 +432,8 @@ def createTypeTable():
     # For the first part we will create the basic type table
     for i in range(len(ID_array)):
         genISA_Intrinsic = Intrinsics[ID_array[i]] # This is our array of types
-        dest = genISA_Intrinsic[0]
-        source_list = genISA_Intrinsic[1]
+        dest = genISA_Intrinsic['result']
+        source_list = genISA_Intrinsic['arguments']
         anyArgs_array = []
         type_string = str()
 
@@ -508,7 +511,7 @@ def createAttributeTable():
     attribute_Array = []
     for i in range(len(ID_array)):
         found = False
-        intrinsic_attribute = Intrinsics[ID_array[i]][2] #This is the location of that attribute
+        intrinsic_attribute = Intrinsics[ID_array[i]]['attributes'] #This is the location of that attribute
         for j in range(len(attribute_Array)):
             if intrinsic_attribute == attribute_Array[j]:
                 found = True
