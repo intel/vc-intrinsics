@@ -672,7 +672,8 @@ void GenXIntrinsic::resetGenXAttributes(Function *F) {
   }
 }
 
-std::string GenXIntrinsic::getAnyName(unsigned id, ArrayRef<Type *> Tys) {
+std::string GenXIntrinsic::getAnyName(unsigned id, ArrayRef<Type *> Tys
+                                      FunctionType *FT = nullptr) {
   assert(isAnyIntrinsic(id));
   if (id == not_any_intrinsic) {
     std::string Result("not_any_intrinsic");
