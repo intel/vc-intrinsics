@@ -50,6 +50,7 @@ See LICENSE.TXT for details.
 #include <llvm/CodeGen/ValueTypes.h>
 
 #include "llvmVCWrapper/IR/DerivedTypes.h"
+#include "llvmVCWrapper/IR/Intrinsics.h"
 
 #include <cstring>
 
@@ -681,6 +682,6 @@ std::string GenXIntrinsic::getAnyName(unsigned id, ArrayRef<Type *> Tys) {
   } else if (isGenXIntrinsic(id))
     return getGenXName((GenXIntrinsic::ID)id, Tys);
   else
-    return Intrinsic::getName((Intrinsic::ID)id, Tys);
+    return VCINTR::Intrinsic::getName((Intrinsic::ID)id, Tys);
 }
 
