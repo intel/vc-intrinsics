@@ -1786,6 +1786,22 @@ Imported_Intrinsics = \
               "attributes" : "NoMem"
             },
 
+### bf_cvt
+### ^^^^^^
+###
+### ``llvm.genx.bf.cvt.<return type>.<any float>`` : bf_cvt instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * ``llvm.genx.bf.cvt`` :
+###
+### * arg0: first input, any scalar/vector bf/float type (overloaded)
+###
+### * Return value: result, must be float if arg0 is half, or half if arg0 is float.
+###
+    "bf_cvt" : { "result" : "anyfloat",
+                 "arguments" : ["anyfloat"],
+                 "attributes" : "NoMem"
+               },
+
 ### xor
 ### ^^^
 ### Intrinsic not needed; use LLVM IR Xor instruction
