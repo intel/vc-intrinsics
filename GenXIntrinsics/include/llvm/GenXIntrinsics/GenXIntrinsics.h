@@ -247,6 +247,10 @@ static inline FunctionType *getAnyType(LLVMContext &Context, unsigned id,
     return Intrinsic::getType(Context, (Intrinsic::ID)id, Tys);
 }
 
+/// GenXIntrinsic::isSupportedPlatform(CPU, ID) - Return true if GenxIntrinsic
+// is supported by current platform
+bool isSupportedPlatform(const std::string &CPU, unsigned id);
+
 /// GenXIntrinsic::isOverloadedArg(ID, ArgNum) - Return true if ArgNum
 /// in intrinsic overloaded
 bool isOverloadedArg(unsigned IntrinID, unsigned ArgNum);
