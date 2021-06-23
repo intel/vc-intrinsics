@@ -51,6 +51,17 @@
 # 1 - LLVMMatchType<1>
 # {int} - LLVMMatchType<{int}>
 
+#------------ Supported platforms ----------------------
+# Every intrinsic has optinal field "platforms" : "CPU"
+# CPU can be any from "platforms" in Intrinsics.py or "ALL"
+# when field is absent - ALL by default
+# additional commands :
+# "CPU" = "-SKL" - unsupported since SKL
+# "CPU" = "KBL+" - supported from KBL
+# "CPU" = "~ICLLP" - unsupported on ICLLP
+# CPU can be list:
+# ["CNL+", "KBL"] - supported on KBL and all started from CNL
+# ["ALL", "~TGLLP"] - supported everyvere except TGLLP
 
 Imported_Intrinsics = \
 {
