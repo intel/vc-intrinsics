@@ -94,6 +94,10 @@ attribute_map = {
     "SideEffects":         set(["NoUnwind"]),
 }
 
+# order does really matter
+platform_list = ["HSW", "BDW", "CHV", "SKL","BXT", "KBL",
+        "GLK", "CNL", "ICL", "ICLLP", "TGLLP", "DG1"]
+
 def getAttributeList(Attrs):
     """
     Takes a list of attribute names, calculates the union,
@@ -299,7 +303,7 @@ def createOverloadTable():
         isOverloadable = False
         genISA_Intrinsic = Intrinsics[ID_array[i]]
         for key in genISA_Intrinsic:
-            val = genISA_Intrinsic[key] 
+            val = genISA_Intrinsic[key]
             if isinstance(val,list):
                 for z in range(len(val)):
                     if isinstance(val[z],int):
@@ -549,6 +553,78 @@ def createAttributeTable():
             "#endif // GET_INTRINSIC_ATTRIBUTES\n\n")
     f.close()
 
+def platformExprProcess(curr_line,platf_expr,platforms):
+    platf_expr = platf_expr.strip()
+    # simple case
+    platf_id = platforms.get(platf_expr)
+    if platf_id is not None:
+        curr_line[platf_id] = 1;
+    # "platform+" case:
+    elif platf_expr[-1] == "+":
+        platf_id = platforms.get(platf_expr[:-1])
+        if platf_id is None:
+            raise NameError("Error in platf in " + str(Intrinsics[ID_array[i]]))
+        for  j in range(platf_id,len(platforms)):
+            curr_line[j] = 1;
+    # "-platform" case:
+    elif platf_expr[0] == "-":
+        platf_id = platforms.get(platf_expr[1:])
+        if platf_id is None:
+            raise NameError("Error in platf in " + str(Intrinsics[ID_array[i]]))
+        for  j in range(platf_id):
+            curr_line[j] = 1;
+    # "~platform" case
+    elif platf_expr[0] == "~":
+        platf_id = platforms.get(platf_expr[1:])
+        if platf_id is None:
+            raise NameError("Error in platf in " + str(Intrinsics[ID_array[i]]))
+        curr_line[j] = 0;
+    elif platf_expr == "ALL":
+        curr_line = [1]*len(platforms)
+    else:
+        raise NameError("Error in platf in " + str(Intrinsics[ID_array[i]]))
+
+    return curr_line
+
+def override_platform_name(platform):
+    return platform
+
+def createPlatformTable():
+    f = open(outputFile,"a")
+    # platforms dict "platform" : number
+    platforms = { platform_list[i] : i for i in range(len(platform_list)) }
+
+    # by default all platfroms are supported
+    support_matrix = [ [1]*len(platforms) for i in range(len(ID_array))]
+
+    # fill support matrix
+    for i in range(len(ID_array)):
+      platf_expr = Intrinsics[ID_array[i]].get('platforms')
+      if platf_expr is None:
+          continue
+      curr_line = [0]*len(platforms)
+      if not isinstance(platf_expr,list):
+          platf_expr = [platf_expr]
+      for expr in platf_expr:
+        curr_line = platformExprProcess(curr_line,expr,platforms)
+      # swope line
+      support_matrix[i] =  curr_line
+
+    f.write("// Add list of supported intrinsics for each platform.\n"
+            "#ifdef GET_INTRINSIC_PLATFORMS\n"
+            "static const std::map<std::string,std::array<unsigned," + \
+            str(len(ID_array)) + ">>  SupportedIntrinsics {\n")
+    transformed_matrix = [list(x) for x in zip(*support_matrix)]
+    for pl,ar in zip(platforms,transformed_matrix):
+        dump_ar = str(ar).replace("[", "{" ,1).replace("]", "}" ,1)
+        name = override_platform_name(pl)
+        wrstring = "{MANGLE(\"" + str(name) +  "\") , " + str(dump_ar) + " },\n"
+        f.write(wrstring)
+    f.write("};\n")
+    f.write("#endif // GET_INTRINSIC_PLATFORMS\n")
+    f.close()
+
+
 def emitSuffix():
     f = open(outputFile,"a")
     f.write("#if defined(_MSC_VER) && defined(setjmp_undefined_for_msvc)\n"
@@ -558,7 +634,7 @@ def emitSuffix():
             "#endif\n\n")
     f.close()
 
-#main functions in order
+# main functions in order
 emitPrefix()
 createTargetData()
 generateEnums()
@@ -569,4 +645,5 @@ createOverloadRetTable()
 sortedIntrinsicsOnLenth()
 createTypeTable()
 createAttributeTable()
+createPlatformTable()
 emitSuffix()

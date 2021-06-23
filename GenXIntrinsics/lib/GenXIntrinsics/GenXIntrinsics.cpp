@@ -480,6 +480,17 @@ bool isOverloaded(GenXIntrinsic::ID id) {
 
 static StringRef GenXIntrinsicMDName{ "genx_intrinsic_id" };
 
+bool GenXIntrinsic::isSupportedPlatform(const std::string &CPU, unsigned id) {
+#define GET_INTRINSIC_PLATFORMS
+#include "llvm/GenXIntrinsics/GenXIntrinsicDescription.gen"
+#undef GET_INTRINSIC_PLATFORMS
+  assert(SupportedIntrinsics.find(CPU) != SupportedIntrinsics.end() &&
+         "Unknown Platform");
+  assert(GenXIntrinsic::isGenXIntrinsic(id) &&
+         "this function should be used only for GenXIntrinsics");
+  return SupportedIntrinsics.at(
+      CPU)[id - GenXIntrinsic::ID::not_genx_intrinsic - 1];
+}
 
 /// Table of per-target intrinsic name tables.
 #define GET_INTRINSIC_TARGET_DATA
