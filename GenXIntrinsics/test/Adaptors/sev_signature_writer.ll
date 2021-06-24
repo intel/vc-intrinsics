@@ -10,9 +10,28 @@
 
 ; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
 
+; CHECK: @global_var_0 = internal global i32 undef, align 4
+@global_var_0 = internal global <1 x i32> undef, align 4 #0
+
+; CHECK: @global_var_1 = internal global i32** undef, align 4
+@global_var_1 = internal global <1 x i32**> undef, align 4 #0
+
+; CHECK: @global_var_2 = external global i32**
+@global_var_2 = external global <1 x i32**> #0
+
 ; CHECK: "VCSingleElementVector"="0" i32 @some.func.1(i32 "VCSingleElementVector"="0" %a, i32 "VCSingleElementVector"="0" %b)
 define dso_local <1 x i32> @some.func.1(<1 x i32> %a, <1 x i32> %b) local_unnamed_addr {
   entry:
+
+; CHECK: call void @llvm.genx.some.intr.0(i32* @global_var_0)
+  call void @llvm.genx.some.intr.0(<1 x i32>* @global_var_0)
+
+; CHECK: call void @llvm.genx.some.intr.1(i32*** @global_var_1)
+  call void @llvm.genx.some.intr.1(<1 x i32**>* @global_var_1)
+
+; CHECK: call void @llvm.genx.some.intr.1(i32*** @global_var_2)
+  call void @llvm.genx.some.intr.1(<1 x i32**>* @global_var_2)
+
   ret <1 x i32> %a
 }
 
@@ -41,6 +60,13 @@ define spir_kernel void @test() {
 entry:
   ret void
 }
+
+declare void @llvm.genx.some.intr.0(<1 x i32>*)
+declare void @llvm.genx.some.intr.1(<1 x i32**>*)
+
+; CHECK: "VCSingleElementVector"="0"
+; CHECK: "VCSingleElementVector"="2"
+attributes #0 = { "VCGlobalVariable" }
 
 !genx.kernels = !{!0}
 
