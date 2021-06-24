@@ -26,7 +26,7 @@ template <class TValue> llvm::MaybeAlign getAlign(TValue *Val) {
   return llvm::MaybeAlign(Val->getAlignment());
 }
 #else
-template <class TValue> llvm::Align getAlign(TValue *Val) {
+template <class TValue> auto getAlign(TValue *Val) {
   return Val->getAlign();
 }
 #endif

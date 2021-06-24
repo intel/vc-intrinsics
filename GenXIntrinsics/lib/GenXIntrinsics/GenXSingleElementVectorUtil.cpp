@@ -52,6 +52,15 @@ static std::vector<Function *> getFunctions(Module &M) {
   return Functions;
 }
 
+// Globals with SEVs are deleted from module
+// This util allows to continue iteration even after deletion
+static std::vector<GlobalVariable *> getGlobalVariables(Module &M) {
+  auto Globals = std::vector<GlobalVariable *>{};
+  std::transform(M.global_begin(), M.global_end(), std::back_inserter(Globals),
+                 [](GlobalVariable &GV) { return &GV; });
+  return Globals;
+}
+
 // Instructions with SEVs are deleted from module
 // This util allows to continue iteration even after deletion
 static std::vector<Instruction *> getInstructions(Function &F) {
@@ -192,16 +201,19 @@ static Value *createVectorToScalarValue(Value *Vector,
                                         Instruction *InsertBefore,
                                         size_t idx = 0) {
   assert(hasSingleElementVector(Vector->getType()));
-  if (isa<PointerType>(Vector->getType()))
+  if (isa<UndefValue>(Vector))
+    return UndefValue::get(
+        getTypeFreeFromSingleElementVector(Vector->getType()));
+  else if (isa<PointerType>(Vector->getType()))
     return new BitCastInst(
-        Vector, getTypeFreeFromSingleElementVector(Vector->getType()), "",
-        InsertBefore);
+        Vector, getTypeFreeFromSingleElementVector(Vector->getType()),
+        "sev.cast.", InsertBefore);
   else if (auto *Const = dyn_cast<Constant>(Vector))
     return Const->getAggregateElement(idx);
   else {
     auto *M = InsertBefore->getModule();
-    return ExtractElementInst::Create(Vector, getVectorIndex(*M, idx), "",
-                                      InsertBefore);
+    return ExtractElementInst::Create(Vector, getVectorIndex(*M, idx),
+                                      "sev.cast.", InsertBefore);
   }
 }
 
@@ -212,14 +224,19 @@ static Value *createVectorToScalarValue(Value *Vector,
 static Value *createVectorToScalarValue(Value *Vector, BasicBlock *BB,
                                         size_t idx = 0) {
   assert(hasSingleElementVector(Vector->getType()));
-  if (isa<PointerType>(Vector->getType()))
+  if (isa<UndefValue>(Vector))
+    return UndefValue::get(
+        getTypeFreeFromSingleElementVector(Vector->getType()));
+  else if (isa<PointerType>(Vector->getType()))
     return new BitCastInst(
-        Vector, getTypeFreeFromSingleElementVector(Vector->getType()), "", BB);
+        Vector, getTypeFreeFromSingleElementVector(Vector->getType()),
+        "sev.cast.", BB);
   else if (auto *Const = dyn_cast<Constant>(Vector))
     return Const->getAggregateElement(idx);
   else {
     auto *M = BB->getModule();
-    return ExtractElementInst::Create(Vector, getVectorIndex(*M, idx), "", BB);
+    return ExtractElementInst::Create(Vector, getVectorIndex(*M, idx),
+                                      "sev.cast.", BB);
   }
 }
 
@@ -229,19 +246,20 @@ static Value *createVectorToScalarValue(Value *Vector, BasicBlock *BB,
 // For non-constant vectors it returns InsertElementInst
 static Value *createScalarToVectorValue(Value *Scalar, Type *ReferenceType,
                                         Instruction *InsertBefore) {
-  if (isa<PointerType>(Scalar->getType())) {
+  if (isa<UndefValue>(Scalar))
+    return UndefValue::get(ReferenceType);
+  else if (isa<PointerType>(Scalar->getType())) {
     auto Inner = getInnerPointerVectorNesting(ReferenceType);
     return new BitCastInst(
-        Scalar, getTypeWithSingleElementVector(Scalar->getType(), Inner), "",
-        InsertBefore);
-  } else if (isa<UndefValue>(Scalar))
-    return UndefValue::get(ReferenceType);
-  else if (auto *Const = dyn_cast<ConstantInt>(Scalar))
+        Scalar, getTypeWithSingleElementVector(Scalar->getType(), Inner),
+        "sev.cast.", InsertBefore);
+  } else if (auto *Const = dyn_cast<ConstantInt>(Scalar))
     return ConstantInt::getSigned(ReferenceType, getConstantElement(Const));
   else {
     auto *M = InsertBefore->getModule();
     return InsertElementInst::Create(UndefValue::get(ReferenceType), Scalar,
-                                     getVectorIndex(*M, 0), "", InsertBefore);
+                                     getVectorIndex(*M, 0), "sev.cast.",
+                                     InsertBefore);
   }
 }
 
@@ -441,11 +459,11 @@ static void manageSingleElementVectorAttribute(Function &NewF, Type *OldT,
     assert(!hasSingleElementVector(NewT));
     auto InnerPtrs = std::to_string(getInnerPointerVectorNesting(OldT));
     auto Attr = Attribute::get(NewF.getContext(),
-                               VCFunctionMD::VCSingleElementVector, InnerPtrs);
+                               VCModuleMD::VCSingleElementVector, InnerPtrs);
     NewF.addAttribute(AttrNo, Attr);
   } else if (hasSingleElementVector(NewT)) {
     assert(!hasSingleElementVector(OldT));
-    NewF.removeAttribute(AttrNo, VCFunctionMD::VCSingleElementVector);
+    NewF.removeAttribute(AttrNo, VCModuleMD::VCSingleElementVector);
   }
 }
 
@@ -474,10 +492,10 @@ static Type *getOriginalType(Function &F, size_t AttrNo) {
   auto *T =
       AttrNo == 0 ? FuncT->getReturnType() : FuncT->getParamType(AttrNo - 1);
   auto Attrs = F.getAttributes();
-  if (!Attrs.hasAttribute(AttrNo, VCFunctionMD::VCSingleElementVector))
+  if (!Attrs.hasAttribute(AttrNo, VCModuleMD::VCSingleElementVector))
     return T;
   auto InnerPtrsStr =
-      Attrs.getAttribute(AttrNo, VCFunctionMD::VCSingleElementVector)
+      Attrs.getAttribute(AttrNo, VCModuleMD::VCSingleElementVector)
           .getValueAsString();
   auto InnerPtrs = InnerPtrsStr.empty() ? 0 : std::stoull(InnerPtrsStr.str());
   return getTypeWithSingleElementVector(T, InnerPtrs);
@@ -723,6 +741,93 @@ public:
   }
 };
 
+/// This section contains utils for rewriting global variables
+
+// For conversion in SEV-rich to SEV-free direction
+// this function adds VCSingleElementVector attribute to global var
+static void manageSingleElementVectorAttribute(GlobalVariable &GV, Type *OldT,
+                                               Type *NewT) {
+  if (hasSingleElementVector(OldT)) {
+    assert(!hasSingleElementVector(NewT));
+    auto InnerPtrs = std::to_string(getInnerPointerVectorNesting(OldT));
+    GV.addAttribute(VCModuleMD::VCSingleElementVector, InnerPtrs);
+  }
+}
+
+static GlobalVariable &createAndTakeFrom(GlobalVariable &GV, PointerType *NewT,
+                                         Constant *Initializer) {
+  auto *NewGV = new GlobalVariable(
+      *GV.getParent(), NewT->getElementType(), GV.isConstant(), GV.getLinkage(),
+      Initializer, "sev.global.", &GV, GV.getThreadLocalMode(),
+      VCINTR::GlobalValue::getAddressSpace(GV), GV.isExternallyInitialized());
+  auto DebugInfoVec = SmallVector<DIGlobalVariableExpression *, 2>{};
+  GV.getDebugInfo(DebugInfoVec);
+  NewGV->takeName(&GV);
+  NewGV->setAttributes(GV.getAttributes());
+  NewGV->copyMetadata(&GV, 0);
+  NewGV->setComdat(GV.getComdat());
+  NewGV->setAlignment(VCINTR::Align::getAlign(&GV));
+  for (auto *DebugInf : DebugInfoVec)
+    NewGV->addDebugInfo(DebugInf);
+  return *NewGV;
+}
+
+static void rewriteGlobalVariable(GlobalVariable &GV) {
+  auto *T = cast<PointerType>(GV.getType());
+  auto *NewT = cast<PointerType>(getTypeFreeFromSingleElementVector(T));
+  if (NewT == T)
+    return;
+  auto *Initializer = static_cast<Constant *>(nullptr);
+  if (GV.hasInitializer())
+    Initializer = cast<Constant>(createVectorToScalarValue(
+        GV.getInitializer(), static_cast<Instruction *>(nullptr)));
+  auto &&NewGV = createAndTakeFrom(GV, NewT, Initializer);
+  while (GV.use_begin() != GV.use_end()) {
+    auto &&Use = GV.use_begin();
+    auto *Inst = cast<Instruction>(Use->getUser());
+    auto *V = createScalarToVectorValue(&NewGV, T, Inst);
+    *Use = V;
+  }
+  manageSingleElementVectorAttribute(NewGV, T, NewT);
+  GV.eraseFromParent();
+}
+
+static void restoreGlobalVariable(GlobalVariable &GV) {
+  auto *T = cast<PointerType>(GV.getType());
+  if (!GV.hasAttribute(VCModuleMD::VCSingleElementVector))
+    return;
+  auto InnerPtrsStr =
+      GV.getAttribute(VCModuleMD::VCSingleElementVector).getValueAsString();
+  auto InnerPtrs = InnerPtrsStr.empty() ? 0 : std::stoull(InnerPtrsStr.str());
+  auto *NewT = cast<PointerType>(getTypeWithSingleElementVector(T, InnerPtrs));
+  if (NewT == T)
+    return;
+  auto *Initializer = static_cast<Constant *>(nullptr);
+  if (GV.hasInitializer())
+    Initializer = cast<Constant>(
+        createScalarToVectorValue(GV.getInitializer(), NewT->getElementType(),
+                                  static_cast<Instruction *>(nullptr)));
+  auto &&NewGV = createAndTakeFrom(GV, NewT, Initializer);
+  while (GV.use_begin() != GV.use_end()) {
+    auto &&Use = GV.use_begin();
+    auto *Inst = cast<Instruction>(Use->getUser());
+    auto *V = createVectorToScalarValue(&NewGV, Inst);
+    *Use = V;
+  }
+  manageSingleElementVectorAttribute(NewGV, T, NewT);
+  GV.eraseFromParent();
+}
+
+static void rewriteGlobalVariables(Module &M, bool IsScalarToVector = false) {
+  auto &&Globals = getGlobalVariables(M);
+  for (auto *GV : Globals) {
+    if (IsScalarToVector)
+      restoreGlobalVariable(*GV);
+    else
+      rewriteGlobalVariable(*GV);
+  }
+}
+
 /// This section contains utils for collapsing pairs of convertion instructions
 /// After rewriting all insructions in the module there are lots of pairs
 /// Extract-insert and bitcast-bitcast conversions left
@@ -873,7 +978,7 @@ static void collapseInsertInstructions(Function &F,
 /// They either remove or restore Single Element Vectors in the module
 
 void rewriteSingleElementVectors(Module &M) {
-  // TODO: rewrite globals
+  rewriteGlobalVariables(M, /*IsScalarToVector=*/false);
 
   auto Functions = getFunctions(M);
   for (auto *F : Functions)
@@ -893,7 +998,7 @@ void rewriteSingleElementVectors(Module &M) {
 }
 
 void restoreSingleElementVectors(Module &M) {
-  // TODO: rewrite globals
+  rewriteGlobalVariables(M, /*IsScalarToVector=*/true);
 
   auto Functions = getFunctions(M);
   for (auto *F : Functions)
