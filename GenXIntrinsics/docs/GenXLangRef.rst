@@ -1,5 +1,4 @@
-..
-  ========================== begin_copyright_notice ============================
+.. ========================= begin_copyright_notice ============================
   
   Copyright (C) 2015-2021 Intel Corporation
   
