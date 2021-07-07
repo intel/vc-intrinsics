@@ -4619,5 +4619,307 @@ Imported_Intrinsics = \
     "jump_table" : { "result" : "anyptr",
                      "arguments" :  ["anyint", "vararg"],
                      "attributes" :  "NoMem"
-                   }
+                   },
+
+## ``llvm.genx.write.predef.surface`` : write predefined surface variable
+## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+##
+## * arg0: ptr predefined surface variable
+## * arg1: i32 value to write
+##
+## This corresponds to MOVS visa instruction and utilizes technique of using
+## global variable in LLVM IR for predefined surfaces.
+##
+    "write_predef_surface" : { "result": "void",
+                               "arguments" : ["anyptr", "int"],
+                               "attributes" : "WriteMem",
+                             },
+
+## Internal VC memory intrinsics.
+## These versions are supposed to use predefined visa variables like %bss.
+## Intrinsics are supposed to be internal to VC backend.
+
+## ``llvm.genx.dword.atomic2.*.predef.surface`` : dword atomic with binary operator with predefined surface
+## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+## * ``llvm.genx.dword.atomic2.add.predef.surface`` : vISA DWORD_ATOMIC ADD instruction
+## * ``llvm.genx.dword.atomic2.sub.predef.surface`` : vISA DWORD_ATOMIC SUB instruction
+## * ``llvm.genx.dword.atomic2.min.predef.surface`` : vISA DWORD_ATOMIC MIN instruction
+## * ``llvm.genx.dword.atomic2.max.predef.surface`` : vISA DWORD_ATOMIC MAX instruction
+## * ``llvm.genx.dword.atomic2.xchg.predef.surface`` : vISA DWORD_ATOMIC XCHG instruction
+## * ``llvm.genx.dword.atomic2.and.predef.surface`` : vISA DWORD_ATOMIC AND instruction
+## * ``llvm.genx.dword.atomic2.or.predef.surface`` : vISA DWORD_ATOMIC OR instruction
+## * ``llvm.genx.dword.atomic2.xor.predef.surface`` : vISA DWORD_ATOMIC XOR instruction
+## * ``llvm.genx.dword.atomic2.imin.predef.surface`` : vISA DWORD_ATOMIC IMIN instruction
+## * ``llvm.genx.dword.atomic2.imax.predef.surface`` : vISA DWORD_ATOMIC IMAX instruction
+##
+## * (Exec_size inferred from element offset type)
+## * arg0: vXi1 predicate (overloaded)
+## * arg1: ptr predefined surface (overloaded)
+## * arg2: vXi32 element offset in bytes (overloaded)
+## * arg3: vXi32 src
+##
+## * Return value: vXi32 the old value read
+##
+## Predicate, element offset, src, and the return value must all have the
+## same vector width, which must be 1, 8 or 16.
+##
+    "dword_atomic2_add_predef_surface" : { "result" : "anyvector",
+                                           "arguments" : ["anyvector","anyptr","anyint",0],
+                                           "attributes" : "None",
+                                         },
+    "dword_atomic2_sub_predef_surface" : { "result" : "anyvector",
+                                           "arguments" : ["anyvector","anyptr","anyint",0],
+                                           "attributes" : "None",
+                                         },
+    "dword_atomic2_min_predef_surface" : { "result" : "anyvector",
+                                           "arguments" : ["anyvector","anyptr","anyint",0],
+                                           "attributes" : "None",
+                                         },
+    "dword_atomic2_max_predef_surface" : { "result" : "anyvector",
+                                           "arguments" : ["anyvector","anyptr","anyint",0],
+                                           "attributes" : "None",
+                                         },
+    "dword_atomic2_xchg_predef_surface" : { "result" : "anyvector",
+                                            "arguments" : ["anyvector","anyptr","anyint",0],
+                                            "attributes" : "None",
+                                          },
+    "dword_atomic2_and_predef_surface" : { "result" : "anyvector",
+                                           "arguments" : ["anyvector","anyptr","anyint",0],
+                                           "attributes" : "None",
+                                         },
+    "dword_atomic2_or_predef_surface" : { "result" : "anyvector",
+                                          "arguments" : ["anyvector","anyptr","anyint",0],
+                                          "attributes" : "None",
+                                        },
+    "dword_atomic2_xor_predef_surface" : { "result" : "anyvector",
+                                           "arguments" : ["anyvector","anyptr","anyint",0],
+                                           "attributes" : "None",
+                                         },
+    "dword_atomic2_imin_predef_surface" : { "result" : "anyvector",
+                                            "arguments" : ["anyvector","anyptr","anyint",0],
+                                            "attributes" : "None",
+                                          },
+    "dword_atomic2_imax_predef_surface" : { "result" : "anyvector",
+                                            "arguments" : ["anyvector","anyptr","anyint",0],
+                                            "attributes" : "None",
+                                          },
+
+## ``llvm.genx.dword.atomic2.*.predef.surface`` : dword atomic with fmin/fmax operation with predefined surface
+## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+## * ``llvm.genx.dword.atomic2.fmin.predef.surface`` : vISA DWORD_ATOMIC FMIN instruction
+## * ``llvm.genx.dword.atomic2.fmax.predef.surface`` : vISA DWORD_ATOMIC FMAX instruction
+##
+## * (Exec_size inferred from element offset type)
+## * arg0: vXi1 predicate (overloaded)
+## * arg1: ptr predefined surface (overloaded)
+## * arg2: vXi32 element offset in bytes (overloaded)
+## * arg3: vXfloat src
+##
+## * Return value: vXfloat the old value read
+##
+## Predicate, element offset, src, and the return value must all have the
+## same vector width, which must be 1, 8 or 16.
+##
+    "dword_atomic2_fmin_predef_surface" : { "result" : "anyvector",
+                                            "arguments" : ["anyvector","anyptr","anyint",0],
+                                            "attributes" : "None",
+                                          },
+    "dword_atomic2_fmax_predef_surface" : { "result" : "anyvector",
+                                            "arguments" : ["anyvector","anyptr","anyint",0],
+                                            "attributes" : "None",
+                                          },
+
+## ``llvm.genx.dword.atomic2.*.predef.surface`` : dword atomic with inc/dec operation with predefined surface
+## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+## * ``llvm.genx.dword.atomic2.inc.predef.surface`` : vISA DWORD_ATOMIC INC instruction
+## * ``llvm.genx.dword.atomic2.dec.predef.surface`` : vISA DWORD_ATOMIC DEC instruction
+##
+## * (Exec_size inferred from element offset type)
+## * arg0: vXi1 predicate (overloaded)
+## * arg1: ptr predefined surface (overloaded)
+## * arg2: vXi32 element offset in bytes (overloaded)
+##
+## * Return value: vXi32 the old value read
+##
+## Predicate, element offset, src, and the return value must all have the
+## same vector width, which must be 1, 8 or 16.
+##
+    "dword_atomic2_inc_predef_surface" : { "result" : "anyvector",
+                                           "arguments" : ["anyvector","anyptr","anyint"],
+                                           "attributes" : "None",
+                                         },
+    "dword_atomic2_dec_predef_surface" : { "result" : "anyvector",
+                                           "arguments" : ["anyvector","anyptr","anyint"],
+                                           "attributes" : "None",
+                                         },
+
+## ``llvm.genx.dword.atomic2.cmpxchg.predef.surface`` : vISA DWORD_ATOMIC CMPXCHG instruction with predefined surface
+## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+##
+## * (Exec_size inferred from element offset type)
+## * arg0: vXi1 predicate (overloaded)
+## * arg1: ptr predefined surface (overloaded)
+## * arg2: vXi32 element offset in bytes (overloaded)
+## * arg3: vXi32 src0
+## * arg4: vXi32 src1
+##
+## * Return value: vXi32 the old value read
+##
+## Predicate, element offset, src, and the return value must all have the
+## same vector width, which must be 1, 8 or 16.
+##
+    "dword_atomic2_cmpxchg_predef_surface" : { "result" : "anyvector",
+                                               "arguments" : ["anyvector","anyptr","anyint",0,0],
+                                               "attributes" : "None",
+                                             },
+
+## ``llvm.genx.dword.atomic2.fcmpwr.predef.surface`` : vISA DWORD_ATOMIC FCMPWR instruction with predefined surface
+## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+##
+## * (Exec_size inferred from element offset type)
+## * arg0: vXi1 predicate (overloaded)
+## * arg1: ptr predefined surface (overloaded)
+## * arg2: vXi32 element offset in bytes (overloaded)
+## * arg3: vXfloat src0
+## * arg4: vXfloat src1
+##
+## * Return value: vXfloat the old value read
+##
+## Predicate, element offset, src, and the return value must all have the
+## same vector width, which must be 1, 8 or 16.
+##
+    "dword_atomic2_fcmpwr_predef_surface" : { "result" : "anyvector",
+                                              "arguments" : ["anyvector","anyptr","anyint",0,0],
+                                              "attributes" : "None",
+                                            },
+
+## ``llvm.genx.gather.masked.scaled2.predef.surface`` : vISA GATHER_SCALED instruction with predefined surface
+## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+##
+## * (Exec_size inferred from element offset type)
+## * arg0: i32 log2 num blocks, constant (0/1/2 for num blocks 1/2/4)
+## * arg1: i16 scale, constant
+## * arg2: ptr predefined surface (overloaded)
+## * arg3: i32 global offset in bytes
+## * arg4: vXi32 element offset in bytes (overloaded)
+## * arg5: vXi1 predicate (overloaded)
+##
+## * Return value: vXi32/float the data read
+##
+    "gather_masked_scaled2_predef_surface" : { "result" : "anyvector",
+                                               "arguments" : ["int","short","anyptr","int","anyint","anyvector"],
+                                               "attributes" : "ReadMem",
+                                             },
+
+## ``llvm.genx.gather4.masked.scaled2.predef.surface`` : vISA GATHER4_SCALED instruction with predefined surface
+## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+##
+## * (Exec_size inferred from element offset type)
+## * arg0: i32 channel mask, constant
+## * arg1: i16 scale, constant
+## * arg2: ptr predefined surface (overloaded)
+## * arg3: i32 global offset in bytes
+## * arg4: vXi32 element offset in bytes
+## * arg5: vXi1 predicate (overloaded)
+##
+## * Return value: vXi32/float the data read
+##
+    "gather4_masked_scaled2_predef_surface" : { "result" : "anyvector",
+                                                "arguments" : ["int","short","anyptr","int","anyint","anyvector"],
+                                                "attributes" : "ReadMem",
+                                              },
+
+## ``llvm.genx.scatter.scaled.predef.surface`` : vISA SCATTER_SCALED instruction with predefined surface
+## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+##
+## * (Exec_size inferred from element offset type)
+## * arg0: vXi1 predicate (overloaded)
+## * arg1: i32 log2 num blocks, constant (0/1/2 for num blocks 1/2/4)
+## * arg2: i16 scale, constant
+## * arg3: ptr predefined surface (overloaded)
+## * arg4: i32 global offset in bytes
+## * arg5: vXi32 element offset (overloaded)
+## * arg6: data to write (overloaded)
+##
+## The vector width of the element offset arg is the number of elements to
+## write, which must be power of 2 and less than or equal to 32.
+##
+## The predicate arg must have the same vector width.
+##
+## The data type to write must have UD, D or F type. For 1 and 2 byte (1 x num
+## blocks) accesses the upper bytes will be ignored.
+##
+    "scatter_scaled_predef_surface" : { "result" : "void",
+                                        "arguments" : ["anyvector","int","short","anyptr","int","anyint","anyvector"],
+                                        "attributes" : "None",
+                                      },
+
+## ``llvm.genx.scatter4.scaled.predef.surface`` : vISA SCATTER4_SCALED instruction with predefined surface
+## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+##
+## * (Exec_size inferred from element offset type)
+## * arg0: vXi1 predicate (overloaded)
+## * arg1: i32 channel mask, constant
+## * arg2: i16 scale, constant
+## * arg3: ptr predefined surface (overloaded)
+## * arg4: i32 global offset in bytes
+## * arg5: vXi32 element offset in bytes (overloaded)
+## * arg6: data to write (overloaded)
+##
+## The vector width of the element offset arg is the number of elements to
+## write, which must be 8 or 16.
+## The predicate arg must have the same vector width.
+## The instruction writes up to 4 channels per element, with the lowest 4
+## bits of the channel mask arg giving the mask of channels _not_ to read.
+## The number of 0 bits in that lower 4 bits of the channel mask arg is the
+## number of channels to write per element.
+## The channels to write must be contiguous and starting at channel 0.
+## The vector width of the data to write must be the number of elements
+## times the number of channels to write per element.
+## The element type of the data to write must be i32 or float.
+##
+    "scatter4_scaled_predef_surface" : { "result" : "void",
+                                         "arguments" : ["anyvector","int","short","anyptr","int","anyint","anyvector"],
+                                         "attributes" : "None",
+                                       },
+
+## ``llvm.genx.oword.ld*.predef.surface`` : oword load instruction with predefined surface
+## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+## * ``llvm.genx.oword.ld.predef.surface`` : vISA OWORD_LD instruction
+## * ``llvm.genx.oword.ld.unaligned.predef.surface`` : vISA OWORD_LD_UNALIGNED instruction
+##
+## * (log2 number of owords inferred from return type)
+## * arg0: i32 is_modified, constant
+## * arg1: ptr predefined surface variable (overloaded)
+## * arg2: i32 offset (in owords for .ld / in bytes for .ld.unaligned)
+##
+## * Return value: vXiN the data read.
+##
+## The byte size of the return type must be 16, 32, 64, or 128.
+##
+    "oword_ld_predef_surface" : { "result" : "anyvector",
+                                  "arguments" : ["int", "anyptr", "int"],
+                                  "attributes": "ReadMem",
+                                },
+
+    "oword_ld_unaligned_predef_surface" : { "result" : "anyvector",
+                                            "arguments": ["int", "anyptr", "int"],
+                                            "attributes" : "ReadMem",
+                                          },
+
+## ``llvm.genx.oword.st.predef.surface`` : vISA OWORD_ST instruction with predefined surface
+## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+##
+## * (log2 number of owords inferred from return type)
+## * arg0: ptr predefined surface variable (overloaded)
+## * arg1: i32 offset (in owords)
+## * arg2: data to write (overloaded)
+##
+## The byte size of the data to write must be 16, 32, 64, or 128.
+##
+    "oword_st_predef_surface" : { "result" : "void",
+                                  "arguments" : ["anyptr", "int", "anyvector"],
+                                  "attributes" : "None",
+                                },
+
 }
