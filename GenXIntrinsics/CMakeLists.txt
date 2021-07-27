@@ -22,8 +22,8 @@ include(cmake/utils.cmake)
 # Global config.
 add_compile_definitions(VC_INTR_LLVM_VERSION_MAJOR=${LLVM_VERSION_MAJOR})
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/GenXIntrinsics/include)
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/GenXIntrinsics/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 
 set(GENX_INTRINSICS_DESCRIPTION "GenXIntrinsicDescription.gen")
 
