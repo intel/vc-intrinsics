@@ -6,7 +6,7 @@
 ;
 ;============================ end_copyright_notice =============================
 
-; XFAIL: llvm13
+; XFAIL: llvm13,llvm14
 ; Test reader translation of implicit argument with argument kind
 ; decoration.
 
