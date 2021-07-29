@@ -6,7 +6,7 @@
 ;
 ;============================ end_copyright_notice =============================
 
-; XFAIL: llvm13
+; XFAIL: llvm13,llvm14
 ; Test that reader treats only global pointer as svmptr type
 ; and ignores other address spaces.
 
