@@ -6,7 +6,7 @@
 ;
 ;============================ end_copyright_notice =============================
 
-; XFAIL: llvm13
+; XFAIL: llvm13,llvm14
 ; Test that reader can cope with mixed mode when some
 ; arguments use address convert and some do not.
 
