@@ -1879,19 +1879,6 @@ Imported_Intrinsics = \
                     "attributes" : "None"
                   },
 
-### ``llvm.genx.tm0.<return type>`` : read vISA v6 (%tm0)
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-###
-### * Return value:  vxi32 the value read
-###
-### The vector width must be 8
-###
-###
-    "tm0" : { "result" : "anyint",
-              "arguments" : [],
-              "attributes" : "SideEffects"
-            },
-
 ### ``llvm.genx.get.color`` : read color value of the thread origin
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
