@@ -466,19 +466,19 @@ bool GenXSPIRVWriterAdaptorImpl::runOnFunction(Function &F) {
   F.addFnAttr(VCFunctionMD::VCFunction);
 
   auto Attrs = F.getAttributes();
-  if (Attrs.hasFnAttribute(FunctionMD::CMStackCall)) {
+  if (Attrs.hasFnAttr(FunctionMD::CMStackCall)) {
     F.addFnAttr(VCFunctionMD::VCStackCall);
   }
 
-  if (Attrs.hasFnAttribute(FunctionMD::CMCallable)) {
+  if (Attrs.hasFnAttr(FunctionMD::CMCallable)) {
     F.addFnAttr(VCFunctionMD::VCCallable);
   }
 
-  if (Attrs.hasFnAttribute(FunctionMD::CMEntry)) {
+  if (Attrs.hasFnAttr(FunctionMD::CMEntry)) {
     F.addFnAttr(VCFunctionMD::VCFCEntry);
   }
 
-  if (Attrs.hasFnAttribute(FunctionMD::CMGenxSIMT)) {
+  if (Attrs.hasFnAttr(FunctionMD::CMGenxSIMT)) {
     auto SIMTMode = StringRef();
     SIMTMode =
         Attrs.getAttribute(AttributeList::FunctionIndex, FunctionMD::CMGenxSIMT)
@@ -487,7 +487,7 @@ bool GenXSPIRVWriterAdaptorImpl::runOnFunction(Function &F) {
   }
 
   auto &&Context = F.getContext();
-  if (Attrs.hasFnAttribute(FunctionMD::CMFloatControl)) {
+  if (Attrs.hasFnAttr(FunctionMD::CMFloatControl)) {
     auto FloatControl = unsigned(0);
     Attrs.getAttribute(AttributeList::FunctionIndex, FunctionMD::CMFloatControl)
         .getValueAsString()
@@ -502,7 +502,7 @@ bool GenXSPIRVWriterAdaptorImpl::runOnFunction(Function &F) {
   if (!KernelMDs)
     return true;
 
-  if (Attrs.hasFnAttribute(FunctionMD::OCLRuntime)) {
+  if (Attrs.hasFnAttr(FunctionMD::OCLRuntime)) {
     auto SIMDSize = unsigned(0);
     Attrs.getAttribute(AttributeList::FunctionIndex, FunctionMD::OCLRuntime)
         .getValueAsString()

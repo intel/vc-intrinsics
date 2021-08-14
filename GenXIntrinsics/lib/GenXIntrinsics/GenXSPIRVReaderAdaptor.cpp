@@ -377,7 +377,7 @@ static void rewriteKernelsTypes(Module &M) {
     // Skip things that are not VC kernels.
     if (F->getCallingConv() != CallingConv::SPIR_KERNEL)
       continue;
-    if (!F->getAttributes().hasFnAttribute(VCFunctionMD::VCFunction))
+    if (!F->getAttributes().hasFnAttr(VCFunctionMD::VCFunction))
       continue;
     rewriteKernelArguments(*F);
   }
@@ -411,23 +411,23 @@ bool GenXSPIRVReaderAdaptor::runOnModule(Module &M) {
 
 bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
   auto Attrs = F.getAttributes();
-  if (!Attrs.hasFnAttribute(VCFunctionMD::VCFunction))
+  if (!Attrs.hasFnAttr(VCFunctionMD::VCFunction))
     return true;
 
-  if (Attrs.hasFnAttribute(VCFunctionMD::VCStackCall)) {
+  if (Attrs.hasFnAttr(VCFunctionMD::VCStackCall)) {
     F.addFnAttr(FunctionMD::CMStackCall);
     F.addFnAttr(Attribute::NoInline);
   }
 
-  if (Attrs.hasFnAttribute(VCFunctionMD::VCCallable)){
+  if (Attrs.hasFnAttr(VCFunctionMD::VCCallable)){
     F.addFnAttr(FunctionMD::CMCallable);
   }
 
-  if (Attrs.hasFnAttribute(VCFunctionMD::VCFCEntry)) {
+  if (Attrs.hasFnAttr(VCFunctionMD::VCFCEntry)) {
     F.addFnAttr(FunctionMD::CMEntry);
   }
 
-  if (Attrs.hasFnAttribute(VCFunctionMD::VCSIMTCall)) {
+  if (Attrs.hasFnAttr(VCFunctionMD::VCSIMTCall)) {
     auto SIMTMode = StringRef();
     SIMTMode = Attrs
                    .getAttribute(AttributeList::FunctionIndex,
@@ -437,7 +437,7 @@ bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
   }
 
   auto &&Context = F.getContext();
-  if (Attrs.hasFnAttribute(VCFunctionMD::VCFloatControl)) {
+  if (Attrs.hasFnAttr(VCFunctionMD::VCFloatControl)) {
     auto FloatControl = unsigned(0);
     Attrs
         .getAttribute(AttributeList::FunctionIndex,
@@ -475,7 +475,7 @@ bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
 
   llvm::Type *I32Ty = llvm::Type::getInt32Ty(Context);
 
-  if (Attrs.hasFnAttribute(VCFunctionMD::VCSLMSize)) {
+  if (Attrs.hasFnAttr(VCFunctionMD::VCSLMSize)) {
     Attrs.getAttribute(AttributeList::FunctionIndex, VCFunctionMD::VCSLMSize)
         .getValueAsString()
         .getAsInteger(0, SLMSize);
