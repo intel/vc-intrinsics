@@ -24,6 +24,7 @@ SPDX-License-Identifier: MIT
 #include "llvm/Pass.h"
 #include "llvm/Support/Process.h"
 
+#include "llvmVCWrapper/IR/Attributes.h"
 #include "llvmVCWrapper/IR/DerivedTypes.h"
 #include "llvmVCWrapper/IR/Function.h"
 #include "llvmVCWrapper/IR/GlobalValue.h"
@@ -466,19 +467,19 @@ bool GenXSPIRVWriterAdaptorImpl::runOnFunction(Function &F) {
   F.addFnAttr(VCFunctionMD::VCFunction);
 
   auto Attrs = F.getAttributes();
-  if (Attrs.hasFnAttribute(FunctionMD::CMStackCall)) {
+  if (VCINTR::AttributeList::hasFnAttr(Attrs, FunctionMD::CMStackCall)) {
     F.addFnAttr(VCFunctionMD::VCStackCall);
   }
 
-  if (Attrs.hasFnAttribute(FunctionMD::CMCallable)) {
+  if (VCINTR::AttributeList::hasFnAttr(Attrs, FunctionMD::CMCallable)) {
     F.addFnAttr(VCFunctionMD::VCCallable);
   }
 
-  if (Attrs.hasFnAttribute(FunctionMD::CMEntry)) {
+  if (VCINTR::AttributeList::hasFnAttr(Attrs, FunctionMD::CMEntry)) {
     F.addFnAttr(VCFunctionMD::VCFCEntry);
   }
 
-  if (Attrs.hasFnAttribute(FunctionMD::CMGenxSIMT)) {
+  if (VCINTR::AttributeList::hasFnAttr(Attrs, FunctionMD::CMGenxSIMT)) {
     auto SIMTMode = StringRef();
     SIMTMode =
         Attrs.getAttribute(AttributeList::FunctionIndex, FunctionMD::CMGenxSIMT)
@@ -487,7 +488,7 @@ bool GenXSPIRVWriterAdaptorImpl::runOnFunction(Function &F) {
   }
 
   auto &&Context = F.getContext();
-  if (Attrs.hasFnAttribute(FunctionMD::CMFloatControl)) {
+  if (VCINTR::AttributeList::hasFnAttr(Attrs, FunctionMD::CMFloatControl)) {
     auto FloatControl = unsigned(0);
     Attrs.getAttribute(AttributeList::FunctionIndex, FunctionMD::CMFloatControl)
         .getValueAsString()
@@ -502,7 +503,7 @@ bool GenXSPIRVWriterAdaptorImpl::runOnFunction(Function &F) {
   if (!KernelMDs)
     return true;
 
-  if (Attrs.hasFnAttribute(FunctionMD::OCLRuntime)) {
+  if (VCINTR::AttributeList::hasFnAttr(Attrs, FunctionMD::OCLRuntime)) {
     auto SIMDSize = unsigned(0);
     Attrs.getAttribute(AttributeList::FunctionIndex, FunctionMD::OCLRuntime)
         .getValueAsString()
