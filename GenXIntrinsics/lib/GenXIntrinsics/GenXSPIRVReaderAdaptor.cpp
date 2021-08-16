@@ -22,6 +22,7 @@ SPDX-License-Identifier: MIT
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 
+#include "llvmVCWrapper/IR/Attributes.h"
 #include "llvmVCWrapper/IR/Function.h"
 #include "llvmVCWrapper/IR/GlobalValue.h"
 
@@ -377,7 +378,8 @@ static void rewriteKernelsTypes(Module &M) {
     // Skip things that are not VC kernels.
     if (F->getCallingConv() != CallingConv::SPIR_KERNEL)
       continue;
-    if (!F->getAttributes().hasFnAttribute(VCFunctionMD::VCFunction))
+    if (!VCINTR::AttributeList::hasFnAttr(F->getAttributes(),
+                                          VCFunctionMD::VCFunction))
       continue;
     rewriteKernelArguments(*F);
   }
@@ -411,23 +413,23 @@ bool GenXSPIRVReaderAdaptor::runOnModule(Module &M) {
 
 bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
   auto Attrs = F.getAttributes();
-  if (!Attrs.hasFnAttribute(VCFunctionMD::VCFunction))
+  if (!VCINTR::AttributeList::hasFnAttr(Attrs, VCFunctionMD::VCFunction))
     return true;
 
-  if (Attrs.hasFnAttribute(VCFunctionMD::VCStackCall)) {
+  if (VCINTR::AttributeList::hasFnAttr(Attrs, VCFunctionMD::VCStackCall)) {
     F.addFnAttr(FunctionMD::CMStackCall);
     F.addFnAttr(Attribute::NoInline);
   }
 
-  if (Attrs.hasFnAttribute(VCFunctionMD::VCCallable)){
+  if (VCINTR::AttributeList::hasFnAttr(Attrs, VCFunctionMD::VCCallable)) {
     F.addFnAttr(FunctionMD::CMCallable);
   }
 
-  if (Attrs.hasFnAttribute(VCFunctionMD::VCFCEntry)) {
+  if (VCINTR::AttributeList::hasFnAttr(Attrs, VCFunctionMD::VCFCEntry)) {
     F.addFnAttr(FunctionMD::CMEntry);
   }
 
-  if (Attrs.hasFnAttribute(VCFunctionMD::VCSIMTCall)) {
+  if (VCINTR::AttributeList::hasFnAttr(Attrs, VCFunctionMD::VCSIMTCall)) {
     auto SIMTMode = StringRef();
     SIMTMode = Attrs
                    .getAttribute(AttributeList::FunctionIndex,
@@ -437,7 +439,7 @@ bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
   }
 
   auto &&Context = F.getContext();
-  if (Attrs.hasFnAttribute(VCFunctionMD::VCFloatControl)) {
+  if (VCINTR::AttributeList::hasFnAttr(Attrs, VCFunctionMD::VCFloatControl)) {
     auto FloatControl = unsigned(0);
     Attrs
         .getAttribute(AttributeList::FunctionIndex,
@@ -475,7 +477,7 @@ bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
 
   llvm::Type *I32Ty = llvm::Type::getInt32Ty(Context);
 
-  if (Attrs.hasFnAttribute(VCFunctionMD::VCSLMSize)) {
+  if (VCINTR::AttributeList::hasFnAttr(Attrs, VCFunctionMD::VCSLMSize)) {
     Attrs.getAttribute(AttributeList::FunctionIndex, VCFunctionMD::VCSLMSize)
         .getValueAsString()
         .getAsInteger(0, SLMSize);
