@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 #define VCINTR_IR_DERIVEDYPES_H
 
 #include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/Module.h>
 
 namespace VCINTR {
 // TODO: move this to namespace VectorType and rename to "get"
