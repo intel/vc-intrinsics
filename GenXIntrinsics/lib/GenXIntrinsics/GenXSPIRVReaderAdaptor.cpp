@@ -322,6 +322,8 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
     NewF->addParamAttr(i, Attr);
   }
 
+  legalizeParamAttributes(NewF);
+
   return NewF;
 }
 

@@ -22,6 +22,7 @@ if(BUILD_EXTERNAL)
               GenXSPIRVReaderAdaptor.cpp
               GenXSPIRVWriterAdaptor.cpp
               GenXVersion.cpp
+              AdaptorsCommon.cpp
              )
   llvm_update_compile_flags(LLVMGenXIntrinsics)
   add_dependencies(LLVMGenXIntrinsics GenXIntrinsicsGen)
