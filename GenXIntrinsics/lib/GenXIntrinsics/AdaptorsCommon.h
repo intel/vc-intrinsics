@@ -9,6 +9,9 @@ SPDX-License-Identifier: MIT
 // This file defines common constants for writer/reader spirv adaptors.
 
 namespace llvm {
+
+class Function;
+
 namespace genx {
 
 enum class ArgKind {
@@ -130,6 +133,18 @@ inline unsigned getOpaqueTypeAddressSpace(SPIRVType Ty) {
     return 0;
   }
 }
+
+// Overrides specific attributes of function parameters.
+//
+// Function arguments of PointerType can have specific
+// attributes like ByVal, ByRef, Preallocated, InAlloca
+// that contain Pointee Type of that pointer as parameter.
+// SPIRV Adaptor passes may change Pointee type, so we must
+// explicitly change this type in corresponding attributes
+// in order to construct valid llvm-IR.
+//
+// (see more here: https://llvm.org/docs/LangRef.html#parameter-attributes)
+void legalizeParamAttributes(Function* F);
 
 } // namespace genx
 } // namespace llvm

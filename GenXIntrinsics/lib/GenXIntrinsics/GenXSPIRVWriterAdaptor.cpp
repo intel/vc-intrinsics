@@ -198,6 +198,8 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
     NewF->removeParamAttr(i, VCFunctionMD::VCArgumentDesc);
   }
 
+  legalizeParamAttributes(NewF);
+
   return NewF;
 }
 
