@@ -49,6 +49,7 @@ else()
     GenXSPIRVReaderAdaptor.cpp
     GenXSPIRVWriterAdaptor.cpp
     GenXVersion.cpp
+    AdaptorsCommon.cpp
     ADDITIONAL_HEADER_DIRS
     ${GENX_INTRINSICS_MAIN_INCLUDE_DIR}/llvm/GenXIntrinsics
 
