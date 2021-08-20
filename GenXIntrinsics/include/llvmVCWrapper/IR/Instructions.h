@@ -19,7 +19,7 @@ auto static constexpr UndefMaskElem = -1;
 // LLVM <= 10 does not have ShuffleVectorInst ctor which accepts ArrayRef<int>
 // This method returns mask with appropriate type for ShuffleVectorInst ctor
 #if VC_INTR_LLVM_VERSION_MAJOR <= 10
-static llvm::Constant *getShuffleMask(llvm::ArrayRef<int> Mask,
+inline llvm::Constant *getShuffleMask(llvm::ArrayRef<int> Mask,
                                       llvm::LLVMContext &Context) {
   using namespace llvm;
   auto Indices = SmallVector<llvm::Constant *, 8>{};
@@ -34,7 +34,7 @@ static llvm::Constant *getShuffleMask(llvm::ArrayRef<int> Mask,
   return ConstantVector::get(Indices);
 }
 #else
-static llvm::ArrayRef<int> getShuffleMask(llvm::ArrayRef<int> Mask,
+inline llvm::ArrayRef<int> getShuffleMask(llvm::ArrayRef<int> Mask,
                                           llvm::LLVMContext &Context) {
   return Mask;
 }

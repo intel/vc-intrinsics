@@ -50,13 +50,13 @@ public:
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const CallInst *I) {
+  static bool classof(const CallInst *I) {
     if (const Function *CF = I->getCalledFunction()) {
       return CF->getName().startswith(GenXIntrinsic::getGenXIntrinsicPrefix());
     }
     return false;
   }
-  static inline bool classof(const Value *V) {
+  static bool classof(const Value *V) {
     return isa<CallInst>(V) && classof(cast<CallInst>(V));
   }
 };

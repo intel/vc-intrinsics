@@ -15,14 +15,14 @@ SPDX-License-Identifier: MIT
 namespace VCINTR {
 // TODO: move this to namespace VectorType and rename to "get"
 #if VC_INTR_LLVM_VERSION_MAJOR >= 9
-  static inline llvm::VectorType *getVectorType(llvm::Type *ElementType,
-                                                llvm::ElementCount EC) {
+  inline llvm::VectorType *getVectorType(llvm::Type *ElementType,
+                                         llvm::ElementCount EC) {
     return llvm::VectorType::get(ElementType, EC);
   }
 #endif
 
-  static inline llvm::VectorType *getVectorType(llvm::Type *ElementType,
-                                                unsigned NumElements) {
+  inline llvm::VectorType *getVectorType(llvm::Type *ElementType,
+                                         unsigned NumElements) {
 #if VC_INTR_LLVM_VERSION_MAJOR >= 11
     return llvm::VectorType::get(ElementType, NumElements, false /*Scalable*/);
 #else
@@ -30,8 +30,8 @@ namespace VCINTR {
 #endif
   }
 
-  static inline llvm::StructType *getTypeByName(llvm::Module *M,
-                                                llvm::StringRef Name) {
+  inline llvm::StructType *getTypeByName(llvm::Module *M,
+                                         llvm::StringRef Name) {
 #if VC_INTR_LLVM_VERSION_MAJOR >= 12
     return llvm::StructType::getTypeByName(M->getContext(), Name);
 #else
@@ -41,7 +41,7 @@ namespace VCINTR {
 
 namespace VectorType {
 
-static unsigned getNumElements(llvm::VectorType *VecType) {
+inline unsigned getNumElements(llvm::VectorType *VecType) {
   using namespace llvm;
 #if VC_INTR_LLVM_VERSION_MAJOR <= 10
   return VecType->getNumElements();
