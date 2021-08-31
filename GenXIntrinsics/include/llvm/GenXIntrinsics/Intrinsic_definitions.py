@@ -1096,35 +1096,6 @@ Imported_Intrinsics = \
                     "attributes" : "NoMem"
                   },
 
-### ``llvm.genx.*madw.<return type>.<any int>`` : madw instruction, no saturation
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-### * ``llvm.genx.smadw`` : result signed
-### * ``llvm.genx.umadw`` : result unsigned
-###
-### result := arg0 * arg1 + arg2
-###
-### * Return value: result, the full 64-bit of the results of multiplying two 32-bit 
-###                 integers and adding 32-bit integer(32b*32b+32b->64b).
-###                 The low 32b of results are stored in the lower GRF and 
-###                 the high 32b of results are stored in the high GRF.
-###
-###                 Return width of intrinsic depends on args width:
-###                 if args width <= GRF/sizeof(i32) then return width = 2*GRF/sizeof(i32)
-###                 else return width = 2 * args width
-###
-### * arg0: first input, same element type as result
-### * arg1: second input, same type as arg0
-### * arg2: third input, same type as arg0
-###
-    "umadw" : { "result" : "anyint",
-                "arguments" : ["anyint", 1, 1],
-                "attributes" : "NoMem"
-              },
-    "smadw" : { "result" : "anyint",
-                "arguments" : ["anyint", 1, 1],
-                "attributes" : "NoMem"
-              },
-
 ### ``llvm.genx.*max.<return type>.<any int>`` : max instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.smax`` : result and operands signed
@@ -1190,6 +1161,28 @@ Imported_Intrinsics = \
 ### No intrinsic needed as the LLVM IR SRem, URem and FRem instructions
 ### cover vISA functionality
 ###
+
+### imad
+### ^^^^
+###
+### ``llvm.genx.*imad.<{hi, lo}>.<any int>`` : imad instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * ``llvm.genx.simad`` : result and operands signed
+### * ``llvm.genx.uimad`` : result and operands unsigned
+###
+### result := {hi, lo} = arg0 * arg1
+###
+### * arg0: first input, i32 scalar/vector integer type
+### * arg1: second input, same type as arg0
+###
+    "simad" : { "result" : ["anyint", "anyint"],
+                "arguments" :  [0, 0],
+                "attributes" :  "NoMem"
+              },
+    "uimad" : { "result" : ["anyint", "anyint"],
+                "arguments" :  [0, 0],
+                "attributes" :  "NoMem"
+              },
 
 ### mul
 ### ^^^
@@ -4933,4 +4926,32 @@ Imported_Intrinsics = \
                                   "attributes" : "None",
                                 },
 
+
+## ``llvm.genx.*madw.<return type>.<any int>`` : madw instruction, no saturation
+## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+## * ``llvm.genx.smadw`` : result signed
+## * ``llvm.genx.umadw`` : result unsigned
+##
+## result := arg0 * arg1 + arg2
+##
+## * Return value: result, the full 64-bit of the results of multiplying two 32-bit
+##                 integers and adding 32-bit integer(32b*32b+32b->64b).
+##                 The low 32b of results are stored in the lower GRF and
+##                 the high 32b of results are stored in the high GRF.
+##
+##                 Return width must be 2*GRF/sizeof(i32)
+##                 Args width must be no more than GRF/sizeof(i32) and must be a power of two
+##
+## * arg0: first input, same element type as result
+## * arg1: second input, same type as arg0
+## * arg2: third input, same type as arg0
+##
+    "umadw" : { "result" : "anyint",
+                "arguments" : ["anyint", 1, 1],
+                "attributes" : "NoMem"
+              },
+    "smadw" : { "result" : "anyint",
+                "arguments" : ["anyint", 1, 1],
+                "attributes" : "NoMem"
+              },
 }
