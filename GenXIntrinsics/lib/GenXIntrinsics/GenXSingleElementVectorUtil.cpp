@@ -22,6 +22,7 @@ SPDX-License-Identifier: MIT
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 
+#include "llvmVCWrapper/IR/Attributes.h"
 #include "llvmVCWrapper/IR/DerivedTypes.h"
 #include "llvmVCWrapper/IR/Function.h"
 #include "llvmVCWrapper/IR/GlobalValue.h"
@@ -460,10 +461,11 @@ static void manageSingleElementVectorAttribute(Function &NewF, Type *OldT,
     auto InnerPtrs = std::to_string(getInnerPointerVectorNesting(OldT));
     auto Attr = Attribute::get(NewF.getContext(),
                                VCModuleMD::VCSingleElementVector, InnerPtrs);
-    NewF.addAttribute(AttrNo, Attr);
+    VCINTR::Function::addAttributeAtIndex(NewF, AttrNo, Attr);
   } else if (hasSingleElementVector(NewT)) {
     assert(!hasSingleElementVector(OldT));
-    NewF.removeAttribute(AttrNo, VCModuleMD::VCSingleElementVector);
+    VCINTR::Function::removeAttributeAtIndex(NewF, AttrNo,
+                                             VCModuleMD::VCSingleElementVector);
   }
 }
 
@@ -492,11 +494,12 @@ static Type *getOriginalType(Function &F, size_t AttrNo) {
   auto *T =
       AttrNo == 0 ? FuncT->getReturnType() : FuncT->getParamType(AttrNo - 1);
   auto Attrs = F.getAttributes();
-  if (!Attrs.hasAttribute(AttrNo, VCModuleMD::VCSingleElementVector))
+  if (!VCINTR::AttributeList::hasAttributeAtIndex(
+          Attrs, AttrNo, VCModuleMD::VCSingleElementVector))
     return T;
-  auto InnerPtrsStr =
-      Attrs.getAttribute(AttrNo, VCModuleMD::VCSingleElementVector)
-          .getValueAsString();
+  auto InnerPtrsStr = VCINTR::AttributeList::getAttributeAtIndex(
+                          Attrs, AttrNo, VCModuleMD::VCSingleElementVector)
+                          .getValueAsString();
   auto InnerPtrs = InnerPtrsStr.empty() ? 0 : std::stoull(InnerPtrsStr.str());
   return getTypeWithSingleElementVector(T, InnerPtrs);
 }

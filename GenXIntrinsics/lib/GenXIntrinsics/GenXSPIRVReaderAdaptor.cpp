@@ -433,25 +433,25 @@ bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
 
   if (VCINTR::AttributeList::hasFnAttr(Attrs, VCFunctionMD::VCSIMTCall)) {
     auto SIMTMode = StringRef();
-    SIMTMode = Attrs
-                   .getAttribute(AttributeList::FunctionIndex,
-                                 VCFunctionMD::VCSIMTCall)
-                   .getValueAsString();
+    SIMTMode =
+        VCINTR::AttributeList::getAttributeAtIndex(
+            Attrs, AttributeList::FunctionIndex, VCFunctionMD::VCSIMTCall)
+            .getValueAsString();
     F.addFnAttr(FunctionMD::CMGenxSIMT, SIMTMode);
   }
 
   auto &&Context = F.getContext();
   if (VCINTR::AttributeList::hasFnAttr(Attrs, VCFunctionMD::VCFloatControl)) {
     auto FloatControl = unsigned(0);
-    Attrs
-        .getAttribute(AttributeList::FunctionIndex,
-                      VCFunctionMD::VCFloatControl)
+    VCINTR::AttributeList::getAttributeAtIndex(
+        Attrs, AttributeList::FunctionIndex, VCFunctionMD::VCFloatControl)
         .getValueAsString()
         .getAsInteger(0, FloatControl);
 
     auto Attr = Attribute::get(Context, FunctionMD::CMFloatControl,
                                std::to_string(FloatControl));
-    F.addAttribute(AttributeList::FunctionIndex, Attr);
+    VCINTR::Function::addAttributeAtIndex(F, AttributeList::FunctionIndex,
+                                          Attr);
   }
 
   if (auto *ReqdSubgroupSize =
@@ -461,7 +461,8 @@ bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
             ->getZExtValue();
     Attribute Attr = Attribute::get(Context, FunctionMD::OCLRuntime,
                                     std::to_string(SIMDSize));
-    F.addAttribute(AttributeList::FunctionIndex, Attr);
+    VCINTR::Function::addAttributeAtIndex(F, AttributeList::FunctionIndex,
+                                          Attr);
   }
 
   if (!(F.getCallingConv() == CallingConv::SPIR_KERNEL))
@@ -480,7 +481,8 @@ bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
   llvm::Type *I32Ty = llvm::Type::getInt32Ty(Context);
 
   if (VCINTR::AttributeList::hasFnAttr(Attrs, VCFunctionMD::VCSLMSize)) {
-    Attrs.getAttribute(AttributeList::FunctionIndex, VCFunctionMD::VCSLMSize)
+    VCINTR::AttributeList::getAttributeAtIndex(
+        Attrs, AttributeList::FunctionIndex, VCFunctionMD::VCSLMSize)
         .getValueAsString()
         .getAsInteger(0, SLMSize);
   }
@@ -490,18 +492,24 @@ bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
     auto ArgKind = unsigned(0);
     auto ArgIOKind = unsigned(0);
     auto ArgDesc = std::string();
-    if (Attrs.hasAttribute(ArgNo + 1, VCFunctionMD::VCArgumentKind)) {
-      Attrs.getAttribute(ArgNo + 1, VCFunctionMD::VCArgumentKind)
+    if (VCINTR::AttributeList::hasAttributeAtIndex(
+            Attrs, ArgNo + 1, VCFunctionMD::VCArgumentKind)) {
+      VCINTR::AttributeList::getAttributeAtIndex(Attrs, ArgNo + 1,
+                                                 VCFunctionMD::VCArgumentKind)
           .getValueAsString()
           .getAsInteger(0, ArgKind);
     }
-    if (Attrs.hasAttribute(ArgNo + 1, VCFunctionMD::VCArgumentIOKind)) {
-      Attrs.getAttribute(ArgNo + 1, VCFunctionMD::VCArgumentIOKind)
+    if (VCINTR::AttributeList::hasAttributeAtIndex(
+            Attrs, ArgNo + 1, VCFunctionMD::VCArgumentIOKind)) {
+      VCINTR::AttributeList::getAttributeAtIndex(Attrs, ArgNo + 1,
+                                                 VCFunctionMD::VCArgumentIOKind)
           .getValueAsString()
           .getAsInteger(0, ArgIOKind);
     }
-    if (Attrs.hasAttribute(ArgNo + 1, VCFunctionMD::VCArgumentDesc)) {
-      ArgDesc = Attrs.getAttribute(ArgNo + 1, VCFunctionMD::VCArgumentDesc)
+    if (VCINTR::AttributeList::hasAttributeAtIndex(
+            Attrs, ArgNo + 1, VCFunctionMD::VCArgumentDesc)) {
+      ArgDesc = VCINTR::AttributeList::getAttributeAtIndex(
+                    Attrs, ArgNo + 1, VCFunctionMD::VCArgumentDesc)
                     .getValueAsString()
                     .str();
     }
