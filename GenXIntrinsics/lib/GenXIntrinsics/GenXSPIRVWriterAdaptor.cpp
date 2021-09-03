@@ -483,22 +483,24 @@ bool GenXSPIRVWriterAdaptorImpl::runOnFunction(Function &F) {
 
   if (VCINTR::AttributeList::hasFnAttr(Attrs, FunctionMD::CMGenxSIMT)) {
     auto SIMTMode = StringRef();
-    SIMTMode =
-        Attrs.getAttribute(AttributeList::FunctionIndex, FunctionMD::CMGenxSIMT)
-            .getValueAsString();
+    SIMTMode = VCINTR::AttributeList::getAttributeAtIndex(
+                   Attrs, AttributeList::FunctionIndex, FunctionMD::CMGenxSIMT)
+                   .getValueAsString();
     F.addFnAttr(VCFunctionMD::VCSIMTCall, SIMTMode);
   }
 
   auto &&Context = F.getContext();
   if (VCINTR::AttributeList::hasFnAttr(Attrs, FunctionMD::CMFloatControl)) {
     auto FloatControl = unsigned(0);
-    Attrs.getAttribute(AttributeList::FunctionIndex, FunctionMD::CMFloatControl)
+    VCINTR::AttributeList::getAttributeAtIndex(
+        Attrs, AttributeList::FunctionIndex, FunctionMD::CMFloatControl)
         .getValueAsString()
         .getAsInteger(0, FloatControl);
 
     auto Attr = Attribute::get(Context, VCFunctionMD::VCFloatControl,
                                std::to_string(FloatControl));
-    F.addAttribute(AttributeList::FunctionIndex, Attr);
+    VCINTR::Function::addAttributeAtIndex(F, AttributeList::FunctionIndex,
+                                          Attr);
   }
 
   auto *KernelMDs = F.getParent()->getNamedMetadata(FunctionMD::GenXKernels);
@@ -507,7 +509,8 @@ bool GenXSPIRVWriterAdaptorImpl::runOnFunction(Function &F) {
 
   if (VCINTR::AttributeList::hasFnAttr(Attrs, FunctionMD::OCLRuntime)) {
     auto SIMDSize = unsigned(0);
-    Attrs.getAttribute(AttributeList::FunctionIndex, FunctionMD::OCLRuntime)
+    VCINTR::AttributeList::getAttributeAtIndex(
+        Attrs, AttributeList::FunctionIndex, FunctionMD::OCLRuntime)
         .getValueAsString()
         .getAsInteger(0, SIMDSize);
     auto SizeMD = ConstantAsMetadata::get(
@@ -537,7 +540,7 @@ bool GenXSPIRVWriterAdaptorImpl::runOnFunction(Function &F) {
             auto ArgKind = V->getZExtValue();
             auto Attr = Attribute::get(Context, VCFunctionMD::VCArgumentKind,
                                        std::to_string(ArgKind));
-            F.addAttribute(ArgNo + 1, Attr);
+            VCINTR::Function::addAttributeAtIndex(F, ArgNo + 1, Attr);
           }
       }
     }
@@ -550,7 +553,8 @@ bool GenXSPIRVWriterAdaptorImpl::runOnFunction(Function &F) {
         auto SLMSize = V->getZExtValue();
         auto Attr = Attribute::get(Context, VCFunctionMD::VCSLMSize,
                                    std::to_string(SLMSize));
-        F.addAttribute(AttributeList::FunctionIndex, Attr);
+        VCINTR::Function::addAttributeAtIndex(F, AttributeList::FunctionIndex,
+                                              Attr);
       }
   }
 
@@ -564,7 +568,7 @@ bool GenXSPIRVWriterAdaptorImpl::runOnFunction(Function &F) {
             auto ArgKind = V->getZExtValue();
             auto Attr = Attribute::get(Context, VCFunctionMD::VCArgumentIOKind,
                                        std::to_string(ArgKind));
-            F.addAttribute(ArgNo + 1, Attr);
+            VCINTR::Function::addAttributeAtIndex(F, ArgNo + 1, Attr);
           }
       }
     }
@@ -579,7 +583,7 @@ bool GenXSPIRVWriterAdaptorImpl::runOnFunction(Function &F) {
           auto &&Desc = MS->getString();
           auto Attr =
               Attribute::get(Context, VCFunctionMD::VCArgumentDesc, Desc);
-          F.addAttribute(ArgNo + 1, Attr);
+          VCINTR::Function::addAttributeAtIndex(F, ArgNo + 1, Attr);
         }
       }
     }

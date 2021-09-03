@@ -33,6 +33,45 @@ inline bool hasFnAttr(const llvm::AttributeList &AttrList,
 #endif
 }
 
+inline bool hasAttributeAtIndex(const llvm::AttributeList &AttrList,
+                                unsigned Index,
+                                llvm::Attribute::AttrKind Kind) {
+#if VC_INTR_LLVM_VERSION_MAJOR >= 14
+  return AttrList.hasAttributeAtIndex(Index, Kind);
+#else
+  return AttrList.hasAttribute(Index, Kind);
+#endif
+}
+
+inline bool hasAttributeAtIndex(const llvm::AttributeList &AttrList,
+                                unsigned Index, llvm::StringRef Kind) {
+#if VC_INTR_LLVM_VERSION_MAJOR >= 14
+  return AttrList.hasAttributeAtIndex(Index, Kind);
+#else
+  return AttrList.hasAttribute(Index, Kind);
+#endif
+}
+
+inline llvm::Attribute getAttributeAtIndex(const llvm::AttributeList &AttrList,
+                                           unsigned Index,
+                                           llvm::Attribute::AttrKind Kind) {
+#if VC_INTR_LLVM_VERSION_MAJOR >= 14
+  return AttrList.getAttributeAtIndex(Index, Kind);
+#else
+  return AttrList.getAttribute(Index, Kind);
+#endif
+}
+
+inline llvm::Attribute getAttributeAtIndex(const llvm::AttributeList &AttrList,
+                                           unsigned Index,
+                                           llvm::StringRef Kind) {
+#if VC_INTR_LLVM_VERSION_MAJOR >= 14
+  return AttrList.getAttributeAtIndex(Index, Kind);
+#else
+  return AttrList.getAttribute(Index, Kind);
+#endif
+}
+
 } // namespace AttributeList
 
 } // namespace VCINTR
