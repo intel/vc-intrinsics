@@ -28,6 +28,33 @@ inline llvm::Function *Create(llvm::FunctionType *FTy,
 #endif
 }
 
+inline void addAttributeAtIndex(llvm::Function &F, unsigned Index,
+                                llvm::Attribute Attr) {
+#if VC_INTR_LLVM_VERSION_MAJOR >= 14
+  F.addAttributeAtIndex(Index, Attr);
+#else
+  F.addAttribute(Index, Attr);
+#endif
+}
+
+inline void removeAttributeAtIndex(llvm::Function &F, unsigned Index,
+                                   llvm::Attribute::AttrKind Kind) {
+#if VC_INTR_LLVM_VERSION_MAJOR >= 14
+  F.removeAttributeAtIndex(Index, Kind);
+#else
+  F.removeAttribute(Index, Kind);
+#endif
+}
+
+inline void removeAttributeAtIndex(llvm::Function &F, unsigned Index,
+                                   llvm::StringRef Kind) {
+#if VC_INTR_LLVM_VERSION_MAJOR >= 14
+  F.removeAttributeAtIndex(Index, Kind);
+#else
+  F.removeAttribute(Index, Kind);
+#endif
+}
+
 } // namespace Function
 
 } // namespace VCINTR
