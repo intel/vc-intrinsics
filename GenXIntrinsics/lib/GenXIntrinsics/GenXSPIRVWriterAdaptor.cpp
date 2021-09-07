@@ -457,12 +457,13 @@ bool GenXSPIRVWriterAdaptorImpl::run(Module &M) {
     }
   }
 
-  if (auto *MD = M.getNamedMetadata(FunctionMD::GenXKernels)) {
-    for (auto &&F : M)
+
+  for (auto &&F : M)
       runOnFunction(F);
-    // Old metadata is not needed anymore at this point.
+
+  // Old metadata is not needed anymore at this point.
+  if (auto *MD = M.getNamedMetadata(FunctionMD::GenXKernels))
     M.eraseNamedMetadata(MD);
-  }
 
   if (RewriteTypes)
     rewriteKernelsTypes(M);
