@@ -67,8 +67,14 @@ static std::pair<SPIRVType, StringRef> parseImageDim(StringRef TyName) {
   if (TyName.consume_front(OCLTypes::Dim1dBuffer))
     return {SPIRVType::Image1dBuffer, TyName};
 
+  if (TyName.consume_front(OCLTypes::Dim1dArray))
+    return {SPIRVType::Image1dArray, TyName};
+
   if (TyName.consume_front(OCLTypes::Dim1d))
     return {SPIRVType::Image1d, TyName};
+
+  if (TyName.consume_front(OCLTypes::Dim2dArray))
+    return {SPIRVType::Image2dArray, TyName};
 
   if (TyName.consume_front(OCLTypes::Dim2d))
     return {SPIRVType::Image2d, TyName};
@@ -221,8 +227,10 @@ static ArgKind mapSPIRVTypeToArgKind(SPIRVType Ty) {
   switch (Ty) {
   case SPIRVType::Buffer:
   case SPIRVType::Image1d:
+  case SPIRVType::Image1dArray:
   case SPIRVType::Image1dBuffer:
   case SPIRVType::Image2d:
+  case SPIRVType::Image2dArray:
   case SPIRVType::Image3d:
     return ArgKind::Surface;
   case SPIRVType::Sampler:
@@ -245,11 +253,17 @@ static std::string mapSPIRVDescToArgDesc(SPIRVArgDesc SPIRVDesc) {
   case SPIRVType::Image1d:
     Desc += ArgDesc::Image1d;
     break;
+  case SPIRVType::Image1dArray:
+    Desc += ArgDesc::Image1dArray;
+    break;
   case SPIRVType::Image1dBuffer:
     Desc += ArgDesc::Image1dBuffer;
     break;
   case SPIRVType::Image2d:
     Desc += ArgDesc::Image2d;
+    break;
+  case SPIRVType::Image2dArray:
+    Desc += ArgDesc::Image2dArray;
     break;
   case SPIRVType::Image3d:
     Desc += ArgDesc::Image3d;

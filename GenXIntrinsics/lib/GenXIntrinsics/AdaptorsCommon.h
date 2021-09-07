@@ -29,8 +29,10 @@ static constexpr const char Buffer[] = "buffer_t";
 static constexpr const char SVM[] = "svmptr_t";
 static constexpr const char Sampler[] = "sampler_t";
 static constexpr const char Image1d[] = "image1d_t";
+static constexpr const char Image1dArray[] = "image1d_array_t";
 static constexpr const char Image1dBuffer[] = "image1d_buffer_t";
 static constexpr const char Image2d[] = "image2d_t";
+static constexpr const char Image2dArray[] = "image2d_array_t";
 static constexpr const char Image3d[] = "image3d_t";
 } // namespace ArgDesc
 
@@ -41,8 +43,10 @@ enum class SPIRVType {
   // Surfaces + corresponding desc.
   Buffer,
   Image1d,
+  Image1dArray,
   Image1dBuffer,
   Image2d,
+  Image2dArray,
   Image3d,
   // Sampler + sampler_t.
   Sampler,
@@ -77,8 +81,10 @@ static constexpr const char TypePrefix[] = "opencl.";
 // Currently used image types.
 static constexpr const char Image[] = "image";
 static constexpr const char Dim1d[] = "1d";
+static constexpr const char Dim1dArray[] = "1d_array";
 static constexpr const char Dim1dBuffer[] = "1d_buffer";
 static constexpr const char Dim2d[] = "2d";
+static constexpr const char Dim2dArray[] = "2d_array";
 static constexpr const char Dim3d[] = "3d";
 // Sampler type.
 static constexpr const char Sampler[] = "sampler";
@@ -124,8 +130,10 @@ inline unsigned getOpaqueTypeAddressSpace(SPIRVType Ty) {
     return SPIRVParams::SPIRVConstantAS;
   case SPIRVType::Buffer:
   case SPIRVType::Image1d:
+  case SPIRVType::Image1dArray:
   case SPIRVType::Image1dBuffer:
   case SPIRVType::Image2d:
+  case SPIRVType::Image2dArray:
   case SPIRVType::Image3d:
     return SPIRVParams::SPIRVGlobalAS;
   default:
