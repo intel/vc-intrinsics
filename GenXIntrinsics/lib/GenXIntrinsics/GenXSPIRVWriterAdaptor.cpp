@@ -113,11 +113,17 @@ static Type *getImageType(SPIRVArgDesc Desc, Module *M) {
   case SPIRVType::Image1d:
     Name += OCLTypes::Dim1d;
     break;
+  case SPIRVType::Image1dArray:
+    Name += OCLTypes::Dim1dArray;
+    break;
   case SPIRVType::Image1dBuffer:
     Name += OCLTypes::Dim1dBuffer;
     break;
   case SPIRVType::Image2d:
     Name += OCLTypes::Dim2d;
+    break;
+  case SPIRVType::Image2dArray:
+    Name += OCLTypes::Dim2dArray;
     break;
   case SPIRVType::Image3d:
     Name += OCLTypes::Dim3d;
@@ -240,8 +246,10 @@ static SPIRVArgDesc parseArgDesc(StringRef Desc) {
       Ty = StringSwitch<Optional<SPIRVType>>(Tok)
                .Case(ArgDesc::Buffer, SPIRVType::Buffer)
                .Case(ArgDesc::Image1d, SPIRVType::Image1d)
+               .Case(ArgDesc::Image1dArray, SPIRVType::Image1dArray)
                .Case(ArgDesc::Image1dBuffer, SPIRVType::Image1dBuffer)
                .Case(ArgDesc::Image2d, SPIRVType::Image2d)
+               .Case(ArgDesc::Image2dArray, SPIRVType::Image2dArray)
                .Case(ArgDesc::Image3d, SPIRVType::Image3d)
                .Case(ArgDesc::SVM, SPIRVType::Pointer)
                .Case(ArgDesc::Sampler, SPIRVType::Sampler)
@@ -290,8 +298,10 @@ static SPIRVArgDesc analyzeSurfaceArg(StringRef Desc) {
   switch (SPVDesc.Ty) {
   case SPIRVType::Buffer:
   case SPIRVType::Image1d:
+  case SPIRVType::Image1dArray:
   case SPIRVType::Image1dBuffer:
   case SPIRVType::Image2d:
+  case SPIRVType::Image2dArray:
   case SPIRVType::Image3d:
     return SPVDesc;
   // CMRT does not require to annotate arguments.
