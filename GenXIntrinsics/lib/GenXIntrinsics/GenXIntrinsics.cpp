@@ -470,8 +470,14 @@ bool GenXIntrinsic::isSupportedPlatform(const std::string &CPU, unsigned id) {
          "Unknown Platform");
   assert(GenXIntrinsic::isGenXIntrinsic(id) &&
          "this function should be used only for GenXIntrinsics");
-  return SupportedIntrinsics.at(
-      CPU)[id - GenXIntrinsic::ID::not_genx_intrinsic - 1];
+  auto PlatformInfoIt = SupportedIntrinsics.find(CPU);
+  if (PlatformInfoIt == SupportedIntrinsics.end())
+    return false;
+  const auto &IntrinsicInfo = PlatformInfoIt->second;
+  size_t IntrinsicIdx = id - GenXIntrinsic::ID::not_genx_intrinsic - 1;
+  if (IntrinsicIdx < IntrinsicInfo.size())
+    return IntrinsicInfo[IntrinsicIdx];
+  return false;
 }
 
 /// Table of per-target intrinsic name tables.
