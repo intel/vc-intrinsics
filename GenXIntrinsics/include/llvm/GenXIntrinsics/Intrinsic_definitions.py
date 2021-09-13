@@ -1170,17 +1170,18 @@ Imported_Intrinsics = \
 ### * ``llvm.genx.simad`` : result and operands signed
 ### * ``llvm.genx.uimad`` : result and operands unsigned
 ###
-### result := {hi, lo} = arg0 * arg1
+### result := {hi, lo} = arg0 * arg1 + arg2
 ###
 ### * arg0: first input, i32 scalar/vector integer type
 ### * arg1: second input, same type as arg0
+### * arg2: third input, same type as arg0
 ###
     "simad" : { "result" : ["anyint", "anyint"],
-                "arguments" :  [0, 0],
+                "arguments" :  [0, 0, 0],
                 "attributes" :  "NoMem"
               },
     "uimad" : { "result" : ["anyint", "anyint"],
-                "arguments" :  [0, 0],
+                "arguments" :  [0, 0, 0],
                 "attributes" :  "NoMem"
               },
 
