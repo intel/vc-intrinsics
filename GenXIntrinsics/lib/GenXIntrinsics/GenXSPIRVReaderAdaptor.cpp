@@ -111,19 +111,26 @@ static SPIRVArgDesc parseImageType(StringRef TyName) {
   return {ImageType, AccType};
 }
 
-static Optional<SPIRVArgDesc> parseBufferType(StringRef TyName) {
+static std::pair<SPIRVType, StringRef> parseIntelMainType(StringRef TyName) {
+  if (TyName.consume_front(IntelTypes::Buffer))
+    return {SPIRVType::Buffer, TyName};
+
+  if (TyName.consume_front(IntelTypes::MediaBlockImage))
+    return {SPIRVType::Image2dMediaBlock, TyName};
+
+  llvm_unreachable("Unexpected intel extension type");
+}
+
+static Optional<SPIRVArgDesc> parseIntelType(StringRef TyName) {
   if (!TyName.consume_front(IntelTypes::TypePrefix))
     return None;
 
-  if (!TyName.consume_front(IntelTypes::Buffer))
-    return None;
-
-  // Now assume that buffer type is correct.
+  SPIRVType MainType;
+  std::tie(MainType, TyName) = parseIntelMainType(TyName);
   AccessType AccType;
-  StringRef Suffix;
-  std::tie(AccType, Suffix) = parseAccessQualifier(TyName);
-  assert(Suffix == CommonTypes::TypeSuffix && "Bad buffer type");
-  return SPIRVArgDesc{SPIRVType::Buffer, AccType};
+  std::tie(AccType, TyName) = parseAccessQualifier(TyName);
+  assert(TyName == CommonTypes::TypeSuffix && "Bad intel type");
+  return SPIRVArgDesc{MainType, AccType};
 }
 
 static Optional<SPIRVArgDesc> parseOCLType(StringRef TyName) {
@@ -141,15 +148,17 @@ static Optional<SPIRVArgDesc> parseOCLType(StringRef TyName) {
 }
 
 // Parse opaque type name.
-// Ty -> "opencl." OCLTy | "intel.buffer" Acc "_t"
+// Ty -> "opencl." OCLTy | "intel." IntelTy
 // OCLTy -> "sampler_t" | ImageTy
+// IntelTy -> MainIntelTy Acc "_t"
+// MainIntelTy -> "buffer" | "image2d_media_block"
 // ImageTy -> "image" Dim Acc "_t"
 // Dim -> "1d" | "1d_buffer" | "2d" | "3d"
 // Acc -> "_ro" | "_wo" | "_rw"
 // Assume that "opencl." and "intel.buffer" types are well-formed.
 static Optional<SPIRVArgDesc> parseOpaqueType(StringRef TyName) {
-  if (auto MaybeBuffer = parseBufferType(TyName))
-    return MaybeBuffer.getValue();
+  if (auto MaybeIntelTy = parseIntelType(TyName))
+    return MaybeIntelTy.getValue();
 
   return parseOCLType(TyName);
 }
@@ -231,6 +240,7 @@ static ArgKind mapSPIRVTypeToArgKind(SPIRVType Ty) {
   case SPIRVType::Image1dBuffer:
   case SPIRVType::Image2d:
   case SPIRVType::Image2dArray:
+  case SPIRVType::Image2dMediaBlock:
   case SPIRVType::Image3d:
     return ArgKind::Surface;
   case SPIRVType::Sampler:
@@ -264,6 +274,9 @@ static std::string mapSPIRVDescToArgDesc(SPIRVArgDesc SPIRVDesc) {
     break;
   case SPIRVType::Image2dArray:
     Desc += ArgDesc::Image2dArray;
+    break;
+  case SPIRVType::Image2dMediaBlock:
+    Desc += ArgDesc::Image2dMediaBlock;
     break;
   case SPIRVType::Image3d:
     Desc += ArgDesc::Image3d;
