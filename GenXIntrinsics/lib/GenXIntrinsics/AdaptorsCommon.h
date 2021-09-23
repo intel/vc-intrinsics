@@ -33,6 +33,7 @@ static constexpr const char Image1dArray[] = "image1d_array_t";
 static constexpr const char Image1dBuffer[] = "image1d_buffer_t";
 static constexpr const char Image2d[] = "image2d_t";
 static constexpr const char Image2dArray[] = "image2d_array_t";
+static constexpr const char Image2dMediaBlock[] = "image2d_media_block_t";
 static constexpr const char Image3d[] = "image3d_t";
 } // namespace ArgDesc
 
@@ -47,6 +48,7 @@ enum class SPIRVType {
   Image1dBuffer,
   Image2d,
   Image2dArray,
+  Image2dMediaBlock,
   Image3d,
   // Sampler + sampler_t.
   Sampler,
@@ -98,6 +100,8 @@ static constexpr const char TypePrefix[] = "intel.";
 
 // Stateful buffer type.
 static constexpr const char Buffer[] = "buffer";
+// Media block image.
+static constexpr const char MediaBlockImage[] = "image2d_media_block";
 } // namespace IntelTypes
 
 namespace CommonTypes {
@@ -134,6 +138,7 @@ inline unsigned getOpaqueTypeAddressSpace(SPIRVType Ty) {
   case SPIRVType::Image1dBuffer:
   case SPIRVType::Image2d:
   case SPIRVType::Image2dArray:
+  case SPIRVType::Image2dMediaBlock:
   case SPIRVType::Image3d:
     return SPIRVParams::SPIRVGlobalAS;
   default:
