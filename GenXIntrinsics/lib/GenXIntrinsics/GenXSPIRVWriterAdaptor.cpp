@@ -137,15 +137,23 @@ static Type *getImageType(SPIRVArgDesc Desc, Module *M) {
   return getOpaquePtrType(M, Name, getOpaqueTypeAddressSpace(Desc.Ty));
 }
 
-// Get or create buffer type with given access qualifier.
-static Type *getBufferType(AccessType Acc, Module *M) {
+// Get or create vector compute extension type with given access qualifier.
+static Type *getIntelExtType(SPIRVArgDesc Desc, Module *M) {
   std::string Name = IntelTypes::TypePrefix;
-  Name += IntelTypes::Buffer;
+  switch (Desc.Ty) {
+  case SPIRVType::Buffer:
+    Name += IntelTypes::Buffer;
+    break;
+  case SPIRVType::Image2dMediaBlock:
+    Name += IntelTypes::MediaBlockImage;
+    break;
+  default:
+    llvm_unreachable("Unexpected spirv type for intel extensions");
+  }
 
-  addCommonTypesPostfix(Name, Acc);
+  addCommonTypesPostfix(Name, Desc.Acc);
 
-  return getOpaquePtrType(M, Name,
-                          getOpaqueTypeAddressSpace(SPIRVType::Buffer));
+  return getOpaquePtrType(M, Name, getOpaqueTypeAddressSpace(Desc.Ty));
 }
 
 // Sampler and surface arguments require opaque types that will be
@@ -155,7 +163,8 @@ static Type *getOpaqueType(SPIRVArgDesc Desc, Module *M) {
   case SPIRVType::Sampler:
     return getSamplerType(M);
   case SPIRVType::Buffer:
-    return getBufferType(Desc.Acc, M);
+  case SPIRVType::Image2dMediaBlock:
+    return getIntelExtType(Desc, M);
   default:
     return getImageType(Desc, M);
   }
@@ -250,6 +259,7 @@ static SPIRVArgDesc parseArgDesc(StringRef Desc) {
                .Case(ArgDesc::Image1dBuffer, SPIRVType::Image1dBuffer)
                .Case(ArgDesc::Image2d, SPIRVType::Image2d)
                .Case(ArgDesc::Image2dArray, SPIRVType::Image2dArray)
+               .Case(ArgDesc::Image2dMediaBlock, SPIRVType::Image2dMediaBlock)
                .Case(ArgDesc::Image3d, SPIRVType::Image3d)
                .Case(ArgDesc::SVM, SPIRVType::Pointer)
                .Case(ArgDesc::Sampler, SPIRVType::Sampler)
@@ -302,6 +312,7 @@ static SPIRVArgDesc analyzeSurfaceArg(StringRef Desc) {
   case SPIRVType::Image1dBuffer:
   case SPIRVType::Image2d:
   case SPIRVType::Image2dArray:
+  case SPIRVType::Image2dMediaBlock:
   case SPIRVType::Image3d:
     return SPVDesc;
   // CMRT does not require to annotate arguments.
