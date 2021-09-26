@@ -66,6 +66,6 @@ declare void @llvm.genx.some.intr.0(i32* "VCSingleElementVector")
 declare void @llvm.genx.some.intr.1(i32*** "VCSingleElementVector"="2")
 
 attributes #0 = { "VCFunction" }
-attributes #1 = { "VCFunction" "VCNamedBarrierCount"="0" "VCSLMSize"="0" }
+attributes #1 = { "VCFunction" "VCSLMSize"="0" }
 attributes #2 = { "VCGlobalVariable" "VCSingleElementVector"="0" }
 attributes #3 = { "VCGlobalVariable" "VCSingleElementVector"="2" }
