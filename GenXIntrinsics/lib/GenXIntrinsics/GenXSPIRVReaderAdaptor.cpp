@@ -121,6 +121,92 @@ static std::pair<SPIRVType, StringRef> parseIntelMainType(StringRef TyName) {
   llvm_unreachable("Unexpected intel extension type");
 }
 
+template <typename T> T consumeIntegerLiteral(StringRef TyName) {
+  int Literal;
+
+  auto ProperlyConsumed = !TyName.consumeInteger(0, Literal);
+  assert(ProperlyConsumed && "Expected string to rpresent integer literal");
+  (void)ProperlyConsumed;
+
+  return static_cast<T>(Literal);
+}
+
+static SPIRVType evaluateImageTypeFromSPVIR(SPIRVIRTypes::Dim Dim,
+                                            bool Arrayed) {
+  SPIRVType ResultType;
+  if (!Arrayed) {
+    switch (Dim) {
+    case SPIRVIRTypes::Dim1D:
+      ResultType = SPIRVType::Image1d;
+      break;
+    case SPIRVIRTypes::Dim2D:
+      ResultType = SPIRVType::Image2d;
+      break;
+    case SPIRVIRTypes::Dim3D:
+      ResultType = SPIRVType::Image3d;
+      break;
+    case SPIRVIRTypes::DimBuffer:
+      ResultType = SPIRVType::Image1dBuffer;
+      break;
+    default:
+      llvm_unreachable("Bad Image Type");
+    }
+  } else {
+    switch (Dim) {
+    case SPIRVIRTypes::Dim1D:
+      ResultType = SPIRVType::Image1dArray;
+      break;
+    case SPIRVIRTypes::Dim2D:
+      ResultType = SPIRVType::Image2dArray;
+      break;
+    default:
+      llvm_unreachable("Bad Image Type");
+    }
+  }
+
+  return ResultType;
+}
+
+static StringRef skipUnderscores(StringRef StrRef, int Count) {
+  for (int i = 0; i < Count; ++i) {
+    StrRef = StrRef.drop_while([](char C) { return C != '_'; });
+    StrRef = StrRef.drop_front(1);
+  }
+
+  return StrRef;
+}
+
+static SPIRVArgDesc parseSPIRVIRImageType(StringRef TyName) {
+  const bool Consumed = TyName.consume_front(SPIRVIRTypes::Image);
+  assert(Consumed && "Unexpected SPIRV friendly IR type");
+  (void)Consumed;
+
+  // SPIRV friendly Ir image type looks like this:
+  // spirv.Image._{Sampled T}_{Dim}_{Depth}_{Arrayed}_{MS}_{Fmt}_{Acc}
+
+  // skip Samled Type.
+  TyName = skipUnderscores(TyName, 2);
+
+  auto Dim = consumeIntegerLiteral<SPIRVIRTypes::Dim>(TyName);
+
+  // Skip Depth.
+  TyName = skipUnderscores(TyName, 2);
+
+  auto Arrayed = consumeIntegerLiteral<bool>(TyName);
+
+  // Skip Multisampling and Format.
+  TyName = skipUnderscores(TyName, 4);
+
+  AccessType AccessTy = AccessType::ReadOnly;
+
+  if (!TyName.empty())
+    AccessTy = consumeIntegerLiteral<AccessType>(TyName);
+
+  auto ResultType = evaluateImageTypeFromSPVIR(Dim, Arrayed);
+
+  return {ResultType, AccessTy};
+}
+
 static Optional<SPIRVArgDesc> parseIntelType(StringRef TyName) {
   if (!TyName.consume_front(IntelTypes::TypePrefix))
     return None;
@@ -147,20 +233,35 @@ static Optional<SPIRVArgDesc> parseOCLType(StringRef TyName) {
   return parseImageType(TyName);
 }
 
+static Optional<SPIRVArgDesc> parseSPIRVIRType(StringRef TyName) {
+  if (!TyName.consume_front(SPIRVIRTypes::TypePrefix))
+    return None;
+
+  if (TyName.consume_front(SPIRVIRTypes::Sampler))
+    return {SPIRVType::Sampler};
+
+  return parseSPIRVIRImageType(TyName);
+}
 // Parse opaque type name.
-// Ty -> "opencl." OCLTy | "intel." IntelTy
+// Ty -> "opencl." OCLTy | "spirv." SPVIRTy | "intel" IntelTy
 // OCLTy -> "sampler_t" | ImageTy
 // IntelTy -> MainIntelTy Acc "_t"
 // MainIntelTy -> "buffer" | "image2d_media_block"
 // ImageTy -> "image" Dim Acc "_t"
 // Dim -> "1d" | "1d_buffer" | "2d" | "3d"
 // Acc -> "_ro" | "_wo" | "_rw"
-// Assume that "opencl." and "intel.buffer" types are well-formed.
+// SPVIRTy -> "Sampler" | SPVImageTy
+// SPVImageTy -> "Image." _..._{Dim}_..._{Arrayed}_..._{Acc}
+// Dim, Arrayed, Acc - literal operands matching OpTypeImage operands in SPIRV
+// Assume that "opencl." "spirv." and "intel.buffer" types are well-formed.
 static Optional<SPIRVArgDesc> parseOpaqueType(StringRef TyName) {
   if (auto MaybeIntelTy = parseIntelType(TyName))
     return MaybeIntelTy.getValue();
 
-  return parseOCLType(TyName);
+  if (auto MaybeOCL = parseOCLType(TyName))
+    return MaybeOCL.getValue();
+
+  return parseSPIRVIRType(TyName);
 }
 
 static SPIRVArgDesc analyzeKernelArg(const Argument &Arg) {
