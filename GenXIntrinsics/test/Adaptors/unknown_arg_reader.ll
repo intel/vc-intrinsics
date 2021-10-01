@@ -13,11 +13,9 @@
 ; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
 
 define spir_kernel void @test(<3 x i32> "VCArgumentKind"="24" %__arg_llvm.genx.local.id) #0 {
-; CHECK-LABEL: @test(
 
-; CHECK: <3 x i32>
-; CHECK: "VCArgumentKind"="24"
-; CHECK: [[LOCAL_ID:%[^)]+]])
+; CHECK-LABEL: @test
+; CHECK-SAME: (<3 x i32> [[LOCAL_ID:%[^)]+]])
 
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    ret void

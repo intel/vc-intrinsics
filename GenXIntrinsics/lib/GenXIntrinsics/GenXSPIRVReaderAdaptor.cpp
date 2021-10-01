@@ -43,6 +43,18 @@ public:
 
 private:
   bool runOnFunction(Function &F);
+
+  bool processVCFunctionAttributes(Function &F);
+  bool processVCKernelAttributes(Function &F);
+
+  void dropAttributeAtIndex(Function &F, unsigned Index, StringRef Kind) {
+    auto NewAttributes = VCINTR::AttributeList::removeAttributeAtIndex(
+            F.getContext(), F.getAttributes(), Index, Kind);
+    F.setAttributes(NewAttributes);
+  }
+  void dropFnAttribute(Function &F, StringRef Kind) {
+    dropAttributeAtIndex(F, AttributeList::FunctionIndex, Kind);
+  }
 };
 
 } // namespace
@@ -541,22 +553,27 @@ bool GenXSPIRVReaderAdaptor::runOnModule(Module &M) {
   return true;
 }
 
-bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
+bool GenXSPIRVReaderAdaptor::processVCFunctionAttributes(Function &F) {
   auto Attrs = F.getAttributes();
   if (!VCINTR::AttributeList::hasFnAttr(Attrs, VCFunctionMD::VCFunction))
-    return true;
+    return false;
+
+  dropFnAttribute(F, VCFunctionMD::VCFunction);
 
   if (VCINTR::AttributeList::hasFnAttr(Attrs, VCFunctionMD::VCStackCall)) {
     F.addFnAttr(FunctionMD::CMStackCall);
     F.addFnAttr(Attribute::NoInline);
+    dropFnAttribute(F, VCFunctionMD::VCStackCall);
   }
 
   if (VCINTR::AttributeList::hasFnAttr(Attrs, VCFunctionMD::VCCallable)) {
     F.addFnAttr(FunctionMD::CMCallable);
+    dropFnAttribute(F, VCFunctionMD::VCCallable);
   }
 
   if (VCINTR::AttributeList::hasFnAttr(Attrs, VCFunctionMD::VCFCEntry)) {
     F.addFnAttr(FunctionMD::CMEntry);
+    dropFnAttribute(F, VCFunctionMD::VCFCEntry);
   }
 
   if (VCINTR::AttributeList::hasFnAttr(Attrs, VCFunctionMD::VCSIMTCall)) {
@@ -566,6 +583,7 @@ bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
             Attrs, AttributeList::FunctionIndex, VCFunctionMD::VCSIMTCall)
             .getValueAsString();
     F.addFnAttr(FunctionMD::CMGenxSIMT, SIMTMode);
+    dropFnAttribute(F, VCFunctionMD::VCSIMTCall);
   }
 
   auto &&Context = F.getContext();
@@ -580,6 +598,7 @@ bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
                                std::to_string(FloatControl));
     VCINTR::Function::addAttributeAtIndex(F, AttributeList::FunctionIndex,
                                           Attr);
+    dropFnAttribute(F, VCFunctionMD::VCFloatControl);
   }
 
   if (auto *ReqdSubgroupSize =
@@ -592,11 +611,17 @@ bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
     VCINTR::Function::addAttributeAtIndex(F, AttributeList::FunctionIndex,
                                           Attr);
   }
+  return true;
+}
 
+bool GenXSPIRVReaderAdaptor::processVCKernelAttributes(Function &F) {
   if (!(F.getCallingConv() == CallingConv::SPIR_KERNEL))
-    return true;
+    return false;
+
   F.addFnAttr(FunctionMD::CMGenXMain);
   F.setDLLStorageClass(llvm::GlobalVariable::DLLExportStorageClass);
+
+  auto Attrs = F.getAttributes();
 
   auto *FunctionRef = ValueAsMetadata::get(&F);
   auto KernelName = F.getName();
@@ -606,46 +631,53 @@ bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
   auto ArgIOKinds = llvm::SmallVector<llvm::Metadata *, 8>();
   auto ArgDescs = llvm::SmallVector<llvm::Metadata *, 8>();
 
+  auto &&Context = F.getContext();
   llvm::Type *I32Ty = llvm::Type::getInt32Ty(Context);
-
-  if (VCINTR::AttributeList::hasFnAttr(Attrs, VCFunctionMD::VCSLMSize)) {
-    VCINTR::AttributeList::getAttributeAtIndex(
-        Attrs, AttributeList::FunctionIndex, VCFunctionMD::VCSLMSize)
-        .getValueAsString()
-        .getAsInteger(0, SLMSize);
-  }
 
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
     auto ArgNo = I->getArgNo();
     auto ArgKind = unsigned(0);
     auto ArgIOKind = unsigned(0);
     auto ArgDesc = std::string();
+    auto AttrIndex = ArgNo + 1;
+
     if (VCINTR::AttributeList::hasAttributeAtIndex(
-            Attrs, ArgNo + 1, VCFunctionMD::VCArgumentKind)) {
-      VCINTR::AttributeList::getAttributeAtIndex(Attrs, ArgNo + 1,
+            Attrs, AttrIndex, VCFunctionMD::VCArgumentKind)) {
+      VCINTR::AttributeList::getAttributeAtIndex(Attrs, AttrIndex,
                                                  VCFunctionMD::VCArgumentKind)
           .getValueAsString()
           .getAsInteger(0, ArgKind);
+      dropAttributeAtIndex(F, AttrIndex, VCFunctionMD::VCArgumentKind);
     }
     if (VCINTR::AttributeList::hasAttributeAtIndex(
-            Attrs, ArgNo + 1, VCFunctionMD::VCArgumentIOKind)) {
-      VCINTR::AttributeList::getAttributeAtIndex(Attrs, ArgNo + 1,
+            Attrs, AttrIndex, VCFunctionMD::VCArgumentIOKind)) {
+      VCINTR::AttributeList::getAttributeAtIndex(Attrs, AttrIndex,
                                                  VCFunctionMD::VCArgumentIOKind)
           .getValueAsString()
           .getAsInteger(0, ArgIOKind);
+      dropAttributeAtIndex(F, AttrIndex, VCFunctionMD::VCArgumentIOKind);
     }
     if (VCINTR::AttributeList::hasAttributeAtIndex(
-            Attrs, ArgNo + 1, VCFunctionMD::VCArgumentDesc)) {
+            Attrs, AttrIndex, VCFunctionMD::VCArgumentDesc)) {
       ArgDesc = VCINTR::AttributeList::getAttributeAtIndex(
-                    Attrs, ArgNo + 1, VCFunctionMD::VCArgumentDesc)
+                    Attrs, AttrIndex, VCFunctionMD::VCArgumentDesc)
                     .getValueAsString()
                     .str();
+      dropAttributeAtIndex(F, AttrIndex, VCFunctionMD::VCArgumentDesc);
     }
     ArgKinds.push_back(
         llvm::ValueAsMetadata::get(llvm::ConstantInt::get(I32Ty, ArgKind)));
     ArgIOKinds.push_back(
         llvm::ValueAsMetadata::get(llvm::ConstantInt::get(I32Ty, ArgIOKind)));
     ArgDescs.push_back(llvm::MDString::get(Context, ArgDesc));
+  }
+
+  if (VCINTR::AttributeList::hasFnAttr(Attrs, VCFunctionMD::VCSLMSize)) {
+    VCINTR::AttributeList::getAttributeAtIndex(
+        Attrs, AttributeList::FunctionIndex, VCFunctionMD::VCSLMSize)
+        .getValueAsString()
+        .getAsInteger(0, SLMSize);
+    dropFnAttribute(F, VCFunctionMD::VCSLMSize);
   }
 
   auto KernelMD = std::vector<llvm::Metadata *>();
@@ -663,5 +695,14 @@ bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
       F.getParent()->getOrInsertNamedMetadata(FunctionMD::GenXKernels);
   llvm::MDNode *Node = MDNode::get(F.getContext(), KernelMD);
   KernelMDs->addOperand(Node);
+
+  return true;
+}
+
+bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
+  if (!processVCFunctionAttributes(F))
+    return true;
+
+  processVCKernelAttributes(F);
   return true;
 }
