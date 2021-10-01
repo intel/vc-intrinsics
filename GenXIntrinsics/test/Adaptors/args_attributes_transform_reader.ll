@@ -12,9 +12,7 @@
 ; XFAIL: llvm13, llvm14
 ; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
 ; CHECK: @test
-; CHECK-SAME: %foo
-; CHECK-SAME: byval(%foo)
-; CHECK-SAME: arg
+; CHECK-SAME: (%foo addrspace(1)* byval(%foo) %arg)
 
 %foo = type { i32 }
 

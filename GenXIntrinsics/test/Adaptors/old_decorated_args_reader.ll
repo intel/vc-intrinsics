@@ -15,16 +15,9 @@
 ; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
 
 define spir_kernel void @test(i32 "VCArgumentDesc"="image2d_t read_only" "VCArgumentKind"="2" %in, i32 "VCArgumentDesc"="image2d_t write_only" "VCArgumentKind"="2" %out, <3 x i32> "VCArgumentKind"="24" %__arg_llvm.genx.local.id) #0 {
-; CHECK-LABEL: @test(
+; CHECK-LABEL: @test
 
-; CHECK: i32
-; CHECK: [[IN:%[^,]+]],
-
-; CHECK: i32
-; CHECK: [[OUT:%[^,]+]],
-
-; CHECK: <3 x i32>
-; CHECK: [[LOCAL_ID:%[^)]+]])
+; CHECK-SAME: (i32 [[IN:%[^,]+]], i32 [[OUT:%[^,]+]], <3 x i32> [[LOCAL_ID:%[^)]+]])
 
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    [[TMP0:%.*]] = extractelement <3 x i32> [[LOCAL_ID]], i32 0
