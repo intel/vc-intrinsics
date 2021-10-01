@@ -72,6 +72,39 @@ inline llvm::Attribute getAttributeAtIndex(const llvm::AttributeList &AttrList,
 #endif
 }
 
+inline llvm::AttributeList
+removeAttributeAtIndex(llvm::LLVMContext &C,
+                       const llvm::AttributeList &AttrList, unsigned Index,
+                       llvm::Attribute::AttrKind Kind) {
+#if VC_INTR_LLVM_VERSION_MAJOR >= 14
+  return AttrList.removeAttributeAtIndex(C, Index, Kind);
+#else
+  return AttrList.removeAttribute(C, Index, Kind);
+#endif
+}
+
+inline llvm::AttributeList
+removeAttributeAtIndex(llvm::LLVMContext &C,
+                       const llvm::AttributeList &AttrList, unsigned Index,
+                       llvm::StringRef Kind) {
+#if VC_INTR_LLVM_VERSION_MAJOR >= 14
+  return AttrList.removeAttributeAtIndex(C, Index, Kind);
+#else
+  return AttrList.removeAttribute(C, Index, Kind);
+#endif
+}
+
+inline llvm::AttributeList
+removeAttributesAtIndex(llvm::LLVMContext &C,
+                        const llvm::AttributeList &AttrList, unsigned Index,
+                        const llvm::AttrBuilder &AttrsToRemove) {
+#if VC_INTR_LLVM_VERSION_MAJOR >= 14
+  return AttrList.removeAttributesAtIndex(C, Index, AttrsToRemove);
+#else
+  return AttrList.removeAttributes(C, Index, AttrsToRemove);
+#endif
+}
+
 } // namespace AttributeList
 
 } // namespace VCINTR
