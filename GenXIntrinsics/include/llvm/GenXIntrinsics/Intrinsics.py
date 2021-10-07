@@ -79,7 +79,7 @@ attribute_map = {
 # order does really matter.
 # It is used to define ordering between the respected platforms
 platform_list = ["HSW", "BDW", "CHV", "SKL", "BXT", "KBL",
-        "GLK", "CNL", "ICL", "ICLLP", "TGLLP", "DG1", "XEHP"]
+        "GLK", "CNL", "ICL", "ICLLP", "TGLLP", "RKL", "DG1", "XEHP"]
 
 def getAttributeList(Attrs):
     """
