@@ -233,6 +233,7 @@ static Instruction *rewriteArgumentUses(Argument &OldArg, Argument &NewArg) {
   Module *M = OldArg.getParent()->getParent();
   Function *ConvFn = GenXIntrinsic::getGenXDeclaration(
       M, GenXIntrinsic::genx_address_convert, {OldTy, NewTy});
+  ConvFn->addFnAttr(VCFunctionMD::VCFunction);
   auto *Conv = CallInst::Create(ConvFn, {&NewArg});
   OldArg.replaceAllUsesWith(Conv);
   return Conv;
