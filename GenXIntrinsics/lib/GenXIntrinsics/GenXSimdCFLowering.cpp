@@ -1078,7 +1078,7 @@ void CMSimdCFLower::predicateInst(Instruction *Inst, unsigned SimdWidth) {
         return;
     }
     // An IntrNoMem intrinsic is an ALU intrinsic and can be ignored.
-    if (Callee->doesNotAccessMemory() || CI->getNumArgOperands() == 0)
+    if (Callee->doesNotAccessMemory() || VCINTR::CallBase::arg_size(*CI) == 0)
       return;
     // no predication for intrinsic marked as ISPC uniform, 
 	// for example, atomic and oword_store used in printf
@@ -1086,7 +1086,7 @@ void CMSimdCFLower::predicateInst(Instruction *Inst, unsigned SimdWidth) {
       return;
 
     // Look for a predicate operand in operand 2, 1 or 0.
-    unsigned PredNum = CI->getNumArgOperands() - 1;
+    unsigned PredNum = VCINTR::CallBase::arg_size(*CI) - 1;
     for (;;) {
       if (auto VT = dyn_cast<VectorType>(CI->getArgOperand(PredNum)->getType()))
       {
@@ -1446,7 +1446,7 @@ void CMSimdCFLower::predicateSend(CallInst *CI, unsigned IntrinsicID,
       break;
   }
   SmallVector<Value *, 8> Args;
-  for (unsigned i = 0, e = CI->getNumArgOperands(); i != e; ++i)
+  for (unsigned i = 0, e = VCINTR::CallBase::arg_size(*CI); i != e; ++i)
     if (i == PredOperandNum)
       Args.push_back(Pred);
     else
@@ -1507,7 +1507,7 @@ CallInst *CMSimdCFLower::predicateWrRegion(CallInst *WrR, unsigned SimdWidth)
 {
   // First gather the args of the original wrregion.
   SmallVector<Value *, 8> Args;
-  for (unsigned i = 0, e = WrR->getNumArgOperands(); i != e; ++i)
+  for (unsigned i = 0, e = VCINTR::CallBase::arg_size(*WrR); i != e; ++i)
     Args.push_back(WrR->getArgOperand(i));
   // Modify the predicate in Args.
   Value *Pred = Args[GenXIntrinsic::GenXRegion::PredicateOperandNum];
