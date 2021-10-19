@@ -53,7 +53,7 @@ To build documentation:
 ## Building
 
 VC Intrinsics can be built in two major modes: in-tree and
-external. All major LLVM versions starting from LLVM 7 are supported.
+external. All major LLVM versions starting from LLVM 8 are supported.
 
 LLVM ToT can be used too, but there is no guarantee that it will
 always work (because of sudden breaking changes in LLVM C++
