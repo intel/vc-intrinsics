@@ -9,7 +9,7 @@
 ; Test that adaptor correctly translates function attributes to VC-specific
 ; metadata (the processed attributes are expected to be discarded)
 
-; UNSUPPORTED: llvm7, llvm8
+; UNSUPPORTED: llvm8
 ; XFAIL: llvm13, llvm14
 ; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
 ; CHECK: @test_VCFunction()

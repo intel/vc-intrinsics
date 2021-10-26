@@ -27,7 +27,6 @@ SPDX-License-Identifier: MIT
 #include "llvmVCWrapper/IR/Attributes.h"
 #include "llvmVCWrapper/IR/DerivedTypes.h"
 #include "llvmVCWrapper/IR/Function.h"
-#include "llvmVCWrapper/IR/GlobalValue.h"
 
 using namespace llvm;
 using namespace genx;
@@ -197,8 +196,7 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
 
   assert(!F.isVarArg() && "Kernel cannot be vararg");
   auto *NewFTy = FunctionType::get(F.getReturnType(), NewParams, false);
-  auto *NewF = VCINTR::Function::Create(
-      NewFTy, F.getLinkage(), VCINTR::GlobalValue::getAddressSpace(F));
+  auto *NewF = Function::Create(NewFTy, F.getLinkage(), F.getAddressSpace());
   NewF->copyAttributesFrom(&F);
   NewF->takeName(&F);
   NewF->copyMetadata(&F, 0);
