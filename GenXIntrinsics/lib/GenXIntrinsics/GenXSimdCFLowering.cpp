@@ -151,21 +151,22 @@ SPDX-License-Identifier: MIT
 
 #define DEBUG_TYPE "cmsimdcflowering"
 
+#include "llvm/GenXIntrinsics/GenXSimdCFLowering.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/Analysis/PostDominators.h"
+#include "llvm/GenXIntrinsics/GenXIntrOpts.h"
 #include "llvm/GenXIntrinsics/GenXIntrinsics.h"
 #include "llvm/GenXIntrinsics/GenXMetadata.h"
-#include "llvm/GenXIntrinsics/GenXIntrOpts.h"
-#include "llvm/GenXIntrinsics/GenXSimdCFLowering.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
-#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/PatternMatch.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
@@ -173,13 +174,7 @@ SPDX-License-Identifier: MIT
 #include <algorithm>
 #include <set>
 
-#if VC_INTR_LLVM_VERSION_MAJOR >= 8
-#include <llvm/IR/PatternMatch.h>
-#endif
-
-#include "llvmVCWrapper/IR/GlobalValue.h"
 #include "llvmVCWrapper/IR/DerivedTypes.h"
-#include "llvmVCWrapper/IR/InstrTypes.h"
 
 using namespace llvm;
 
@@ -333,7 +328,7 @@ bool CMSimdCFLowering::doInitialization(Module &M)
       continue;
     // Transform all load store on volatile globals to vload/vstore to disable
     // optimizations on this global (no PHI will be produced.).
-    auto AS0 = VCINTR::GlobalValue::getAddressSpace(G);
+    auto AS0 = G.getAddressSpace();
     std::vector<User*> WL;
     for (auto UI = G.user_begin(); UI != G.user_end();) {
       auto U = *UI++;
@@ -778,7 +773,7 @@ void CMSimdCFLower::findAndSplitJoinPoints()
   }
   for (auto sji = Jumps.begin(), sje = Jumps.end(); sji != sje; ++sji) {
     assert((*sji)->isTerminator() && "Expected terminator inst");
-    auto Br = cast<VCINTR::TerminatorInst>(*sji);
+    auto *Br = *sji;
     unsigned SimdWidth = SimdBranches[Br->getParent()];
     LLVM_DEBUG(dbgs() << *Br << "\n");
     auto JP = Br->getSuccessor(0);
@@ -835,7 +830,7 @@ void CMSimdCFLower::determineJIPs()
   for (auto NextBB = &F->front(), EndBB = &F->back(); NextBB;) {
     auto BB = NextBB;
     NextBB = BB == EndBB ? nullptr : BB->getNextNode();
-    auto Term = cast<VCINTR::TerminatorInst>(BB->getTerminator());
+    auto *Term = BB->getTerminator();
     for (unsigned si = 0, se = Term->getNumSuccessors(); si != se; ++si) {
       BasicBlock *Succ = Term->getSuccessor(si);
       if (Succ == NextBB)
@@ -944,7 +939,7 @@ void CMSimdCFLower::determineJIP(BasicBlock *BB,
     if (NeedNextJoin && JoinPoints.count(JP))
       break; // found join point
     // See if JP finishes with a branch to BB or before.
-    auto Term = cast<VCINTR::TerminatorInst>(JP->getTerminator());
+    auto *Term = JP->getTerminator();
     for (unsigned si = 0, se = Term->getNumSuccessors(); si != se; ++si) {
       auto Succ = Term->getSuccessor(si);
       if ((*Numbers)[Succ] <= BBNum) {
@@ -1078,7 +1073,7 @@ void CMSimdCFLower::predicateInst(Instruction *Inst, unsigned SimdWidth) {
         return;
     }
     // An IntrNoMem intrinsic is an ALU intrinsic and can be ignored.
-    if (Callee->doesNotAccessMemory() || VCINTR::CallBase::arg_size(*CI) == 0)
+    if (Callee->doesNotAccessMemory() || CI->arg_size() == 0)
       return;
     // no predication for intrinsic marked as ISPC uniform, 
 	// for example, atomic and oword_store used in printf
@@ -1086,7 +1081,7 @@ void CMSimdCFLower::predicateInst(Instruction *Inst, unsigned SimdWidth) {
       return;
 
     // Look for a predicate operand in operand 2, 1 or 0.
-    unsigned PredNum = VCINTR::CallBase::arg_size(*CI) - 1;
+    unsigned PredNum = CI->arg_size() - 1;
     for (;;) {
       if (auto VT = dyn_cast<VectorType>(CI->getArgOperand(PredNum)->getType()))
       {
@@ -1457,7 +1452,7 @@ void CMSimdCFLower::predicateSend(CallInst *CI, unsigned IntrinsicID,
       break;
   }
   SmallVector<Value *, 8> Args;
-  for (unsigned i = 0, e = VCINTR::CallBase::arg_size(*CI); i != e; ++i)
+  for (unsigned i = 0, e = CI->arg_size(); i != e; ++i)
     if (i == PredOperandNum)
       Args.push_back(Pred);
     else
@@ -1518,7 +1513,7 @@ CallInst *CMSimdCFLower::predicateWrRegion(CallInst *WrR, unsigned SimdWidth)
 {
   // First gather the args of the original wrregion.
   SmallVector<Value *, 8> Args;
-  for (unsigned i = 0, e = VCINTR::CallBase::arg_size(*WrR); i != e; ++i)
+  for (unsigned i = 0, e = WrR->arg_size(); i != e; ++i)
     Args.push_back(WrR->getArgOperand(i));
   // Modify the predicate in Args.
   Value *Pred = Args[GenXIntrinsic::GenXRegion::PredicateOperandNum];
