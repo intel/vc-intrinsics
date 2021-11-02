@@ -52,6 +52,7 @@ static constexpr const char VCSLMSize[] = "VCSLMSize";
 static constexpr const char VCArgumentKind[] = "VCArgumentKind";
 static constexpr const char VCArgumentDesc[] = "VCArgumentDesc";
 static constexpr const char VCSIMTCall[] = "VCSIMTCall";
+static constexpr const char VCNamedBarrierCount[] = "VCNamedBarrierCount";
 } // namespace VCFunctionMD
 
 enum KernelMDOp {
@@ -63,7 +64,7 @@ enum KernelMDOp {
   ArgIOKinds,   // Reference to metadata node containing kernel argument
                 // input/output kinds
   ArgTypeDescs, // Kernel argument type descriptors
-  Reserved_0,
+  NBarrierCnt,  // Named barrier count
   BarrierCnt    // Barrier count
 };
 

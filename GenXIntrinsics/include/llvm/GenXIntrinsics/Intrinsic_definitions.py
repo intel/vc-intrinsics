@@ -1791,6 +1791,21 @@ Imported_Intrinsics = \
               "attributes" : "NoMem"
             },
 
+### srnd
+### ^^^
+###
+### ``llvm.genx.srnd.<return type>.<any float>.<any float>`` : srnd instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * ``llvm.genx.srnd`` :
+###
+### * arg0: first input, any vector f32/hf16 type
+### * arg1: second input, same type as arg0
+### * Return value: result, must be half if arg0 is f32, or ub if arg0 is half.
+    "srnd" : { "result" : "anyvector",
+               "arguments" : ["anyvector", "anyvector"],
+               "attributes" : "NoMem"
+             },
+
 ### bf_cvt
 ### ^^^^^^
 ###
@@ -1806,6 +1821,404 @@ Imported_Intrinsics = \
                  "arguments" : ["anyfloat"],
                  "attributes" : "NoMem"
                },
+
+### tf32_cvt
+### ^^^^^^
+###
+### ``llvm.genx.tf32.cvt.<return type>.<any float>`` : tf32_cvt instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * ``llvm.genx.tf32.cvt`` :
+###
+### * arg0: first input, vector float type fp32/hf16
+###
+### * Return value: result, must be ud( Unsigned Doubleword)
+###
+    "tf32_cvt" : { "result" : "anyvector",
+                   "arguments" : ["anyvector"],
+                   "attributes" : "NoMem"
+                 },
+
+### qf_cvt
+### ^^^^^^
+###
+### ``llvm.genx.qf.cvt.<return type>.<vector type>`` : qf_cvt instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * ``llvm.genx.qf.cvt`` :
+###
+### * arg0: first input, any scalar/vector i8/half type (overloaded)
+###
+### * Return value: result, must be i8 if arg0 is half, or half if arg0 is i8.
+###
+    "qf_cvt" : { "result" : "anyvector",
+                 "arguments" : ["anyvector"],
+                 "attributes" : "NoMem"
+               },
+
+### ``llvm.genx.lsc.load.*.<return type if not void>.<any type>.<any type>`` : lsc_load instructions
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * ``llvm.genx.lsc.load.slm`` :
+### * ``llvm.genx.lsc.load.bti`` :
+### * ``llvm.genx.lsc.load.stateless`` :
+### * ``llvm.genx.lsc.prefetch.bti`` :
+### * ``llvm.genx.lsc.prefetch.stateless`` :
+###
+### * Exec_size ignored unless operation is transposed (DataOrder == Tranpose)
+### * arg0: {1,32}Xi1 predicate (overloaded)
+### * arg1: i8 Subopcode, [MBZ]
+### * arg2: i8 Caching behavior for L1, [MBC]
+### * arg3: i8 Caching behavior for L3, [MBC]
+### * arg4: i16 Address scale, [MBC]
+### * arg5: i32 Immediate offset added to each address, [MBC]
+### * arg6: i8 The dataum size, [MBC]
+### * arg7: i8 Number of elements to load per address (vector size), [MBC]
+### * arg8: i8 Indicates if the data is transposed during the transfer, [MBC]
+### * arg9: i8 Channel mask for quad versions, [MBC]
+### * arg10: {1,32}Xi{16,32,64} The vector register holding offsets (overloaded)
+###          for flat version Base Address + Offset[i] goes here
+### * arg11: i32 surface to use for this operation. This can be an immediate or a register
+###          for flat and bindless version pass zero here
+###
+### * Return value: the value read or void for prefetch
+###
+### Cache mappings are:
+###
+###   - 0 -> .df (default)
+###   - 1 -> .uc (uncached)
+###   - 2 -> .wb (writeback)
+###   - 3 -> .wt (writethrough)
+###   - 4 -> .st (streaming)
+###   - 5 -> .ri (read-invalidate)
+###
+### Only certain combinations of CachingL1 with CachingL3 are valid on hardware.
+###
+### +---------+-----+-----------------------------------------------------------------------+
+### |  L1     |  L3 | Notes                                                                 |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .df     | .df | default behavior on both L1 and L3 (L3 uses MOCS settings)            |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .ri/.wb | .wb | read-invalidate on reads (e.g. last use) / writeback on Stores for L1 |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .uc     | .uc | uncached (bypass) both L1 and L3                                      |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .uc     | .wb | bypass L1 / writeback L3                                              |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .wt     | .uc | writethrough L1 / bypass L3                                           |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .wt     | .wb | writethrough L1 / writeback L3                                        |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .st     | .uc | streaming L1 / bypass L3                                              |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .st     | .wb | streaming L1 / writeback L3                                           |
+### +---------+-----+-----------------------------------------------------------------------+
+###
+### Immediate offset. The compiler may be able to fuse this add into the message, otherwise
+### additional instructions are generated to honor the semantics.
+###
+### Dataum size mapping is
+###
+###   - 1 = :u8
+###   - 2 = :u16
+###   - 3 = :u32
+###   - 4 = :u64
+###   - 5 = :u8u32 (load 8b, zero extend to 32b; store the opposite),
+###   - 6 = :u16u32 (load 8b, zero extend to 32b; store the opposite),
+###   - 7 = :u16u32h (load 16b into high 16 of each 32b; store the high 16)
+###
+    "lsc_load_slm" : { "result" : "anyvector",
+                       "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","int"],
+                       "attributes" : "ReadMem"
+                     },
+    "lsc_load_stateless" : { "result" : "anyvector",
+                             "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","int"],
+                             "attributes" : "ReadMem"
+                           },
+    "lsc_load_bindless" : { "result" : "anyvector",
+                            "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","int"],
+                            "attributes" : "ReadMem"
+                          },
+    "lsc_load_bti" : { "result" : "anyvector",
+                       "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","int"],
+                       "attributes" : "ReadMem"
+                     },
+    "lsc_prefetch_slm" : { "result" : "void",
+                           "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","int"],
+                           "attributes" : "None"
+                         },
+    "lsc_prefetch_bti" : { "result" : "void",
+                           "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","int"],
+                           "attributes" : "None"
+                         },
+    "lsc_prefetch_stateless" : { "result" : "void",
+                                 "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","int"],
+                                 "attributes" : "None"
+                               },
+    "lsc_prefetch_bindless" : { "result" : "void",
+                                "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","int"],
+                                "attributes" : "None"
+                              },
+    "lsc_load_quad_slm" : { "result" : "anyvector",
+                            "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","int"],
+                            "attributes" : "ReadMem"
+                          },
+    "lsc_load_quad_stateless" : { "result" : "anyvector",
+                                  "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","int"],
+                                  "attributes" : "ReadMem"
+                                },
+    "lsc_load_quad_bindless" : { "result" : "anyvector",
+                                 "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","int"],
+                                 "attributes" : "ReadMem"
+                               },
+    "lsc_load_quad_bti" : { "result" : "anyvector",
+                            "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","int"],
+                            "attributes" : "ReadMem"
+                          },
+
+### ``llvm.genx.lsc.store.*.<any type>.<any type>.<any vector>`` : lsc_store instructions
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * ``llvm.genx.lsc.store.slm`` :
+### * ``llvm.genx.lsc.store.bti`` :
+### * ``llvm.genx.lsc.store.stateless`` :
+###
+### * Exec_size ignored unless operation is transposed (DataOrder == Tranpose)
+### * arg0: {1,32}Xi1 predicate(overloaded)
+### * arg1: i8 Subopcode, [MBZ]
+### * arg2: i8 Caching behavior for L1, [MBC]
+### * arg3: i8 Caching behavior for L3, [MBC]
+### * arg4: i16 Address scale, [MBC]
+### * arg5: {1,32}Xi32 Immediate offset added to each address, [MBC]
+### * arg6: i8 The dataum size, [MBC]
+### * arg7: i8 Number of elements to load per address (vector size), [MBC]
+### * arg8: i8 Indicates if the data is transposed during the transfer, [MBC]
+### * arg9: i8 Channel mask for quad version, [MBC]
+### * arg10: {1,32}Xi{16,32,64} The vector register holding offsets (overloaded)
+###          for flat version Base Address + Offset[i] goes here
+### * arg11: VXi{16,32,64} The data to write (overloaded)
+### * arg12: i32 surface to use for this operation. This can be an immediate or a register
+###          for flat and bindless version pass zero here
+###
+### * Return value: void
+###
+    "lsc_store_slm" : { "result" : "void",
+                        "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","anyvector","int"],
+                        "attributes" : "None"
+                      },
+    "lsc_store_stateless" : { "result" : "void",
+                              "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","anyvector","int"],
+                              "attributes" : "None"
+                            },
+    "lsc_store_bindless" : { "result" : "void",
+                             "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","anyvector","int"],
+                             "attributes" : "None"
+                           },
+    "lsc_store_bti" : { "result" : "void",
+                        "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","anyvector","int"],
+                        "attributes" : "None"
+                      },
+    "lsc_store_quad_slm" : { "result" : "void",
+                             "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","anyvector","int"],
+                             "attributes" : "None"
+                           },
+    "lsc_store_quad_stateless" : { "result" : "void",
+                                   "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","anyvector","int"],
+                                   "attributes" : "None"
+                                 },
+    "lsc_store_quad_bindless" : { "result" : "void",
+                                  "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","anyvector","int"],
+                                  "attributes" : "None"
+                                },
+    "lsc_store_quad_bti" : { "result" : "void",
+                             "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","anyvector","int"],
+                             "attributes" : "None"
+                           },
+
+### ``llvm.genx.lsc.*2d.stateless.[return type].<vector type>.<address type>`` : 2d stateless load/prefecth instructions
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * ``llvm.genx.lsc.load2d.stateless.<return type>.<vector type>.<address type>`` :
+### * ``llvm.genx.lsc.prefetch2d.stateless.<vector type>.<address type>`` :
+###
+### * Exec_size ignored unless operation is transposed (DataOrder == Tranpose)
+### * arg0: {1,32}Xi1 predicate (overloaded)
+### * arg1: i8 Caching behavior for L1, [MBC]
+### * arg2: i8 Caching behavior for L3, [MBC]
+### * arg3: i8 The dataum size, [MBC]
+### * arg4: i8 Indicates if the data is transposed during the transfer, [MBC]
+### * arg5: i8 number of blocks, [MBC]
+### * arg6: i32 BlockWidth, [MBC]
+### * arg7: i32 BlockHeight, [MBC]
+### * arg8: i8 VNNI. This performs a VNNI transform during the access.
+### * arg9: i32/i64 surface base address for this operation.
+### * arg10: i32 surface width minus 1.
+### * arg11: i32 surface height minus 1.
+### * arg12: i32 surface pitch minus 1.
+### * arg13: i32 Src0AddrX, the base X position of the 2D region to load or store.
+### * arg14: i32 Src0AddrY, the base Y position of the 2D region to load or store.
+###
+### * Return value: the value read or void for prefetch
+###
+    "lsc_load2d_stateless" : { "result" : "anyvector",
+                               "arguments" : ["anyvector","char","char","char","char","char","short","short","char","anyint","int","int","int","int","int"],
+                               "attributes" : "ReadMem"
+                             },
+    "lsc_prefetch2d_stateless" : { "result" : "void",
+                                   "arguments" : ["anyvector","char","char","char","char","char","short","short","char","anyint","int","int","int","int","int"],
+                                   "attributes" : "None"
+                                 },
+
+## ``llvm.genx.lsc.store2d.stateless.<vector type>.<address type>.<vector type>`` : 2d stateless store
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * Exec_size ignored unless operation is transposed (DataOrder == Tranpose)
+### * arg0: {1,32}Xi1 predicate (overloaded)
+### * arg1: i8 Caching behavior for L1, [MBC]
+### * arg2: i8 Caching behavior for L3, [MBC]
+### * arg3: i8 The dataum size, [MBC]
+### * arg4: i8 Indicates if the data is transposed during the transfer, [MBC]
+### * arg5: i8 number of blocks, [MBC]
+### * arg7: i32 BlockWidth, [MBC]
+### * arg6: i32 BlockHeight, [MBC]
+### * arg8: i8 VNNI. This performs a VNNI transform during the access.
+### * arg9: i32/i64 surface base address for this operation.
+### * arg10: i32 surface width minus 1.
+### * arg11: i32 surface height minus 1.
+### * arg12: i32 surface pitch minus 1.
+### * arg13: i32 Src0AddrX, the base X position of the 2D region to load or store.
+### * arg14: i32 Src0AddrY, the base Y position of the 2D region to load or store.
+### * arg15: data to write (overloaded)
+###
+### * Return value: void
+###
+    "lsc_store2d_stateless" : { "result" : "void",
+                                "arguments" : ["anyvector","char","char","char","char","char","short","short","char","anyint","int","int","int","int","int","anyvector"],
+                                "attributes" : "None"
+                              },
+
+
+### ``llvm.genx.lsc.atomic.*.<return type>.<any type>.<any vector>`` : lsc_atomic instructions
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### !!! Those are legacy ones! Use xatomic version instead !!!
+###
+### * ``llvm.genx.lsc.atomic.bti`` :
+### * ``llvm.genx.lsc.atomic.slm`` :
+### * ``llvm.genx.lsc.atomic.slateless`` :
+###
+### * arg0: {1,32}Xi1 predicate (overloaded)
+### * arg1: i8 Subopcode, [MBZ]
+### * arg2: i8 Caching behavior for L1, [MBC]
+### * arg3: i8 Caching behavior for L3, [MBC]
+### * arg4: i16 Address scale, [MBC]
+### * arg5: {1,32}Xi32 Immediate offset added to each address, [MBC]
+### * arg6: i8 The dataum size, [MBC]
+### * arg7: i8 Indicates if the data is transposed during the transfer, [MBC]
+### * arg8: i8 Number of elements to load per address (vector size), [MBC]
+### * arg9: i8 Channel mask, currently ignored, [MBC].
+### * arg10: i32/i64 surface base address for this operation.
+### * arg11: {1,32}Xi{16,32,64} The vector register holding addresses. (overloaded)
+### * arg12: i32 {1,32}Xi32 Src0 or undef (same vector size as predicate)
+### * arg13: i32 {1,32}Xi32 Src1 or undef (same vector size as predicate)
+### * arg14: i32 {1,32}Xi32 Old value of destination (same vector size as predicate), now always undef
+###
+    "lsc_atomic_bti" : { "result" : "any",
+                         "arguments" : ["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],
+                         "attributes" : "None"
+                       },
+    "lsc_atomic_slm" : { "result" : "any",
+                         "arguments" : ["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],
+                         "attributes" : "None"
+                       },
+    "lsc_atomic_stateless" : { "result" : "any",
+                               "arguments" : ["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],
+                               "attributes" : "None"
+                             },
+    "lsc_atomic_bindless" : { "result" : "any",
+                              "arguments" : ["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],
+                              "attributes" : "None"
+                            },
+
+### ``llvm.genx.lsc.xatomic.*.<return type>.<any type>.<any vector>`` : lsc_atomic instructions
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * ``llvm.genx.lsc.xatomic.bti`` :
+### * ``llvm.genx.lsc.xatomic.slm`` :
+### * ``llvm.genx.lsc.xatomic.slateless`` :
+### * ``llvm.genx.lsc.xatomic.bindless`` :
+###
+### * arg0: {1,32}Xi1 predicate (overloaded)
+### * arg1: i8 Subopcode, [MBZ]
+### * arg2: i8 Caching behavior for L1, [MBC]
+### * arg3: i8 Caching behavior for L3, [MBC]
+### * arg4: i16 Address scale, [MBC]
+### * arg5: {1,32}Xi32 Immediate offset added to each address, [MBC]
+### * arg6: i8 Data size, [MBC]
+### * arg7: i8 Number of elements to load per address (vector size), [MBC]
+### * arg8: i8 Indicates if the data is transposed during the transfer, [MBC]
+### * arg9: i8 Channel mask, currently ignored, [MBC]
+### * arg10: {1,32}Xi{16,32,64} The vector register holding offsets (overloaded)
+###          for flat version Base Address + Offset[i] goes here
+### * arg11: i32 {1,32}Xi32 Src0 or undef (same vector size as predicate)
+### * arg12: i32 {1,32}Xi32 Src1 or undef (same vector size as predicate)
+### * arg13: i32 surface to use for this operation. This can be an immediate or a register
+###          for flat and bindless version pass zero here
+### * arg14: i32 {1,32}Xi32 Old value of destination (same vector size as predicate), now always undef
+###
+    "lsc_xatomic_bti" : { "result" : "any",
+                          "arguments" : ["any","char","char","char","short","int","char","char","char","char","anyvector",0,0,"int",0],
+                          "attributes" : "None"
+                        },
+    "lsc_xatomic_slm" : { "result" : "any",
+                          "arguments" : ["any","char","char","char","short","int","char","char","char","char","anyvector",0,0,"int",0],
+                          "attributes" : "None"
+                        },
+    "lsc_xatomic_stateless" : { "result" : "any",
+                                "arguments" : ["any","char","char","char","short","int","char","char","char","char","anyvector",0,0,"int",0],
+                                "attributes" : "None"
+                              },
+    "lsc_xatomic_bindless" : { "result" : "any",
+                               "arguments" : ["any","char","char","char","short","int","char","char","char","char","anyvector",0,0,"int",0],
+                               "attributes" : "None"
+                             },
+
+### ``llvm.genx.lsc.fence.<vector type>`` : lsc_fence instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * ``llvm.genx.lsc.fence`` :
+###
+### * Exec_size ignored unless operation is transposed (DataOrder == Tranpose)
+### * arg0: {1,32}Xi1 predicate (overloaded)
+### * arg1: i8 SFID
+### * arg2: i8 Fence operation
+### * arg3: i8 Fence operation scope
+###
+### [2] Mappings are:
+###     0 -> .ugm (unified global memory)
+###     1 -> .ugml (low-bandwith untyped global memory)
+###     2 -> .tgm (typed global memory)
+###     3 -> .slm (shared local memory)
+###
+### [3] Mappings are:
+###     0 -> .none (no operation)
+###     1 -> .evict (dirty lines evicted and invalidated from L1)
+###     2 -> .invalidate (invalidate all clean lines)
+###     3 -> .discard (direct and clean lines are discarded w/o eviction)
+###     4 -> .clean (dirty lines are written to memory, but retained in cache in clean state)
+###     5 -> .flushl3 (flush only L3)
+###
+### [4] Mappings are:
+###     0 -> .group (flush out to the threadgroup's scope)
+###     1 -> .local (flush out to the local scope)
+###     2 -> .tile (tile, flush out to several DSSs)
+###     3 -> .gpu (entire GPU, flush out to the GPUs LLC)
+###     4 -> .gpus (all GPUs in the system, flush out to memory shared by all GPUs)
+###     5 -> .system (the entire system memory space)
+###     6 -> .sysacq (the entire system memory space with system-acquire semantics)
+###
+    "lsc_fence" : { "result" : "void",
+                    "arguments" : ["anyvector","char","char","char"],
+                    "attributes" : "None"
+                  },
 
 ### xor
 ### ^^^
@@ -2167,6 +2580,14 @@ Imported_Intrinsics = \
                             "arguments" : ["anyvector","int","anyint",0,0],
                             "attributes" : "None",
                           },
+    "dword_atomic_fadd" : { "result" : "anyvector",
+                            "arguments" : ["anyvector","int","anyint",0,0],
+                            "attributes" : "None",
+                          },
+    "dword_atomic_fsub" : { "result" : "anyvector",
+                            "arguments" : ["anyvector","int","anyint",0,0],
+                            "attributes" : "None",
+                          },
 
 ### ``llvm.genx.dword.atomic2.*.<return type>.<vector type>.<any int>`` : dword atomic with fmin/fmax operation (variant with no oldval)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2189,6 +2610,14 @@ Imported_Intrinsics = \
                              "attributes" : "None",
                            },
     "dword_atomic2_fmax" : { "result" : "anyvector",
+                             "arguments" : ["anyvector","int","anyint",0],
+                             "attributes" : "None",
+                           },
+    "dword_atomic2_fadd" : { "result" : "anyvector",
+                             "arguments" : ["anyvector","int","anyint",0],
+                             "attributes" : "None",
+                           },
+    "dword_atomic2_fsub" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","anyint",0],
                              "attributes" : "None",
                            },
@@ -2417,6 +2846,14 @@ Imported_Intrinsics = \
                             "attributes" : "None"
                           },
     "typed_atomic_fmax" : { "result" : "anyvector",
+                            "arguments" : ["anyvector","int",0,"anyint",2,2,2],
+                            "attributes" : "None"
+                          },
+    "typed_atomic_fadd" : { "result" : "anyvector",
+                            "arguments" : ["anyvector","int",0,"anyint",2,2,2],
+                            "attributes" : "None"
+                          },
+    "typed_atomic_fsub" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int",0,"anyint",2,2,2],
                             "attributes" : "None"
                           },
@@ -3476,6 +3913,17 @@ Imported_Intrinsics = \
                    "attributes" : "Convergent"
                  },
 
+### ``llvm.genx.nbarrier`` : vISA NBARRIER instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0: i8 signal flag, constant
+### * arg1: i8 barrier id
+### * arg2: i8 number of threads
+###
+    "nbarrier" : { "result" : "void",
+                   "arguments" : ["char","char","char"],
+                   "attributes" : "Convergent"
+                 },
 
 ### ``llvm.genx.cache.flush`` : vISA CACHE_FLUSH instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -4713,6 +5161,8 @@ Imported_Intrinsics = \
 ## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ## * ``llvm.genx.dword.atomic2.fmin.predef.surface`` : vISA DWORD_ATOMIC FMIN instruction
 ## * ``llvm.genx.dword.atomic2.fmax.predef.surface`` : vISA DWORD_ATOMIC FMAX instruction
+## * ``llvm.genx.dword.atomic2.fadd.predef.surface`` : vISA DWORD_ATOMIC FADD instruction
+## * ``llvm.genx.dword.atomic2.fsub.predef.surface`` : vISA DWORD_ATOMIC FSUB instruction
 ##
 ## * (Exec_size inferred from element offset type)
 ## * arg0: vXi1 predicate (overloaded)
@@ -4730,6 +5180,14 @@ Imported_Intrinsics = \
                                             "attributes" : "None",
                                           },
     "dword_atomic2_fmax_predef_surface" : { "result" : "anyvector",
+                                            "arguments" : ["anyvector","anyptr","anyint",0],
+                                            "attributes" : "None",
+                                          },
+    "dword_atomic2_fadd_predef_surface" : { "result" : "anyvector",
+                                            "arguments" : ["anyvector","anyptr","anyint",0],
+                                            "attributes" : "None",
+                                          },
+    "dword_atomic2_fsub_predef_surface" : { "result" : "anyvector",
                                             "arguments" : ["anyvector","anyptr","anyint",0],
                                             "attributes" : "None",
                                           },

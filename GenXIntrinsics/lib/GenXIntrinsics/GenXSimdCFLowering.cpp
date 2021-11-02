@@ -1218,6 +1218,17 @@ unsigned CMSimdCFLower::deduceNumChannels(Instruction *SI) {
     NumChannels = ResultElems / AddrElems;
     break;
   }
+  case GenXIntrinsic::genx_lsc_load_slm:
+  case GenXIntrinsic::genx_lsc_load_stateless:
+  case GenXIntrinsic::genx_lsc_load_bindless:
+  case GenXIntrinsic::genx_lsc_load_bti:
+  case GenXIntrinsic::genx_lsc_prefetch_bti:
+  case GenXIntrinsic::genx_lsc_prefetch_stateless:
+  case GenXIntrinsic::genx_lsc_prefetch_bindless:
+    NumChannels = GenXIntrinsic::getLSCNumVectorElements(
+          static_cast<GenXIntrinsic::LSCVectorSize>(
+              cast<ConstantInt>(CI->getOperand(7))->getZExtValue()));
+    break;
   default:
     break;
   }
