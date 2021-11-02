@@ -630,6 +630,7 @@ bool GenXSPIRVReaderAdaptor::processVCKernelAttributes(Function &F) {
   auto ArgOffset = unsigned(0);
   auto ArgIOKinds = llvm::SmallVector<llvm::Metadata *, 8>();
   auto ArgDescs = llvm::SmallVector<llvm::Metadata *, 8>();
+  auto NBarrierCnt = unsigned(0);
 
   auto &&Context = F.getContext();
   llvm::Type *I32Ty = llvm::Type::getInt32Ty(Context);
@@ -680,6 +681,15 @@ bool GenXSPIRVReaderAdaptor::processVCKernelAttributes(Function &F) {
     dropFnAttribute(F, VCFunctionMD::VCSLMSize);
   }
 
+  if (VCINTR::AttributeList::hasFnAttr(Attrs,
+                                       VCFunctionMD::VCNamedBarrierCount)) {
+    VCINTR::AttributeList::getAttributeAtIndex(
+        Attrs, AttributeList::FunctionIndex, VCFunctionMD::VCNamedBarrierCount)
+        .getValueAsString()
+        .getAsInteger(0, NBarrierCnt);
+    dropFnAttribute(F, VCFunctionMD::VCNamedBarrierCount);
+  }
+
   auto KernelMD = std::vector<llvm::Metadata *>();
   KernelMD.push_back(FunctionRef);
   KernelMD.push_back(llvm::MDString::get(Context, KernelName));
@@ -689,8 +699,8 @@ bool GenXSPIRVReaderAdaptor::processVCKernelAttributes(Function &F) {
       ConstantAsMetadata::get(ConstantInt::get(I32Ty, ArgOffset)));
   KernelMD.push_back(llvm::MDNode::get(Context, ArgIOKinds));
   KernelMD.push_back(llvm::MDNode::get(Context, ArgDescs));
-  KernelMD.push_back(ConstantAsMetadata::get(ConstantInt::get(I32Ty, 0)));
-
+  KernelMD.push_back(
+      ConstantAsMetadata::get(ConstantInt::get(I32Ty, NBarrierCnt)));
   NamedMDNode *KernelMDs =
       F.getParent()->getOrInsertNamedMetadata(FunctionMD::GenXKernels);
   llvm::MDNode *Node = MDNode::get(F.getContext(), KernelMD);
