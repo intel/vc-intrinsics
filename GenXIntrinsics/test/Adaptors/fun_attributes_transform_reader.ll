@@ -48,7 +48,7 @@ define spir_kernel void @test_VCSLMSize() #6 {
   ret void
 }
 
-; CHECK-DAG: attributes #[[FATR_STACK_CALL_ATTR_IDX]] = { noinline "CMStackCall" }
+; CHECK-DAG: attributes #[[FATR_STACK_CALL_ATTR_IDX]] = { "CMStackCall" }
 ; CHECK-DAG: attributes #[[FATR_CALLABLE_ATTR_IDX]] = { "CMCallable" }
 ; CHECK-DAG: attributes #[[FATR_FC_ENTRY_IDX]] = { "CMEntry" }
 ; CHECK-DAG: attributes #[[FATR_SIMT_CALL_IDX]] = { "CMGenxSIMT" }

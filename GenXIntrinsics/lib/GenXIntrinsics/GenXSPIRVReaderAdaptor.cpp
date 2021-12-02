@@ -562,7 +562,6 @@ bool GenXSPIRVReaderAdaptor::processVCFunctionAttributes(Function &F) {
 
   if (VCINTR::AttributeList::hasFnAttr(Attrs, VCFunctionMD::VCStackCall)) {
     F.addFnAttr(FunctionMD::CMStackCall);
-    F.addFnAttr(Attribute::NoInline);
     dropFnAttribute(F, VCFunctionMD::VCStackCall);
   }
 
