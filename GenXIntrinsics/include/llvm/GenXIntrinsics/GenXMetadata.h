@@ -17,6 +17,10 @@ SPDX-License-Identifier: MIT
 #define GENX_METADATA_H
 
 namespace llvm {
+
+class MDNode;
+class Function;
+
 namespace genx {
 
 namespace FunctionMD {
@@ -68,22 +72,7 @@ enum KernelMDOp {
   BarrierCnt    // Barrier count
 };
 
-inline MDNode *GetOldStyleKernelMD(Function const &F) {
-  auto *KernelMD = static_cast<MDNode *>(nullptr);
-  auto *KernelMDs = F.getParent()->getNamedMetadata(FunctionMD::GenXKernels);
-  if (!KernelMDs)
-    return KernelMD;
-
-  for (unsigned I = 0, E = KernelMDs->getNumOperands(); I < E; ++I) {
-    auto *Kernel = mdconst::dyn_extract<Function>(
-        KernelMDs->getOperand(I)->getOperand(KernelMDOp::FunctionRef));
-    if (Kernel == &F) {
-      KernelMD = KernelMDs->getOperand(I);
-      break;
-    }
-  }
-  return KernelMD;
-}
+MDNode *GetOldStyleKernelMD(const Function &F);
 
 } // namespace genx
 } // namespace llvm
