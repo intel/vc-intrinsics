@@ -39,12 +39,14 @@ enum ID : unsigned {
 };
 
 namespace GenXResult {
-  enum ResultIndexes {
-    IdxAddc_Add    = 1,
-    IdxAddc_Carry  = 0,
-    IdxSubb_Sub    = 1,
-    IdxSubb_Borrow = 0
-  };
+enum ResultIndexes {
+  IdxAddc_Add = 1,
+  IdxAddc_Carry = 0,
+  IdxSubb_Sub = 1,
+  IdxSubb_Borrow = 0,
+  IdxAdd3c_Add = 1,
+  IdxAdd3c_Carry = 0
+};
 }
 
 // The number of elements to load per address (vector size)
