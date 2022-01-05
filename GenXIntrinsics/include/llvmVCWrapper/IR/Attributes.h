@@ -97,7 +97,7 @@ removeAttributeAtIndex(llvm::LLVMContext &C,
 inline llvm::AttributeList
 removeAttributesAtIndex(llvm::LLVMContext &C,
                         const llvm::AttributeList &AttrList, unsigned Index,
-                        const llvm::AttrBuilder &AttrsToRemove) {
+                        const llvm::AttributeMask &AttrsToRemove) {
 #if VC_INTR_LLVM_VERSION_MAJOR >= 14
   return AttrList.removeAttributesAtIndex(C, Index, AttrsToRemove);
 #else
