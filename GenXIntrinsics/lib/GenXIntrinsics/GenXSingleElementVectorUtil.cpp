@@ -25,7 +25,6 @@ SPDX-License-Identifier: MIT
 #include "llvmVCWrapper/IR/Attributes.h"
 #include "llvmVCWrapper/IR/DerivedTypes.h"
 #include "llvmVCWrapper/IR/Function.h"
-#include "llvmVCWrapper/IR/GlobalValue.h"
 #include "llvmVCWrapper/IR/Instructions.h"
 #include "llvmVCWrapper/Support/Alignment.h"
 
@@ -532,8 +531,8 @@ static Function &getSingleElementVectorSignature(Function &F,
   if (NewFunctionType == F.getFunctionType())
     return F;
 
-  auto &&NewF = *VCINTR::Function::Create(
-      NewFunctionType, F.getLinkage(), VCINTR::GlobalValue::getAddressSpace(F));
+  auto &&NewF =
+      *Function::Create(NewFunctionType, F.getLinkage(), F.getAddressSpace());
 
   assert(doesSignatureHaveSingleElementVector(F) ||
          doesSignatureHaveSingleElementVector(NewF));
@@ -702,14 +701,12 @@ public:
                               OldInst.getOrdering(), OldInst.getSyncScopeID(),
                               &OldInst);
   }
-#if VC_INTR_LLVM_VERSION_MAJOR >= 8
   Instruction *visitUnaryOperator(UnaryOperator &OldInst) {
     auto *NewT = static_cast<llvm::Type *>(nullptr);
     auto NewVals = ValueCont{};
     std::tie(NewT, NewVals) = getOperandsFreeFromSingleElementVector(OldInst);
     return UnaryOperator::Create(OldInst.getOpcode(), NewVals[0], "", &OldInst);
   }
-#endif
   Instruction *visitVAArgInst(VAArgInst &OldInst) {
     auto *NewT = static_cast<llvm::Type *>(nullptr);
     auto NewVals = ValueCont{};
@@ -762,7 +759,7 @@ static GlobalVariable &createAndTakeFrom(GlobalVariable &GV, PointerType *NewT,
   auto *NewGV = new GlobalVariable(
       *GV.getParent(), NewT->getElementType(), GV.isConstant(), GV.getLinkage(),
       Initializer, "sev.global.", &GV, GV.getThreadLocalMode(),
-      VCINTR::GlobalValue::getAddressSpace(GV), GV.isExternallyInitialized());
+      GV.getAddressSpace(), GV.isExternallyInitialized());
   auto DebugInfoVec = SmallVector<DIGlobalVariableExpression *, 2>{};
   GV.getDebugInfo(DebugInfoVec);
   NewGV->takeName(&GV);

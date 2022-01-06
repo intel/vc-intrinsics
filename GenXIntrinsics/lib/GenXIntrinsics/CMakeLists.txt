@@ -23,6 +23,7 @@ if(BUILD_EXTERNAL)
               GenXSPIRVWriterAdaptor.cpp
               GenXVersion.cpp
               AdaptorsCommon.cpp
+              GenXMetadata.cpp
              )
   llvm_update_compile_flags(LLVMGenXIntrinsics)
   add_dependencies(LLVMGenXIntrinsics GenXIntrinsicsGen)
@@ -50,6 +51,7 @@ else()
     GenXSPIRVWriterAdaptor.cpp
     GenXVersion.cpp
     AdaptorsCommon.cpp
+    GenXMetadata.cpp
     ADDITIONAL_HEADER_DIRS
     ${GENX_INTRINSICS_MAIN_INCLUDE_DIR}/llvm/GenXIntrinsics
 

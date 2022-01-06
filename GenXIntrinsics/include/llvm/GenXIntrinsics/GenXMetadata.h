@@ -17,6 +17,10 @@ SPDX-License-Identifier: MIT
 #define GENX_METADATA_H
 
 namespace llvm {
+
+class MDNode;
+class Function;
+
 namespace genx {
 
 namespace FunctionMD {
@@ -52,6 +56,7 @@ static constexpr const char VCSLMSize[] = "VCSLMSize";
 static constexpr const char VCArgumentKind[] = "VCArgumentKind";
 static constexpr const char VCArgumentDesc[] = "VCArgumentDesc";
 static constexpr const char VCSIMTCall[] = "VCSIMTCall";
+static constexpr const char VCNamedBarrierCount[] = "VCNamedBarrierCount";
 } // namespace VCFunctionMD
 
 enum KernelMDOp {
@@ -63,26 +68,11 @@ enum KernelMDOp {
   ArgIOKinds,   // Reference to metadata node containing kernel argument
                 // input/output kinds
   ArgTypeDescs, // Kernel argument type descriptors
-  Reserved_0,
+  NBarrierCnt,  // Named barrier count
   BarrierCnt    // Barrier count
 };
 
-inline MDNode *GetOldStyleKernelMD(Function const &F) {
-  auto *KernelMD = static_cast<MDNode *>(nullptr);
-  auto *KernelMDs = F.getParent()->getNamedMetadata(FunctionMD::GenXKernels);
-  if (!KernelMDs)
-    return KernelMD;
-
-  for (unsigned I = 0, E = KernelMDs->getNumOperands(); I < E; ++I) {
-    auto *Kernel = mdconst::dyn_extract<Function>(
-        KernelMDs->getOperand(I)->getOperand(KernelMDOp::FunctionRef));
-    if (Kernel == &F) {
-      KernelMD = KernelMDs->getOperand(I);
-      break;
-    }
-  }
-  return KernelMD;
-}
+MDNode *GetOldStyleKernelMD(const Function &F);
 
 } // namespace genx
 } // namespace llvm
