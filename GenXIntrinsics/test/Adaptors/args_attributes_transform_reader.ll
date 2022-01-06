@@ -8,7 +8,7 @@
 
 ; Test that adaptor correctly handles parameter attributes with types.
 
-; UNSUPPORTED: llvm7, llvm8
+; UNSUPPORTED: llvm8
 ; XFAIL: llvm13, llvm14
 ; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
 ; CHECK: @test

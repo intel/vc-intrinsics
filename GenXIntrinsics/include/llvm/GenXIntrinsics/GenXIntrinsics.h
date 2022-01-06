@@ -47,6 +47,49 @@ namespace GenXResult {
   };
 }
 
+// The number of elements to load per address (vector size)
+// NOTE: taken from cmc/support
+enum class LSCVectorSize : uint8_t {
+  N0 = 0,
+  N1 = 1,  // 1 element
+  N2 = 2,  // 2 element
+  N3 = 3,  // 3 element
+  N4 = 4,  // 4 element
+  N8 = 5,  // 8 element
+  N16 = 6, // 16 element
+  N32 = 7, // 32 element
+  N64 = 8  // 64 element
+};
+
+enum class LSCDataSize : uint8_t {
+  Invalid,
+  D8,
+  D16,
+  D32,
+  D64,
+  D8U32,
+  D16U32,
+  D16U32H,
+};
+
+enum class LSCDataOrder : uint8_t {
+  Invalid,
+  NonTranspose,
+  Transpose
+};
+
+enum class LSCCategory : uint8_t {
+  Load,
+  Load2D,
+  Prefetch,
+  Prefetch2D,
+  Store,
+  Store2D,
+  Fence,
+  LegacyAtomic,
+  Atomic,
+  NotLSC
+};
 
 namespace GenXRegion {
 enum {
@@ -412,6 +455,295 @@ inline bool isReadWritePredefReg(const Function *F) {
          isReadPredefReg(getGenXIntrinsicID(F));
 }
 
+inline LSCCategory getLSCCategory(unsigned IntrinID) {
+  switch(IntrinID) {
+    case GenXIntrinsic::genx_lsc_load_bti:
+    case GenXIntrinsic::genx_lsc_load_stateless:
+    case GenXIntrinsic::genx_lsc_load_slm:
+    case GenXIntrinsic::genx_lsc_load_bindless:
+    case GenXIntrinsic::genx_lsc_load_quad_bti:
+    case GenXIntrinsic::genx_lsc_load_quad_slm:
+    case GenXIntrinsic::genx_lsc_load_quad_stateless:
+      return LSCCategory::Load;
+    case GenXIntrinsic::genx_lsc_load2d_stateless:
+      return LSCCategory::Load2D;
+    case GenXIntrinsic::genx_lsc_prefetch_bti:
+    case GenXIntrinsic::genx_lsc_prefetch_stateless:
+      return LSCCategory::Prefetch;
+    case GenXIntrinsic::genx_lsc_prefetch2d_stateless:
+      return LSCCategory::Prefetch2D;
+    case GenXIntrinsic::genx_lsc_store_bti:
+    case GenXIntrinsic::genx_lsc_store_stateless:
+    case GenXIntrinsic::genx_lsc_store_slm:
+    case GenXIntrinsic::genx_lsc_store_bindless:
+    case GenXIntrinsic::genx_lsc_store_quad_bti:
+    case GenXIntrinsic::genx_lsc_store_quad_slm:
+    case GenXIntrinsic::genx_lsc_store_quad_stateless:
+      return LSCCategory::Store;
+    case GenXIntrinsic::genx_lsc_store2d_stateless:
+      return LSCCategory::Store2D;
+    case GenXIntrinsic::genx_lsc_fence:
+      return LSCCategory::Fence;
+    case GenXIntrinsic::genx_lsc_atomic_bti:
+    case GenXIntrinsic::genx_lsc_atomic_stateless:
+    case GenXIntrinsic::genx_lsc_atomic_slm:
+    case GenXIntrinsic::genx_lsc_atomic_bindless:
+      return LSCCategory::LegacyAtomic;
+    case GenXIntrinsic::genx_lsc_xatomic_bti:
+    case GenXIntrinsic::genx_lsc_xatomic_stateless:
+    case GenXIntrinsic::genx_lsc_xatomic_slm:
+    case GenXIntrinsic::genx_lsc_xatomic_bindless:
+      return LSCCategory::Atomic;
+    default:
+      return LSCCategory::NotLSC;
+  }
+}
+
+inline LSCCategory getLSCCategory(const Value *V) {
+  return getLSCCategory(getGenXIntrinsicID(V));
+}
+
+inline LSCCategory getLSCCategory(const Function *F) {
+  return getLSCCategory(getGenXIntrinsicID(F));
+}
+
+inline bool isLSCLoad(unsigned IntrinID) {
+  return getLSCCategory(IntrinID) == LSCCategory::Load;
+}
+
+inline bool isLSCLoad(const Value *V) {
+  return isLSCLoad(getGenXIntrinsicID(V));
+}
+
+inline bool isLSCLoad(const Function *F) {
+  return isLSCLoad(getGenXIntrinsicID(F));
+}
+
+inline bool isLSCLoad2D(unsigned IntrinID) {
+  return getLSCCategory(IntrinID) == LSCCategory::Load2D;
+}
+
+inline bool isLSCLoad2D(const Value *V) {
+  return isLSCLoad2D(getGenXIntrinsicID(V));
+}
+
+inline bool isLSCLoad2D(const Function *F) {
+  return isLSCLoad2D(getGenXIntrinsicID(F));
+}
+
+
+inline bool isLSCPrefetch(unsigned IntrinID) {
+  return getLSCCategory(IntrinID) == LSCCategory::Prefetch;
+}
+
+inline bool isLSCPrefetch(const Value *V) {
+  return isLSCPrefetch(getGenXIntrinsicID(V));
+}
+
+inline bool isLSCPrefetch(const Function *F) {
+  return isLSCPrefetch(getGenXIntrinsicID(F));
+}
+
+inline bool isLSCPrefetch2D(unsigned IntrinID) {
+  return getLSCCategory(IntrinID) == LSCCategory::Prefetch2D;
+}
+
+inline bool isLSCPrefetch2D(const Value *V) {
+  return isLSCPrefetch2D(getGenXIntrinsicID(V));
+}
+
+inline bool isLSCPrefetch2D(const Function *F) {
+  return isLSCPrefetch2D(getGenXIntrinsicID(F));
+}
+
+inline bool isLSCStore(unsigned IntrinID) {
+  return getLSCCategory(IntrinID) == LSCCategory::Store;
+}
+
+inline bool isLSCStore(const Value *V) {
+  return isLSCStore(getGenXIntrinsicID(V));
+}
+
+inline bool isLSCStore(const Function *F) {
+  return isLSCStore(getGenXIntrinsicID(F));
+}
+
+inline bool isLSCStore2D(unsigned IntrinID) {
+  return getLSCCategory(IntrinID) == LSCCategory::Store2D;
+}
+
+inline bool isLSCStore2D(const Value *V) {
+  return isLSCStore2D(getGenXIntrinsicID(V));
+}
+
+inline bool isLSCStore2D(const Function *F) {
+  return isLSCStore2D(getGenXIntrinsicID(F));
+}
+
+
+inline bool isLSCFence(unsigned IntrinID) {
+  return getLSCCategory(IntrinID) == LSCCategory::Fence;
+}
+
+inline bool isLSCFence(const Value *V) {
+  return isLSCFence(getGenXIntrinsicID(V));
+}
+
+inline bool isLSCFence(const Function *F) {
+  return isLSCFence(getGenXIntrinsicID(F));
+}
+
+inline bool isLSCLegacyAtomic(unsigned IntrinID) {
+  return getLSCCategory(IntrinID) == LSCCategory::LegacyAtomic;
+}
+
+inline bool isLSCLegacyAtomic(const Value *V) {
+  return isLSCLegacyAtomic(getGenXIntrinsicID(V));
+}
+
+inline bool isLSCLegacyAtomic(const Function *F) {
+  return isLSCLegacyAtomic(getGenXIntrinsicID(F));
+}
+
+inline bool isLSCAtomic(unsigned IntrinID) {
+  return getLSCCategory(IntrinID) == LSCCategory::Atomic;
+}
+
+inline bool isLSCAtomic(const Value *V) {
+  return isLSCAtomic(getGenXIntrinsicID(V));
+}
+
+inline bool isLSCAtomic(const Function *F) {
+  return isLSCAtomic(getGenXIntrinsicID(F));
+}
+
+inline bool isLSC(unsigned IntrinID) {
+  return getLSCCategory(IntrinID) != LSCCategory::NotLSC;
+}
+
+inline bool isLSC(const Value *V) {
+  return isLSC(getGenXIntrinsicID(V));
+}
+
+inline bool isLSC(const Function *F) {
+  return isLSC(getGenXIntrinsicID(F));
+}
+
+inline bool isLSC2D(unsigned IntrinID) {
+  switch (getLSCCategory(IntrinID)) {
+    case LSCCategory::Load2D:
+    case LSCCategory::Prefetch2D:
+    case LSCCategory::Store2D:
+      return true;
+    case LSCCategory::Load:
+    case LSCCategory::Prefetch:
+    case LSCCategory::Store:
+    case LSCCategory::Fence:
+    case LSCCategory::LegacyAtomic:
+    case LSCCategory::Atomic:
+    case LSCCategory::NotLSC:
+      return false;
+  }
+  llvm_unreachable("Unknown LSC category");
+}
+
+inline bool isLSC2D(const Value *V) {
+  return isLSC2D(getGenXIntrinsicID(V));
+}
+
+inline bool isLSC2D(const Function *F) {
+  return isLSC2D(getGenXIntrinsicID(F));
+}
+
+inline unsigned getLSCNumVectorElements(LSCVectorSize VS) {
+  switch (VS) {
+    case LSCVectorSize::N0:
+      break;
+    case LSCVectorSize::N1:
+      return 1;
+    case LSCVectorSize::N2:
+      return 2;
+    case LSCVectorSize::N3:
+      return 3;
+    case LSCVectorSize::N4:
+      return 4;
+    case LSCVectorSize::N8:
+      return 8;
+    case LSCVectorSize::N16:
+      return 16;
+    case LSCVectorSize::N32:
+      return 32;
+    case LSCVectorSize::N64:
+      return 64;
+  }
+  llvm_unreachable("Unknown vector size");
+}
+
+LSCVectorSize getLSCVectorSize(const Instruction *I);
+
+inline unsigned getLSCNumVectorElements(const Instruction *I) {
+  return GenXIntrinsic::getLSCNumVectorElements(getLSCVectorSize(I));
+}
+
+inline unsigned getLSCDataBitsRegister(LSCDataSize DS) {
+  switch(DS) {
+    case LSCDataSize::Invalid:
+      break;
+    case LSCDataSize::D8:
+      return 8;
+    case LSCDataSize::D16:
+      return 16;
+    case LSCDataSize::D32:
+    case LSCDataSize::D8U32:
+    case LSCDataSize::D16U32:
+    case LSCDataSize::D16U32H:
+      return 32;
+    case LSCDataSize::D64:
+      return 64;
+  }
+  llvm_unreachable("Unknown data size");
+}
+
+inline unsigned getLSCDataBitsMemory(LSCDataSize DS) {
+  switch(DS) {
+    case LSCDataSize::Invalid:
+      break;
+    case LSCDataSize::D8:
+    case LSCDataSize::D8U32:
+      return 8;
+    case LSCDataSize::D16:
+    case LSCDataSize::D16U32:
+    case LSCDataSize::D16U32H:
+      return 16;
+    case LSCDataSize::D32:
+      return 32;
+    case LSCDataSize::D64:
+      return 64;
+  }
+  llvm_unreachable("Unknown data size");
+}
+
+LSCDataSize getLSCDataSize(const Instruction *I);
+
+inline unsigned getLSCDataBitsRegister(const Instruction *I) {
+  return getLSCDataBitsRegister(getLSCDataSize(I));
+}
+
+inline unsigned getLSCDataBitsMemory(const Instruction *I) {
+  return getLSCDataBitsMemory(getLSCDataSize(I));
+}
+
+LSCDataOrder getLSCDataOrder(const Instruction *I);
+
+inline bool isLSCNonTransposed(const Instruction *I) {
+  return getLSCDataOrder(I) == LSCDataOrder::NonTranspose;
+}
+
+inline bool isLSCTransposed(const Instruction *I) {
+  return getLSCDataOrder(I) == LSCDataOrder::Transpose;
+}
+
+unsigned getLSCWidth(const Instruction *I);
 
 } // namespace GenXIntrinsic
 
