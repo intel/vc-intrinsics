@@ -15,19 +15,6 @@ namespace VCINTR {
 
 namespace Function {
 
-inline llvm::Function *Create(llvm::FunctionType *FTy,
-                              llvm::Function::LinkageTypes Linkage,
-                              unsigned AddressSpace, const llvm::Twine &N = "",
-                              llvm::Module *M = nullptr) {
-#if VC_INTR_LLVM_VERSION_MAJOR <= 7
-  // Let's stick to newer LLVM versions interface.
-  (void)AddressSpace;
-  return llvm::Function::Create(FTy, Linkage, N, M);
-#else
-  return llvm::Function::Create(FTy, Linkage, AddressSpace, N, M);
-#endif
-}
-
 inline void addAttributeAtIndex(llvm::Function &F, unsigned Index,
                                 llvm::Attribute Attr) {
 #if VC_INTR_LLVM_VERSION_MAJOR >= 14

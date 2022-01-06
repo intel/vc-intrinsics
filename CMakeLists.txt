@@ -16,7 +16,7 @@ set(LLVM_GENX_INTRINSICS_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   get_filename_component(LLVM_CMAKE_PATH ${LLVM_DIR} ABSOLUTE BASE_DIR ${CMAKE_BINARY_DIR})
   set(BUILD_EXTERNAL YES)
-  if (NOT DEFINED INSTALL_REQUIRED)
+  if(NOT DEFINED INSTALL_REQUIRED)
     set(INSTALL_REQUIRED YES)
   endif()
   project(LLVM_GenXIntrinsics
@@ -46,20 +46,24 @@ else(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
   # LLVM_CMAKE_DIR is not set for non-standalone builds. Use LLVM_CMAKE_PATH
   # instead. (see clang/CMakeLists.txt)
-  if (NOT LLVM_CMAKE_DIR)
+  if(NOT LLVM_CMAKE_DIR)
     set(LLVM_CMAKE_DIR ${LLVM_CMAKE_PATH})
   endif()
 endif(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
+if(LLVM_VERSION_MAJOR VERSION_LESS 8)
+  message(FATAL_ERROR "VC-intrinsics do not support ${LLVM_VERSION} LLVM version")
+endif()
+
 include(FindPythonInterp)
-if( NOT PYTHONINTERP_FOUND )
+if(NOT PYTHONINTERP_FOUND)
   message(FATAL_ERROR
 "Unable to find Python interpreter, required for builds and testing.
 
 Please install Python or specify the PYTHON_EXECUTABLE CMake variable.")
 endif()
 
-if( "${PYTHON_VERSION_STRING}" VERSION_LESS 2.7 )
+if("${PYTHON_VERSION_STRING}" VERSION_LESS 2.7)
   message(FATAL_ERROR "Python 2.7 or newer is required")
 endif()
 

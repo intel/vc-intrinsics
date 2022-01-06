@@ -8,7 +8,7 @@
 
 ; Test that adaptor correctly handles parameter attributes with types.
 
-; UNSUPPORTED: llvm7, llvm8
+; UNSUPPORTED: llvm8
 ; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
 ; CHECK: @test
 ; CHECK-SAME: i8
