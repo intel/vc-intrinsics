@@ -17,6 +17,7 @@ SPDX-License-Identifier: MIT
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
 #include <algorithm>
+#include <map>
 #include <set>
 
 namespace llvm {
