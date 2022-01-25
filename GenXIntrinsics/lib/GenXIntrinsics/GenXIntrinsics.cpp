@@ -35,6 +35,7 @@ See LICENSE.TXT for details.
 #include "llvmVCWrapper/IR/Intrinsics.h"
 
 #include <cstring>
+#include <map>
 
 using namespace llvm;
 
