@@ -387,7 +387,11 @@ static void replaceAllUsesWith(Function &OldF, Function &NewF) {
     }
 
     auto *NewCall = CallInst::Create(&NewF, NewParams, "", OldInst);
-    NewCall->setTailCall(OldInst->isTailCall());
+    NewCall->setCallingConv(OldInst->getCallingConv());
+    NewCall->setTailCallKind(OldInst->getTailCallKind());
+    NewCall->copyIRFlags(OldInst);
+    NewCall->copyMetadata(*OldInst);
+    NewCall->setAttributes(OldInst->getAttributes());
     replaceAllUsesWith(OldInst, NewCall);
   }
 }
