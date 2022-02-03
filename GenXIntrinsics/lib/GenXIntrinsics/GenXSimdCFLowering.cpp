@@ -149,8 +149,6 @@ SPDX-License-Identifier: MIT
 ///
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "cmsimdcflowering"
-
 #include "llvm/GenXIntrinsics/GenXSimdCFLowering.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/Analysis/PostDominators.h"
@@ -175,6 +173,8 @@ SPDX-License-Identifier: MIT
 #include <set>
 
 #include "llvmVCWrapper/IR/DerivedTypes.h"
+
+#define DEBUG_TYPE "cmsimdcflowering"
 
 using namespace llvm;
 

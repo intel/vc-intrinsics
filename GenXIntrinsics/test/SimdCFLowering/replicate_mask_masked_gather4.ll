@@ -6,7 +6,7 @@
 ;
 ;============================ end_copyright_notice =============================
 
-; XFAIL: llvm13,llvm14
+; XFAIL: llvm13, llvm14, llvm15
 ; RUN: opt -S -cmsimdcflowering < %s | FileCheck %s
 
 @Rcp_T2 = internal global <64 x i32> undef

@@ -6,7 +6,7 @@
 ;
 ;============================ end_copyright_notice =============================
 
-; XFAIL: llvm13,llvm14
+; XFAIL: llvm13, llvm14, llvm15
 ; Test general translation of attributes within module that has no kernels
 
 ; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
