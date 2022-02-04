@@ -9,7 +9,6 @@
 ; Test GenXSingleElementVectorUtil preserves calling convention
 ; (spir_func here)
 
-; XFAIL: llvm13, llvm14
 ; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
 
 ; ModuleID = 'sev_calling_conv_reader.ll'
