@@ -1775,6 +1775,21 @@ Imported_Intrinsics = \
                      "attributes" : "NoMem"
                    },
 
+### add3c
+### ^^^^^
+###
+### ``llvm.genx.add3c.<{carry, add3}>.<any int>`` : add3 with carry
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * ``llvm.genx.add3c`` :
+###
+### * arg0: first input, i32 scalar/vector integer type
+### * arg1: second input, same type as arg0
+### * arg2: third input, same type as arg0
+    "add3c" : { "result" : ["anyint", "intvector"],
+                "arguments" :  ["anyint",1,1,1],
+                "attributes" :  "NoMem"
+              },
+
 ### bfn
 ### ^^^
 ###
