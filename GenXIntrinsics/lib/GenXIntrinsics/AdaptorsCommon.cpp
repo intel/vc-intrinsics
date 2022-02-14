@@ -43,7 +43,7 @@ void legalizeParamAttributes(Function *F) {
       continue;
 #endif // VC_INTR_LLVM_VERSION_MAJOR >= 13
 
-    auto *ElemType = PTy->getElementType();
+    auto *ElemType = PTy->getPointerElementType();
 
     legalizeAttribute(Arg, ElemType, Attribute::ByVal);
 

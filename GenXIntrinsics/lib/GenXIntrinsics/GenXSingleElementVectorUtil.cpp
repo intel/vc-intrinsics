@@ -91,7 +91,7 @@ static size_t getPointerNesting(Type *T, Type **ReturnNested = nullptr) {
   auto NPtrs = size_t{0};
   auto *NestedType = T;
   while (dyn_cast<PointerType>(NestedType)) {
-    NestedType = cast<PointerType>(NestedType)->getElementType();
+    NestedType = cast<PointerType>(NestedType)->getPointerElementType();
     ++NPtrs;
   }
   if (ReturnNested)
@@ -137,8 +137,8 @@ static size_t getInnerPointerVectorNesting(Type *T) {
 static Type *getTypeFreeFromSingleElementVector(Type *T) {
   // Pointer types should be "undressed" first
   if (auto *Ptr = dyn_cast<PointerType>(T)) {
-    auto UT = getTypeFreeFromSingleElementVector(Ptr->getElementType());
-    if (UT == Ptr->getElementType())
+    auto UT = getTypeFreeFromSingleElementVector(Ptr->getPointerElementType());
+    if (UT == Ptr->getPointerElementType())
       return Ptr;
     return PointerType::get(UT, Ptr->getAddressSpace());
   } else if (auto *VecTy = dyn_cast<VectorType>(T)) {
@@ -165,8 +165,8 @@ static Type *getTypeWithSingleElementVector(Type *T, size_t InnerPointers = 0) {
     return VCINTR::getVectorType(T, 1);
 
   auto *Ptr = cast<PointerType>(T);
-  auto *UT =
-      getTypeWithSingleElementVector(Ptr->getElementType(), InnerPointers);
+  auto *UT = getTypeWithSingleElementVector(Ptr->getPointerElementType(),
+                                            InnerPointers);
   return PointerType::get(UT, Ptr->getAddressSpace());
 }
 
@@ -761,8 +761,8 @@ static void manageSingleElementVectorAttribute(GlobalVariable &GV, Type *OldT,
 static GlobalVariable &createAndTakeFrom(GlobalVariable &GV, PointerType *NewT,
                                          Constant *Initializer) {
   auto *NewGV = new GlobalVariable(
-      *GV.getParent(), NewT->getElementType(), GV.isConstant(), GV.getLinkage(),
-      Initializer, "sev.global.", &GV, GV.getThreadLocalMode(),
+      *GV.getParent(), NewT->getPointerElementType(), GV.isConstant(),
+      GV.getLinkage(), Initializer, "sev.global.", &GV, GV.getThreadLocalMode(),
       GV.getAddressSpace(), GV.isExternallyInitialized());
   auto DebugInfoVec = SmallVector<DIGlobalVariableExpression *, 2>{};
   GV.getDebugInfo(DebugInfoVec);
@@ -808,9 +808,9 @@ static void restoreGlobalVariable(GlobalVariable &GV) {
     return;
   auto *Initializer = static_cast<Constant *>(nullptr);
   if (GV.hasInitializer())
-    Initializer = cast<Constant>(
-        createScalarToVectorValue(GV.getInitializer(), NewT->getElementType(),
-                                  static_cast<Instruction *>(nullptr)));
+    Initializer = cast<Constant>(createScalarToVectorValue(
+        GV.getInitializer(), NewT->getPointerElementType(),
+        static_cast<Instruction *>(nullptr)));
   auto &&NewGV = createAndTakeFrom(GV, NewT, Initializer);
   while (GV.use_begin() != GV.use_end()) {
     auto &&Use = GV.use_begin();
