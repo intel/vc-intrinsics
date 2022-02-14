@@ -294,7 +294,7 @@ static SPIRVArgDesc analyzeKernelArg(const Argument &Arg) {
       AddressSpace != SPIRVParams::SPIRVConstantAS)
     return {SPIRVType::Other};
 
-  Type *PointeeTy = PointerTy->getElementType();
+  Type *PointeeTy = PointerTy->getPointerElementType();
   // Not a pointer to struct, cannot be sampler or image.
   if (!isa<StructType>(PointeeTy))
     return {SPIRVType::Pointer};
