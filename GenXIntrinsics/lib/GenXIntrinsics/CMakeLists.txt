@@ -32,12 +32,6 @@ if(BUILD_EXTERNAL)
 
   vc_get_llvm_targets(LLVM_LIBS ${LLVM_COMPONENTS})
   target_link_libraries(LLVMGenXIntrinsics ${LLVM_LIBS})
-
-  target_include_directories(LLVMGenXIntrinsics PUBLIC
-    $<BUILD_INTERFACE:${GENX_INTRINSICS_MAIN_INCLUDE_DIR}>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/../../include>
-    $<INSTALL_INTERFACE:include>
-  )
 else()
   # when we are building in LLVM infra, we need to conform
   set(LLVM_LINK_COMPONENTS
@@ -54,3 +48,9 @@ else()
       intrinsics_gen
   )
 endif()
+
+target_include_directories(LLVMGenXIntrinsics PUBLIC
+  $<BUILD_INTERFACE:${GENX_INTRINSICS_MAIN_INCLUDE_DIR}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/../../include>
+  $<INSTALL_INTERFACE:include>
+  )
