@@ -201,20 +201,24 @@ static Value *createVectorToScalarValue(Value *Vector,
                                         Instruction *InsertBefore,
                                         size_t idx = 0) {
   assert(hasSingleElementVector(Vector->getType()));
+  Instruction *Val = nullptr;
   if (isa<UndefValue>(Vector))
     return UndefValue::get(
         getTypeFreeFromSingleElementVector(Vector->getType()));
   else if (isa<PointerType>(Vector->getType()))
-    return new BitCastInst(
-        Vector, getTypeFreeFromSingleElementVector(Vector->getType()),
-        "sev.cast.", InsertBefore);
+    Val = new BitCastInst(Vector,
+                          getTypeFreeFromSingleElementVector(Vector->getType()),
+                          "sev.cast.", InsertBefore);
   else if (auto *Const = dyn_cast<Constant>(Vector))
     return Const->getAggregateElement(idx);
   else {
     auto *M = InsertBefore->getModule();
-    return ExtractElementInst::Create(Vector, getVectorIndex(*M, idx),
-                                      "sev.cast.", InsertBefore);
+    Val = ExtractElementInst::Create(Vector, getVectorIndex(*M, idx),
+                                     "sev.cast.", InsertBefore);
   }
+  if (auto *InVector = dyn_cast<Instruction>(Vector))
+    Val->setDebugLoc(InVector->getDebugLoc());
+  return Val;
 }
 
 // This util accepts SEV-rich Value and returns new, SEV-free one
@@ -224,20 +228,24 @@ static Value *createVectorToScalarValue(Value *Vector,
 static Value *createVectorToScalarValue(Value *Vector, BasicBlock *BB,
                                         size_t idx = 0) {
   assert(hasSingleElementVector(Vector->getType()));
+  Instruction *Val = nullptr;
   if (isa<UndefValue>(Vector))
     return UndefValue::get(
         getTypeFreeFromSingleElementVector(Vector->getType()));
   else if (isa<PointerType>(Vector->getType()))
-    return new BitCastInst(
-        Vector, getTypeFreeFromSingleElementVector(Vector->getType()),
-        "sev.cast.", BB);
+    Val = new BitCastInst(Vector,
+                          getTypeFreeFromSingleElementVector(Vector->getType()),
+                          "sev.cast.", BB);
   else if (auto *Const = dyn_cast<Constant>(Vector))
     return Const->getAggregateElement(idx);
   else {
     auto *M = BB->getModule();
-    return ExtractElementInst::Create(Vector, getVectorIndex(*M, idx),
-                                      "sev.cast.", BB);
+    Val = ExtractElementInst::Create(Vector, getVectorIndex(*M, idx),
+                                     "sev.cast.", BB);
   }
+  if (auto *InVector = dyn_cast<Instruction>(Vector))
+    Val->setDebugLoc(InVector->getDebugLoc());
+  return Val;
 }
 
 // This util accepts Scalar Value and returns new SEV-rich Value
