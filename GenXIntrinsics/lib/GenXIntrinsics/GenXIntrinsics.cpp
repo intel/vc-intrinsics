@@ -688,93 +688,40 @@ std::string GenXIntrinsic::getAnyName(unsigned id, ArrayRef<Type *> Tys) {
 GenXIntrinsic::LSCVectorSize GenXIntrinsic::getLSCVectorSize(
     const Instruction *I) {
   assert(isLSC(I));
-  switch (getLSCCategory(I)) {
-    case LSCCategory::Load:
-    case LSCCategory::Prefetch:
-    case LSCCategory::Store:
-    case LSCCategory::Atomic:
-      return static_cast<LSCVectorSize>(
-          cast<ConstantInt>(I->getOperand(7))->getZExtValue());
-    case LSCCategory::LegacyAtomic:
-      return static_cast<LSCVectorSize>(
-          cast<ConstantInt>(I->getOperand(8))->getZExtValue());
-    case LSCCategory::Fence:
-    case LSCCategory::Load2D:
-    case LSCCategory::Prefetch2D:
-    case LSCCategory::Store2D:
-    case LSCCategory::NotLSC:
-      return LSCVectorSize::N0;
-  }
-  llvm_unreachable("Unknown LSC category");
+  const int VectorSizeIdx = LSCArgIdx::getLSCVectorSize(getLSCCategory(I));
+  if (VectorSizeIdx == LSCArgIdx::Invalid)
+    return LSCVectorSize::N0;
+  return static_cast<LSCVectorSize>(
+      cast<ConstantInt>(I->getOperand(VectorSizeIdx))->getZExtValue());
 }
 
 GenXIntrinsic::LSCDataSize GenXIntrinsic::getLSCDataSize(
     const Instruction *I) {
   assert(isLSC(I));
-  switch (getLSCCategory(I)) {
-    case LSCCategory::Load:
-    case LSCCategory::Prefetch:
-    case LSCCategory::Store:
-    case LSCCategory::LegacyAtomic:
-    case LSCCategory::Atomic:
-      return static_cast<LSCDataSize>(
-          cast<ConstantInt>(I->getOperand(6))->getZExtValue());
-    case LSCCategory::Load2D:
-    case LSCCategory::Prefetch2D:
-    case LSCCategory::Store2D:
-      return static_cast<LSCDataSize>(
-          cast<ConstantInt>(I->getOperand(3))->getZExtValue());
-    case LSCCategory::Fence:
-    case LSCCategory::NotLSC:
-      return LSCDataSize::Invalid;
-  }
-  llvm_unreachable("Unknown LSC category");
+  const int DataSizeIdx = LSCArgIdx::getLSCDataSize(getLSCCategory(I));
+  if (DataSizeIdx == LSCArgIdx::Invalid)
+    return LSCDataSize::Invalid;
+  return static_cast<LSCDataSize>(
+      cast<ConstantInt>(I->getOperand(DataSizeIdx))->getZExtValue());
 }
 
 GenXIntrinsic::LSCDataOrder GenXIntrinsic::getLSCDataOrder(
     const Instruction *I) {
   assert(isLSC(I));
-  switch (getLSCCategory(I)) {
-    case LSCCategory::Load:
-    case LSCCategory::Prefetch:
-    case LSCCategory::Store:
-    case LSCCategory::Atomic:
-      return static_cast<LSCDataOrder>(
-          cast<ConstantInt>(I->getOperand(8))->getZExtValue());
-    case LSCCategory::LegacyAtomic:
-      return static_cast<LSCDataOrder>(
-          cast<ConstantInt>(I->getOperand(7))->getZExtValue());
-    case LSCCategory::Load2D:
-    case LSCCategory::Prefetch2D:
-    case LSCCategory::Store2D:
-      return static_cast<LSCDataOrder>(
-          cast<ConstantInt>(I->getOperand(4))->getZExtValue());
-    case LSCCategory::Fence:
-    case LSCCategory::NotLSC:
-      return LSCDataOrder::Invalid;
-  }
-  llvm_unreachable("Unknown LSC category");
+  const int DataOrderIdx = LSCArgIdx::getLSCDataOrder(getLSCCategory(I));
+  if (DataOrderIdx == LSCArgIdx::Invalid)
+    return LSCDataOrder::Invalid;
+  return static_cast<LSCDataOrder>(
+      cast<ConstantInt>(I->getOperand(DataOrderIdx))->getZExtValue());
 }
 
 unsigned GenXIntrinsic::getLSCWidth(const Instruction *I) {
   assert(isLSC(I));
-  switch(getLSCCategory(I)) {
-    case LSCCategory::Load:
-    case LSCCategory::Prefetch:
-    case LSCCategory::Store:
-    case LSCCategory::Fence:
-    case LSCCategory::LegacyAtomic:
-    case LSCCategory::Atomic: {
-    case LSCCategory::Prefetch2D:
-      if (auto VT = dyn_cast<VectorType>(I->getOperand(0)->getType()))
-        return VCINTR::VectorType::getNumElements(VT);
-      return 1;
-    }
-    case LSCCategory::Load2D:
-    case LSCCategory::Store2D:
-    case LSCCategory::NotLSC:
-      return 1;
-  }
-  llvm_unreachable("Unknown LSC category");
+  const int WidthIdx = LSCArgIdx::getLSCWidth(getLSCCategory(I));
+  if (WidthIdx == LSCArgIdx::Invalid)
+    return 1;
+  if (auto VT = dyn_cast<VectorType>(I->getOperand(WidthIdx)->getType()))
+    return VCINTR::VectorType::getNumElements(VT);
+  return 1;
 }
 
