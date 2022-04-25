@@ -1869,16 +1869,6 @@ Imported_Intrinsics = \
                  "attributes" : "NoMem"
                },
 
-### ``llvm.genx.slm.init`` : slm_init instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-###
-### * arg0: slm size, i32 scalar integer type
-###
-    "slm_init" : { "result" : "void",
-                   "arguments" : ["int"],
-                   "attributes" : "None"
-                 },
-
 ### ``llvm.genx.lsc.load.*.<return type if not void>.<any type>.<any type>`` : lsc_load instructions
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
@@ -5432,4 +5422,14 @@ Imported_Intrinsics = \
                 "arguments" : ["anyint", 1, 1],
                 "attributes" : "NoMem"
               },
+
+### ``llvm.genx.slm.init`` : slm_init instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0: slm size, i32 scalar integer type
+###
+    "slm_init" : { "result" : "void",
+                   "arguments" : ["int"],
+                   "attributes" : "None"
+                 },
 }
