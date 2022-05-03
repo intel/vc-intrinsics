@@ -706,7 +706,6 @@ inline int getLSCVectorSize(LSCCategory Cat) {
   case LSCCategory::Store2D:
   case LSCCategory::Fence:
   case LSCCategory::NotLSC:
-  default:
     llvm_unreachable("no such argument");
     return Invalid;
   }
@@ -731,7 +730,6 @@ inline int getLSCDataSize(LSCCategory Cat) {
     return 3;
   case LSCCategory::Fence:
   case LSCCategory::NotLSC:
-  default:
     llvm_unreachable("no such argument");
     return Invalid;
   }
@@ -755,7 +753,6 @@ inline int getLSCImmOffset(LSCCategory Cat) {
   case LSCCategory::Store2D:
   case LSCCategory::Fence:
   case LSCCategory::NotLSC:
-  default:
     llvm_unreachable("no such argument");
     return Invalid;
   }
@@ -781,7 +778,6 @@ inline int getLSCDataOrder(LSCCategory Cat) {
     return 4;
   case LSCCategory::Fence:
   case LSCCategory::NotLSC:
-  default:
     llvm_unreachable("no such argument");
     return Invalid;
   }
@@ -805,7 +801,6 @@ inline int getLSCWidth(LSCCategory Cat) {
   case LSCCategory::Load2D:
   case LSCCategory::Store2D:
   case LSCCategory::NotLSC:
-  default:
     llvm_unreachable("no such argument");
     return Invalid;
   }
