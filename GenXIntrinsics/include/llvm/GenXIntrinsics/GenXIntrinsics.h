@@ -796,10 +796,10 @@ inline int getLSCWidth(LSCCategory Cat) {
   case LSCCategory::Fence:
   case LSCCategory::LegacyAtomic:
   case LSCCategory::Atomic:
-  case LSCCategory::Prefetch2D:
-    return 0;
   case LSCCategory::Load2D:
+  case LSCCategory::Prefetch2D:
   case LSCCategory::Store2D:
+    return 0;
   case LSCCategory::NotLSC:
     llvm_unreachable("no such argument");
     return Invalid;
