@@ -709,6 +709,7 @@ inline int getLSCVectorSize(LSCCategory Cat) {
     llvm_unreachable("no such argument");
     return Invalid;
   }
+  return Invalid;
 }
 // Returns VectorSize index.
 inline int getLSCVectorSize(unsigned IID) {
@@ -733,6 +734,7 @@ inline int getLSCDataSize(LSCCategory Cat) {
     llvm_unreachable("no such argument");
     return Invalid;
   }
+  return Invalid;
 }
 // Returns DataSize index.
 inline int getLSCDataSize(unsigned IID) {
@@ -756,6 +758,7 @@ inline int getLSCImmOffset(LSCCategory Cat) {
     llvm_unreachable("no such argument");
     return Invalid;
   }
+  return Invalid;
 }
 // Returns immediate offset index.
 inline int getLSCImmOffset(unsigned IID) {
@@ -781,6 +784,7 @@ inline int getLSCDataOrder(LSCCategory Cat) {
     llvm_unreachable("no such argument");
     return Invalid;
   }
+  return Invalid;
 }
 // Returns data order index.
 inline int getLSCDataOrder(unsigned IID) {
@@ -804,6 +808,7 @@ inline int getLSCWidth(LSCCategory Cat) {
     llvm_unreachable("no such argument");
     return Invalid;
   }
+  return Invalid;
 }
 // Returns width index.
 inline int getLSCWidth(unsigned IID) {
