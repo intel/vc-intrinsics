@@ -27,12 +27,12 @@ See LICENSE.TXT for details.
 ///
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "GENX_RESTOREINTRATTR"
-
 #include "llvm/GenXIntrinsics/GenXIntrOpts.h"
 #include "llvm/GenXIntrinsics/GenXIntrinsics.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Pass.h"
+
+#define DEBUG_TYPE "GENX_RESTOREINTRATTR"
 
 using namespace llvm;
 

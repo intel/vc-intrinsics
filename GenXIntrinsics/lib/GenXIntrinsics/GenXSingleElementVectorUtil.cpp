@@ -91,7 +91,7 @@ static size_t getPointerNesting(Type *T, Type **ReturnNested = nullptr) {
   auto NPtrs = size_t{0};
   auto *NestedType = T;
   while (dyn_cast<PointerType>(NestedType)) {
-    NestedType = cast<PointerType>(NestedType)->getElementType();
+    NestedType = cast<PointerType>(NestedType)->getPointerElementType();
     ++NPtrs;
   }
   if (ReturnNested)
@@ -137,8 +137,8 @@ static size_t getInnerPointerVectorNesting(Type *T) {
 static Type *getTypeFreeFromSingleElementVector(Type *T) {
   // Pointer types should be "undressed" first
   if (auto *Ptr = dyn_cast<PointerType>(T)) {
-    auto UT = getTypeFreeFromSingleElementVector(Ptr->getElementType());
-    if (UT == Ptr->getElementType())
+    auto UT = getTypeFreeFromSingleElementVector(Ptr->getPointerElementType());
+    if (UT == Ptr->getPointerElementType())
       return Ptr;
     return PointerType::get(UT, Ptr->getAddressSpace());
   } else if (auto *VecTy = dyn_cast<VectorType>(T)) {
@@ -165,8 +165,8 @@ static Type *getTypeWithSingleElementVector(Type *T, size_t InnerPointers = 0) {
     return VCINTR::getVectorType(T, 1);
 
   auto *Ptr = cast<PointerType>(T);
-  auto *UT =
-      getTypeWithSingleElementVector(Ptr->getElementType(), InnerPointers);
+  auto *UT = getTypeWithSingleElementVector(Ptr->getPointerElementType(),
+                                            InnerPointers);
   return PointerType::get(UT, Ptr->getAddressSpace());
 }
 
@@ -201,20 +201,24 @@ static Value *createVectorToScalarValue(Value *Vector,
                                         Instruction *InsertBefore,
                                         size_t idx = 0) {
   assert(hasSingleElementVector(Vector->getType()));
+  Instruction *Val = nullptr;
   if (isa<UndefValue>(Vector))
     return UndefValue::get(
         getTypeFreeFromSingleElementVector(Vector->getType()));
   else if (isa<PointerType>(Vector->getType()))
-    return new BitCastInst(
-        Vector, getTypeFreeFromSingleElementVector(Vector->getType()),
-        "sev.cast.", InsertBefore);
+    Val = new BitCastInst(Vector,
+                          getTypeFreeFromSingleElementVector(Vector->getType()),
+                          "sev.cast.", InsertBefore);
   else if (auto *Const = dyn_cast<Constant>(Vector))
     return Const->getAggregateElement(idx);
   else {
     auto *M = InsertBefore->getModule();
-    return ExtractElementInst::Create(Vector, getVectorIndex(*M, idx),
-                                      "sev.cast.", InsertBefore);
+    Val = ExtractElementInst::Create(Vector, getVectorIndex(*M, idx),
+                                     "sev.cast.", InsertBefore);
   }
+  if (auto *InVector = dyn_cast<Instruction>(Vector))
+    Val->setDebugLoc(InVector->getDebugLoc());
+  return Val;
 }
 
 // This util accepts SEV-rich Value and returns new, SEV-free one
@@ -224,20 +228,24 @@ static Value *createVectorToScalarValue(Value *Vector,
 static Value *createVectorToScalarValue(Value *Vector, BasicBlock *BB,
                                         size_t idx = 0) {
   assert(hasSingleElementVector(Vector->getType()));
+  Instruction *Val = nullptr;
   if (isa<UndefValue>(Vector))
     return UndefValue::get(
         getTypeFreeFromSingleElementVector(Vector->getType()));
   else if (isa<PointerType>(Vector->getType()))
-    return new BitCastInst(
-        Vector, getTypeFreeFromSingleElementVector(Vector->getType()),
-        "sev.cast.", BB);
+    Val = new BitCastInst(Vector,
+                          getTypeFreeFromSingleElementVector(Vector->getType()),
+                          "sev.cast.", BB);
   else if (auto *Const = dyn_cast<Constant>(Vector))
     return Const->getAggregateElement(idx);
   else {
     auto *M = BB->getModule();
-    return ExtractElementInst::Create(Vector, getVectorIndex(*M, idx),
-                                      "sev.cast.", BB);
+    Val = ExtractElementInst::Create(Vector, getVectorIndex(*M, idx),
+                                     "sev.cast.", BB);
   }
+  if (auto *InVector = dyn_cast<Instruction>(Vector))
+    Val->setDebugLoc(InVector->getDebugLoc());
+  return Val;
 }
 
 // This util accepts Scalar Value and returns new SEV-rich Value
@@ -387,7 +395,11 @@ static void replaceAllUsesWith(Function &OldF, Function &NewF) {
     }
 
     auto *NewCall = CallInst::Create(&NewF, NewParams, "", OldInst);
-    NewCall->setTailCall(OldInst->isTailCall());
+    NewCall->setCallingConv(OldInst->getCallingConv());
+    NewCall->setTailCallKind(OldInst->getTailCallKind());
+    NewCall->copyIRFlags(OldInst);
+    NewCall->copyMetadata(*OldInst);
+    NewCall->setAttributes(OldInst->getAttributes());
     replaceAllUsesWith(OldInst, NewCall);
   }
 }
@@ -757,8 +769,8 @@ static void manageSingleElementVectorAttribute(GlobalVariable &GV, Type *OldT,
 static GlobalVariable &createAndTakeFrom(GlobalVariable &GV, PointerType *NewT,
                                          Constant *Initializer) {
   auto *NewGV = new GlobalVariable(
-      *GV.getParent(), NewT->getElementType(), GV.isConstant(), GV.getLinkage(),
-      Initializer, "sev.global.", &GV, GV.getThreadLocalMode(),
+      *GV.getParent(), NewT->getPointerElementType(), GV.isConstant(),
+      GV.getLinkage(), Initializer, "sev.global.", &GV, GV.getThreadLocalMode(),
       GV.getAddressSpace(), GV.isExternallyInitialized());
   auto DebugInfoVec = SmallVector<DIGlobalVariableExpression *, 2>{};
   GV.getDebugInfo(DebugInfoVec);
@@ -804,9 +816,9 @@ static void restoreGlobalVariable(GlobalVariable &GV) {
     return;
   auto *Initializer = static_cast<Constant *>(nullptr);
   if (GV.hasInitializer())
-    Initializer = cast<Constant>(
-        createScalarToVectorValue(GV.getInitializer(), NewT->getElementType(),
-                                  static_cast<Instruction *>(nullptr)));
+    Initializer = cast<Constant>(createScalarToVectorValue(
+        GV.getInitializer(), NewT->getPointerElementType(),
+        static_cast<Instruction *>(nullptr)));
   auto &&NewGV = createAndTakeFrom(GV, NewT, Initializer);
   while (GV.use_begin() != GV.use_end()) {
     auto &&Use = GV.use_begin();

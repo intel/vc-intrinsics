@@ -6,7 +6,7 @@
 ;
 ;============================ end_copyright_notice =============================
 
-; XFAIL: llvm13,llvm14
+; XFAIL: llvm13, llvm14, llvm15
 ; Test that reader ignores signature rewriting for kernels
 ; that are not VCFunction.
 

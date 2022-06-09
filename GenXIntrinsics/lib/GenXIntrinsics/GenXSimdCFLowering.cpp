@@ -149,8 +149,6 @@ SPDX-License-Identifier: MIT
 ///
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "cmsimdcflowering"
-
 #include "llvm/GenXIntrinsics/GenXSimdCFLowering.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/Analysis/PostDominators.h"
@@ -175,6 +173,8 @@ SPDX-License-Identifier: MIT
 #include <set>
 
 #include "llvmVCWrapper/IR/DerivedTypes.h"
+
+#define DEBUG_TYPE "cmsimdcflowering"
 
 using namespace llvm;
 
@@ -362,7 +362,7 @@ bool CMSimdCFLowering::doInitialization(Module &M)
         auto AS1 = LI->getPointerAddressSpace();
         if (AS1 != AS0) {
           auto PtrTy = cast<PointerType>(Ptr->getType());
-          PtrTy = PointerType::get(PtrTy->getElementType(), AS0);
+          PtrTy = PointerType::get(PtrTy->getPointerElementType(), AS0);
           Ptr = Builder.CreateAddrSpaceCast(Ptr, PtrTy);
         }
         Type* Tys[] = { LI->getType(), Ptr->getType() };
@@ -379,7 +379,7 @@ bool CMSimdCFLowering::doInitialization(Module &M)
         auto AS1 = SI->getPointerAddressSpace();
         if (AS1 != AS0) {
           auto PtrTy = cast<PointerType>(Ptr->getType());
-          PtrTy = PointerType::get(PtrTy->getElementType(), AS0);
+          PtrTy = PointerType::get(PtrTy->getPointerElementType(), AS0);
           Ptr = Builder.CreateAddrSpaceCast(Ptr, PtrTy);
         }
         Type* Tys[] = { SI->getValueOperand()->getType(), Ptr->getType() };

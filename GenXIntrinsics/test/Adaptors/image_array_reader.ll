@@ -6,7 +6,7 @@
 ;
 ;============================ end_copyright_notice =============================
 
-; XFAIL: llvm13,llvm14
+; XFAIL: llvm13, llvm14, llvm15
 ; Test reader translation of image array arguments.
 
 ; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s

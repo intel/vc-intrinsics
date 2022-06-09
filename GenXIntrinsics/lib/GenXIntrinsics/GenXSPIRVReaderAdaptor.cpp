@@ -294,7 +294,7 @@ static SPIRVArgDesc analyzeKernelArg(const Argument &Arg) {
       AddressSpace != SPIRVParams::SPIRVConstantAS)
     return {SPIRVType::Other};
 
-  Type *PointeeTy = PointerTy->getElementType();
+  Type *PointeeTy = PointerTy->getPointerElementType();
   // Not a pointer to struct, cannot be sampler or image.
   if (!isa<StructType>(PointeeTy))
     return {SPIRVType::Pointer};
@@ -601,7 +601,7 @@ bool GenXSPIRVReaderAdaptor::processVCFunctionAttributes(Function &F) {
   if (auto *ReqdSubgroupSize =
           F.getMetadata(SPIRVParams::SPIRVSIMDSubgroupSize)) {
     auto SIMDSize =
-        mdconst::dyn_extract<ConstantInt>(ReqdSubgroupSize->getOperand(0))
+        mdconst::extract<ConstantInt>(ReqdSubgroupSize->getOperand(0))
             ->getZExtValue();
     Attribute Attr = Attribute::get(Context, FunctionMD::OCLRuntime,
                                     std::to_string(SIMDSize));

@@ -75,9 +75,16 @@ if(INSTALL_REQUIRED)
       INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
 
+    # Legacy export. To remove when all clients switch to new name.
     install(EXPORT LLVMGenXIntrinsicsTargets
       FILE LLVMGenXIntrinsicsConfig.cmake
       DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/LLVMGenXIntrinsics
+    )
+
+    set(PACKAGE_NAME VCIntrinsics${LLVM_VERSION_MAJOR})
+    install(EXPORT LLVMGenXIntrinsicsTargets
+      FILE ${PACKAGE_NAME}Config.cmake
+      DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PACKAGE_NAME}
     )
   endif() # BUILD_EXTERNAL
 endif() # INSTALL_REQUIRED
