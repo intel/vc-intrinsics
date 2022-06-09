@@ -39,12 +39,14 @@ enum ID : unsigned {
 };
 
 namespace GenXResult {
-  enum ResultIndexes {
-    IdxAddc_Add    = 1,
-    IdxAddc_Carry  = 0,
-    IdxSubb_Sub    = 1,
-    IdxSubb_Borrow = 0
-  };
+enum ResultIndexes {
+  IdxAddc_Add = 1,
+  IdxAddc_Carry = 0,
+  IdxSubb_Sub = 1,
+  IdxSubb_Borrow = 0,
+  IdxAdd3c_Add = 1,
+  IdxAdd3c_Carry = 0
+};
 }
 
 // The number of elements to load per address (vector size)
@@ -654,6 +656,166 @@ inline bool isLSC2D(const Value *V) {
 inline bool isLSC2D(const Function *F) {
   return isLSC2D(getGenXIntrinsicID(F));
 }
+
+
+// Dependency from visa_igc_common_header.
+// Converts vector size into LSC-appropriate code.
+inline LSCVectorSize getLSCVectorSize(unsigned N) {
+  switch (N) {
+  case 0:
+    return LSCVectorSize::N0;
+  case 1:
+    return LSCVectorSize::N1;
+  case 2:
+    return LSCVectorSize::N2;
+  case 3:
+    return LSCVectorSize::N3;
+  case 4:
+    return LSCVectorSize::N4;
+  case 8:
+    return LSCVectorSize::N8;
+  case 16:
+    return LSCVectorSize::N16;
+  case 32:
+    return LSCVectorSize::N32;
+  case 64:
+    return LSCVectorSize::N64;
+  }
+  llvm_unreachable("Unknown vector size");
+}
+// Gets encoded vector size for LSC instruction.
+inline uint8_t getEncodedLSCVectorSize(unsigned N) {
+  return static_cast<uint8_t>(getLSCVectorSize(N));
+}
+
+// Functions in this namespace return argument index for LSC instruction.
+namespace LSCArgIdx {
+constexpr int Invalid = -1;
+// Returns VectorSize index.
+inline int getLSCVectorSize(LSCCategory Cat) {
+  switch (Cat) {
+  case LSCCategory::Load:
+  case LSCCategory::Prefetch:
+  case LSCCategory::Store:
+  case LSCCategory::Atomic:
+    return 7;
+  case LSCCategory::LegacyAtomic:
+    return 8;
+  case LSCCategory::Prefetch2D:
+  case LSCCategory::Load2D:
+  case LSCCategory::Store2D:
+  case LSCCategory::Fence:
+  case LSCCategory::NotLSC:
+    llvm_unreachable("no such argument");
+    return Invalid;
+  }
+  return Invalid;
+}
+// Returns VectorSize index.
+inline int getLSCVectorSize(unsigned IID) {
+  return LSCArgIdx::getLSCVectorSize(getLSCCategory(IID));
+}
+
+// Returns DataSize index.
+inline int getLSCDataSize(LSCCategory Cat) {
+  switch (Cat) {
+  case LSCCategory::Load:
+  case LSCCategory::Prefetch:
+  case LSCCategory::Store:
+  case LSCCategory::LegacyAtomic:
+  case LSCCategory::Atomic:
+    return 6;
+  case LSCCategory::Load2D:
+  case LSCCategory::Prefetch2D:
+  case LSCCategory::Store2D:
+    return 3;
+  case LSCCategory::Fence:
+  case LSCCategory::NotLSC:
+    llvm_unreachable("no such argument");
+    return Invalid;
+  }
+  return Invalid;
+}
+// Returns DataSize index.
+inline int getLSCDataSize(unsigned IID) {
+  return LSCArgIdx::getLSCDataSize(getLSCCategory(IID));
+}
+
+// Returns immediate offset index.
+inline int getLSCImmOffset(LSCCategory Cat) {
+  switch (Cat) {
+  case LSCCategory::Load:
+  case LSCCategory::Prefetch:
+  case LSCCategory::Store:
+  case LSCCategory::LegacyAtomic:
+  case LSCCategory::Atomic:
+    return 5;
+  case LSCCategory::Prefetch2D:
+  case LSCCategory::Load2D:
+  case LSCCategory::Store2D:
+  case LSCCategory::Fence:
+  case LSCCategory::NotLSC:
+    llvm_unreachable("no such argument");
+    return Invalid;
+  }
+  return Invalid;
+}
+// Returns immediate offset index.
+inline int getLSCImmOffset(unsigned IID) {
+  return LSCArgIdx::getLSCImmOffset(getLSCCategory(IID));
+}
+
+// Returns data order index.
+inline int getLSCDataOrder(LSCCategory Cat) {
+  switch (Cat) {
+  case LSCCategory::Load:
+  case LSCCategory::Prefetch:
+  case LSCCategory::Store:
+  case LSCCategory::Atomic:
+    return 8;
+  case LSCCategory::LegacyAtomic:
+    return 7;
+  case LSCCategory::Load2D:
+  case LSCCategory::Prefetch2D:
+  case LSCCategory::Store2D:
+    return 4;
+  case LSCCategory::Fence:
+  case LSCCategory::NotLSC:
+    llvm_unreachable("no such argument");
+    return Invalid;
+  }
+  return Invalid;
+}
+// Returns data order index.
+inline int getLSCDataOrder(unsigned IID) {
+  return LSCArgIdx::getLSCDataOrder(getLSCCategory(IID));
+}
+
+// Returns width index.
+inline int getLSCWidth(LSCCategory Cat) {
+  switch (Cat) {
+  case LSCCategory::Load:
+  case LSCCategory::Prefetch:
+  case LSCCategory::Store:
+  case LSCCategory::Fence:
+  case LSCCategory::LegacyAtomic:
+  case LSCCategory::Atomic:
+  case LSCCategory::Load2D:
+  case LSCCategory::Prefetch2D:
+  case LSCCategory::Store2D:
+    return 0;
+  case LSCCategory::NotLSC:
+    llvm_unreachable("no such argument");
+    return Invalid;
+  }
+  return Invalid;
+}
+// Returns width index.
+inline int getLSCWidth(unsigned IID) {
+  return LSCArgIdx::getLSCWidth(getLSCCategory(IID));
+}
+
+} // namespace LSCArgIdx
 
 inline unsigned getLSCNumVectorElements(LSCVectorSize VS) {
   switch (VS) {

@@ -6,7 +6,7 @@
 ;
 ;============================ end_copyright_notice =============================
 
-; XFAIL: llvm13,llvm14
+; XFAIL: llvm13, llvm14, llvm15
 ; Test reader translation of old-style decorated arguments.
 ; Annotations for these are directly translated from attributes to
 ; kernel metadata without any checks. Required until full transition

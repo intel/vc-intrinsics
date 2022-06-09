@@ -610,6 +610,18 @@ bool GenXSPIRVWriterAdaptorImpl::runOnFunction(Function &F) {
     }
   }
 
+  if (KernelMD->getNumOperands() > KernelMDOp::NBarrierCnt) {
+    if (auto VM = dyn_cast<ValueAsMetadata>(
+            KernelMD->getOperand(KernelMDOp::NBarrierCnt)))
+      if (auto V = dyn_cast<ConstantInt>(VM->getValue())) {
+        auto NBarrierCnt = V->getZExtValue();
+        auto Attr = Attribute::get(Context, VCFunctionMD::VCNamedBarrierCount,
+                                   std::to_string(NBarrierCnt));
+        VCINTR::Function::addAttributeAtIndex(F, AttributeList::FunctionIndex,
+                                              Attr);
+      }
+  }
+
   return true;
 }
 

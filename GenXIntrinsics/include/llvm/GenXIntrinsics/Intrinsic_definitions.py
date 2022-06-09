@@ -1775,6 +1775,21 @@ Imported_Intrinsics = \
                      "attributes" : "NoMem"
                    },
 
+### add3c
+### ^^^^^
+###
+### ``llvm.genx.add3c.<{carry, add3}>.<any int>`` : add3 with carry
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * ``llvm.genx.add3c`` :
+###
+### * arg0: first input, i32 scalar/vector integer type
+### * arg1: second input, same type as arg0
+### * arg2: third input, same type as arg0
+    "add3c" : { "result" : ["anyint", "intvector"],
+                "arguments" :  ["anyint",1,1,1],
+                "attributes" :  "NoMem"
+              },
+
 ### bfn
 ### ^^^
 ###
@@ -1885,10 +1900,11 @@ Imported_Intrinsics = \
 ###
 ###   - 0 -> .df (default)
 ###   - 1 -> .uc (uncached)
-###   - 2 -> .wb (writeback)
-###   - 3 -> .wt (writethrough)
-###   - 4 -> .st (streaming)
-###   - 5 -> .ri (read-invalidate)
+###   - 2 -> .ca (cached)
+###   - 3 -> .wb (writeback)
+###   - 4 -> .wt (writethrough)
+###   - 5 -> .st (streaming)
+###   - 6 -> .ri (read-invalidate)
 ###
 ### Only certain combinations of CachingL1 with CachingL3 are valid on hardware.
 ###
@@ -1897,19 +1913,19 @@ Imported_Intrinsics = \
 ### +---------+-----+-----------------------------------------------------------------------+
 ### | .df     | .df | default behavior on both L1 and L3 (L3 uses MOCS settings)            |
 ### +---------+-----+-----------------------------------------------------------------------+
-### | .ri/.wb | .wb | read-invalidate on reads (e.g. last use) / writeback on Stores for L1 |
-### +---------+-----+-----------------------------------------------------------------------+
 ### | .uc     | .uc | uncached (bypass) both L1 and L3                                      |
-### +---------+-----+-----------------------------------------------------------------------+
-### | .uc     | .wb | bypass L1 / writeback L3                                              |
-### +---------+-----+-----------------------------------------------------------------------+
-### | .wt     | .uc | writethrough L1 / bypass L3                                           |
-### +---------+-----+-----------------------------------------------------------------------+
-### | .wt     | .wb | writethrough L1 / writeback L3                                        |
 ### +---------+-----+-----------------------------------------------------------------------+
 ### | .st     | .uc | streaming L1 / bypass L3                                              |
 ### +---------+-----+-----------------------------------------------------------------------+
-### | .st     | .wb | streaming L1 / writeback L3                                           |
+### | .uc     | .ca | bypass L1 / cache in L3                                               |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .ca     | .uc | cache in L1 / bypass L3                                               |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .ca     | .ca | cache in both L1 and L3                                               |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .st     | .ca | streaming L1 / cache in L3                                            |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .ri     | .ca | read-invalidate (e.g. last-use) on L1 loads / cache in L3             |
 ### +---------+-----+-----------------------------------------------------------------------+
 ###
 ### Immediate offset. The compiler may be able to fuse this add into the message, otherwise
@@ -1999,6 +2015,38 @@ Imported_Intrinsics = \
 ###          for flat and bindless version pass zero here
 ###
 ### * Return value: void
+###
+### Cache mappings are:
+###
+###   - 0 -> .df (default)
+###   - 1 -> .uc (uncached)
+###   - 2 -> .ca (cached)
+###   - 3 -> .wb (writeback)
+###   - 4 -> .wt (writethrough)
+###   - 5 -> .st (streaming)
+###   - 6 -> .ri (read-invalidate)
+###
+### Only certain combinations of CachingL1 with CachingL3 are valid on hardware.
+###
+### +---------+-----+-----------------------------------------------------------------------+
+### |  L1     |  L3 | Notes                                                                 |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .df     | .df | default behavior on both L1 and L3 (L3 uses MOCS settings)            |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .uc     | .uc | uncached (bypass) both L1 and L3                                      |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .st     | .uc | streaming L1 / bypass L3                                              |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .uc     | .wb | bypass L1/ writeback L3                                               |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .wt     | .uc | writethrough L1 / bypass L3                                           |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .wt     | .wb | writethrough L1 / writeback L3                                        |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .st     | .wb | streaming L1 / writeback L3                                           |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .wb     | .wb | writeback both L1 and L3                                              |
+### +---------+-----+-----------------------------------------------------------------------+
 ###
     "lsc_store_slm" : { "result" : "void",
                         "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","anyvector","int"],
@@ -5374,4 +5422,14 @@ Imported_Intrinsics = \
                 "arguments" : ["anyint", 1, 1],
                 "attributes" : "NoMem"
               },
+
+### ``llvm.genx.slm.init`` : slm_init instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0: slm size, i32 scalar integer type
+###
+    "slm_init" : { "result" : "void",
+                   "arguments" : ["int"],
+                   "attributes" : "None"
+                 },
 }
