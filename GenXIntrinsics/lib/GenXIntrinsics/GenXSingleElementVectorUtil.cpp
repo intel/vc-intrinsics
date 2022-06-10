@@ -852,7 +852,7 @@ static void collapseBitcastInst(BitCastInst *BitCast, bool CollapseCannotFail) {
   }
   auto &&M = *BitCast->getModule();
   auto &&Q = SimplifyQuery(M.getDataLayout());
-  auto *ReplaceWith = SimplifyCastInst(
+  auto *ReplaceWith = simplifyCastInst(
       BitCast->getOpcode(), BitCast->getOperand(0), BitCast->getType(), Q);
   if (!CollapseCannotFail && !ReplaceWith)
     return;
@@ -893,7 +893,7 @@ static void collapseExtractInst(ExtractElementInst *Extract,
   }
   auto &&M = *Extract->getModule();
   auto &&Q = SimplifyQuery(M.getDataLayout());
-  auto *ReplaceWith = SimplifyExtractElementInst(Extract->getOperand(0),
+  auto *ReplaceWith = simplifyExtractElementInst(Extract->getOperand(0),
                                                  Extract->getOperand(1), Q);
   if (!CollapseCannotFail && !ReplaceWith)
     return;
@@ -910,10 +910,10 @@ static void collapseInsertInst(InsertElementInst *Insert,
   }
   auto &&M = *Insert->getModule();
   auto &&Q = SimplifyQuery(M.getDataLayout());
-  auto *ReplaceWith = SimplifyInsertElementInst(
+  auto *ReplaceWith = simplifyInsertElementInst(
       Insert->getOperand(0), Insert->getOperand(1), Insert->getOperand(2), Q);
 
-  // SimplifyInsertElementInst provides too simple analysis
+  // simplifyInsertElementInst provides too simple analysis
   // which does not work in some cases handled below:
   if (!ReplaceWith && hasSingleElementVector(Insert->getType())) {
     auto *Scal = Insert->getOperand(1);
