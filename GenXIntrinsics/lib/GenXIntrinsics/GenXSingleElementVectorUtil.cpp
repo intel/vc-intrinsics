@@ -22,6 +22,7 @@ SPDX-License-Identifier: MIT
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 
+#include "llvmVCWrapper/Analysis/InstructionSimplify.h"
 #include "llvmVCWrapper/IR/Attributes.h"
 #include "llvmVCWrapper/IR/DerivedTypes.h"
 #include "llvmVCWrapper/IR/Function.h"
@@ -852,7 +853,7 @@ static void collapseBitcastInst(BitCastInst *BitCast, bool CollapseCannotFail) {
   }
   auto &&M = *BitCast->getModule();
   auto &&Q = SimplifyQuery(M.getDataLayout());
-  auto *ReplaceWith = SimplifyCastInst(
+  auto *ReplaceWith = VCINTR::SimplifyCastInst(
       BitCast->getOpcode(), BitCast->getOperand(0), BitCast->getType(), Q);
   if (!CollapseCannotFail && !ReplaceWith)
     return;
@@ -893,8 +894,8 @@ static void collapseExtractInst(ExtractElementInst *Extract,
   }
   auto &&M = *Extract->getModule();
   auto &&Q = SimplifyQuery(M.getDataLayout());
-  auto *ReplaceWith = SimplifyExtractElementInst(Extract->getOperand(0),
-                                                 Extract->getOperand(1), Q);
+  auto *ReplaceWith = VCINTR::SimplifyExtractElementInst(
+      Extract->getOperand(0), Extract->getOperand(1), Q);
   if (!CollapseCannotFail && !ReplaceWith)
     return;
   assert(ReplaceWith && "Oops... Cannot collapse ExtractElement instruction");
@@ -910,7 +911,7 @@ static void collapseInsertInst(InsertElementInst *Insert,
   }
   auto &&M = *Insert->getModule();
   auto &&Q = SimplifyQuery(M.getDataLayout());
-  auto *ReplaceWith = SimplifyInsertElementInst(
+  auto *ReplaceWith = VCINTR::SimplifyInsertElementInst(
       Insert->getOperand(0), Insert->getOperand(1), Insert->getOperand(2), Q);
 
   // SimplifyInsertElementInst provides too simple analysis
