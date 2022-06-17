@@ -94,6 +94,7 @@ platform_list = [
     "DG1",
     "ADLP",
     "ADLS",
+    "ADLN",
     "XEHP",
     "DG2",
     "PVC",
