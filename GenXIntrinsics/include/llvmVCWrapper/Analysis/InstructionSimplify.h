@@ -17,7 +17,7 @@ inline llvm::Value *SimplifyInsertElementInst(llvm::Value *Vec,
                                               llvm::Value *Elt,
                                               llvm::Value *Idx,
                                               const llvm::SimplifyQuery &Q) {
-#if VC_INTR_LLVM_VERSION_MAJOR <= 14
+#if VC_INTR_LLVM_VERSION_MAJOR <= 15
   return llvm::SimplifyInsertElementInst(Vec, Elt, Idx, Q);
 #else
   return llvm::simplifyInsertElementInst(Vec, Elt, Idx, Q);
@@ -27,7 +27,7 @@ inline llvm::Value *SimplifyInsertElementInst(llvm::Value *Vec,
 inline llvm::Value *SimplifyExtractElementInst(llvm::Value *Vec,
                                                llvm::Value *Idx,
                                                const llvm::SimplifyQuery &Q) {
-#if VC_INTR_LLVM_VERSION_MAJOR <= 14
+#if VC_INTR_LLVM_VERSION_MAJOR <= 15
   return llvm::SimplifyExtractElementInst(Vec, Idx, Q);
 #else
   return llvm::simplifyExtractElementInst(Vec, Idx, Q);
@@ -37,7 +37,7 @@ inline llvm::Value *SimplifyExtractElementInst(llvm::Value *Vec,
 inline llvm::Value *SimplifyCastInst(unsigned CastOpc, llvm::Value *Op,
                                      llvm::Type *Ty,
                                      const llvm::SimplifyQuery &Q) {
-#if VC_INTR_LLVM_VERSION_MAJOR <= 14
+#if VC_INTR_LLVM_VERSION_MAJOR <= 15
   return llvm::SimplifyCastInst(CastOpc, Op, Ty, Q);
 #else
   return llvm::simplifyCastInst(CastOpc, Op, Ty, Q);
