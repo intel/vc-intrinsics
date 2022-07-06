@@ -38,15 +38,32 @@ else()
     ${LLVM_COMPONENTS}
     )
 
-  add_llvm_library(LLVMGenXIntrinsics
-    ${SRC_LIST}
-
-    ADDITIONAL_HEADER_DIRS
-      ${GENX_INTRINSICS_MAIN_INCLUDE_DIR}/llvm/GenXIntrinsics
-    DEPENDS
-      GenXIntrinsicsGen
-      intrinsics_gen
-  )
+  if(LLVM_LINK_LLVM_DYLIB)
+    add_llvm_library(LLVMGenXIntrinsics STATIC DISABLE_LLVM_LINK_LLVM_DYLIB
+      ${SRC_LIST}
+	
+      ADDITIONAL_HEADER_DIRS
+        ${GENX_INTRINSICS_MAIN_INCLUDE_DIR}/llvm/GenXIntrinsics
+      DEPENDS
+        GenXIntrinsicsGen
+        intrinsics_gen
+	    LLVMCodeGen
+        LLVMSupport
+        LLVMCore
+        LLVMAnalysis
+        LLVMSPIRVLib
+    )
+  else()
+    add_llvm_library(LLVMGenXIntrinsics
+      ${SRC_LIST}
+	
+      ADDITIONAL_HEADER_DIRS
+        ${GENX_INTRINSICS_MAIN_INCLUDE_DIR}/llvm/GenXIntrinsics
+      DEPENDS
+        GenXIntrinsicsGen
+        intrinsics_gen
+    )
+  endif()
 endif()
 
 target_include_directories(LLVMGenXIntrinsics PUBLIC
