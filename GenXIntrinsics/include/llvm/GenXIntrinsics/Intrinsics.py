@@ -117,6 +117,7 @@ for i in range(len(parse)):
     #Populate the dictionary with the appropriate Intrinsics
     if i != 0:
         if (".py" in parse[i]):
+            sys.path.append(os.path.split(parse[i])[0])
             module = importlib.import_module(os.path.split(parse[i])[1].replace(".py",""))
             Intrinsics.update(module.Imported_Intrinsics)
 
