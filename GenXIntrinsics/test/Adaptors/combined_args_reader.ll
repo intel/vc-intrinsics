@@ -6,7 +6,7 @@
 ;
 ;============================ end_copyright_notice =============================
 
-; XFAIL: llvm13, llvm14, llvm15
+; XFAIL: llvm13, llvm14, llvm15, llvm16
 ; Test combined reader translation: kernel has both native SPIRV types
 ; and impicit arguments. Implicit arguments would not show in normal
 ; flow, though they appear in old cmc.

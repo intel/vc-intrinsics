@@ -6,7 +6,7 @@
 ;
 ;============================ end_copyright_notice =============================
 
-; XFAIL: llvm13, llvm14, llvm15
+; XFAIL: llvm13, llvm14, llvm15, llvm16
 ; Test that reader correctly restores metadata and does
 ; not change other things if there is no address conversion
 ; but correct SPIRV types in signature.

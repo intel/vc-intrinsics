@@ -6,7 +6,7 @@
 ;
 ;============================ end_copyright_notice =============================
 
-; XFAIL: llvm13, llvm14, llvm15
+; XFAIL: llvm13, llvm14, llvm15, llvm16
 ; Test kernel surface argument translation from new style with opaque
 ; types that SPIRV translator can understand to old style with
 ; metadata. This test checks access qualifiers translation.

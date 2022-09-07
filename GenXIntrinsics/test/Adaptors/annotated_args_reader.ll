@@ -6,7 +6,7 @@
 ;
 ;============================ end_copyright_notice =============================
 
-; XFAIL: llvm13, llvm14, llvm15
+; XFAIL: llvm13, llvm14, llvm15, llvm16
 ; Test kernel argument translation from new style with opaque types
 ; that SPIRV translator can understand to old style with
 ; metadata. Here annotations for OCL runtime are used.

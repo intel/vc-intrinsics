@@ -6,7 +6,7 @@
 ;
 ;============================ end_copyright_notice =============================
 
-; XFAIL: llvm13, llvm14, llvm15
+; XFAIL: llvm13, llvm14, llvm15, llvm16
 ; RUN: opt -S -cmsimdcflowering < %s | FileCheck %s
 
 ; CHECK: @EM = internal global <32 x i1> 
