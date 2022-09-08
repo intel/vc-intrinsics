@@ -155,6 +155,7 @@ SPDX-License-Identifier: MIT
 #include "llvm/GenXIntrinsics/GenXIntrOpts.h"
 #include "llvm/GenXIntrinsics/GenXIntrinsics.h"
 #include "llvm/GenXIntrinsics/GenXMetadata.h"
+#include "llvm/InitializePasses.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DiagnosticInfo.h"
@@ -260,6 +261,9 @@ public:
 
 // The CM SIMD CF lowering pass (a function pass)
 class CMSimdCFLowering : public FunctionPass {
+  using GListType = std::vector<llvm::GlobalVariable*>;
+  std::map<const Function *, DominatorTree *> DTs;
+  GListType VolList;
 public:
   static char ID;
 
@@ -273,6 +277,9 @@ public:
   virtual bool doInitialization(Module &M) override;
   virtual bool runOnFunction(Function &F) override { return false; }
 private:
+  DominatorTree *getDomTree(Function *F);
+  bool isGlobalInterseptVol(GlobalVariable &G, const GListType& VolList);
+  void initializeVolatileGlobals(Module &M);
   void calculateVisitOrder(Module *M, std::vector<Function *> *VisitOrder);
 };
 
@@ -280,6 +287,7 @@ private:
 
 char CMSimdCFLowering::ID = 0;
 INITIALIZE_PASS_BEGIN(CMSimdCFLowering, "cmsimdcflowering", "Lower CM SIMD control flow", false, false)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass);
 INITIALIZE_PASS_END(CMSimdCFLowering, "cmsimdcflowering", "Lower CM SIMD control flow", false, false)
 
 Pass *llvm::createCMSimdCFLoweringPass() { return new CMSimdCFLowering(); }
@@ -300,29 +308,70 @@ bool ISPCSimdCFLowering::runOnModule(Module &M) {
     return CMSimdCFLowering().doInitialization(M);
 }
 
-/***********************************************************************
- * doInitialization : per-module initialization for CM simd CF lowering
- *
- * Really we want a module pass for CM simd CF lowering. But, without modifying
- * llvm's PassManagerBuilder, the earliest place to insert a pass is
- * EP_EarlyAsPossible, which must be a function pass. So, we do our
- * per-module processing here in doInitialization.
- */
-bool CMSimdCFLowering::doInitialization(Module &M)
+
+DominatorTree *CMSimdCFLowering::getDomTree(Function *F)
 {
-#if 0
-  for (auto &F : M.getFunctionList()) {
-    if (F.hasFnAttribute("CMGenxSIMT")) {
-      if (F.hasFnAttribute(Attribute::AlwaysInline)) {
-        F.removeFnAttr(Attribute::AlwaysInline);
-        F.removeFnAttr(Attribute::InlineHint);
-        F.addFnAttr("CMGenxInline");
-        F.addFnAttr(Attribute::NoInline);
+  if (!DTs[F]) {
+    auto DT = new DominatorTree;
+    DT->recalculate(*F);
+    DTs[F] = DT;
+  }
+  return DTs[F];
+}
+
+/***********************************************************************
+ * isGlobalInterseptVol : Check interseption between global var and
+ * a list of global volatile variables
+ */
+bool CMSimdCFLowering::isGlobalInterseptVol(GlobalVariable &G, const GListType& VolList) {
+  for (auto UI = G.user_begin(), UE = G.user_end(); UI != UE; UI++) {
+    llvm::Instruction *U = dyn_cast<Instruction>(*UI);
+    if (!U)
+      continue;
+    auto *F = U->getParent()->getParent();
+    auto *DT = getDomTree(F);
+    for(auto &VG : VolList) {
+      for(auto SUI = VG->user_begin(), SUIE = VG->user_end(); SUI != SUIE;SUI++) {
+        auto *I = dyn_cast<Instruction>(*SUI);
+        if (I && DT->dominates(I,&*U)) {
+          return true;
+        }
       }
     }
   }
-#endif
+  return false;
+}
 
+/***********************************************************************
+ * initializeVolatileGlobals : Check and modify global variables for vc
+ *
+ * Special case for volatile globals, because there is agreement - they
+ * will be put to hw-register (this agreement give a lot of perfomance).
+ * That's why we need save load and store instruction until the end of
+ * vc-pipeline. And for reach the goal - they will be replaced by
+ * genx.vload/vstore instructions.
+ * But if volatile global overlap other non-volatile global variable
+ * it generate issue in register allocator - because it will be put to
+ * same register. It is special case in coalescing, that's why here
+ * we mark them as volatile too.
+ */
+void CMSimdCFLowering::initializeVolatileGlobals(Module &M) {
+  // Analise interseption between globals
+  for (auto &G : M.getGlobalList()) {
+    if (G.hasAttribute(genx::FunctionMD::GenXVolatile)) {
+      VolList.push_back(&G);
+    }
+  }
+  // If non-volatile global intersept with volatile global
+  // mark him volatile too
+  for (auto &G : M.getGlobalList()) {
+    if (!G.hasAttribute(genx::FunctionMD::GenXVolatile)) {
+      if (isGlobalInterseptVol(G, VolList))
+        G.addAttribute(genx::FunctionMD::GenXVolatile);
+    }
+  }
+
+  // Replace instructions to save them untill the end of vc
   for (auto &G : M.getGlobalList()) {
     if (!G.hasAttribute(genx::FunctionMD::GenXVolatile))
       continue;
@@ -390,6 +439,35 @@ bool CMSimdCFLowering::doInitialization(Module &M)
       }
     }
   }
+}
+
+
+/***********************************************************************
+ * doInitialization : per-module initialization for CM simd CF lowering
+ *
+ * Really we want a module pass for CM simd CF lowering. But, without modifying
+ * llvm's PassManagerBuilder, the earliest place to insert a pass is
+ * EP_EarlyAsPossible, which must be a function pass. So, we do our
+ * per-module processing here in doInitialization.
+ */
+bool CMSimdCFLowering::doInitialization(Module &M)
+{
+  VolList.clear();
+  DTs.clear();
+#if 0
+  for (auto &F : M.getFunctionList()) {
+    if (F.hasFnAttribute("CMGenxSIMT")) {
+      if (F.hasFnAttribute(Attribute::AlwaysInline)) {
+        F.removeFnAttr(Attribute::AlwaysInline);
+        F.removeFnAttr(Attribute::InlineHint);
+        F.addFnAttr("CMGenxInline");
+        F.addFnAttr(Attribute::NoInline);
+      }
+    }
+  }
+#endif
+
+  initializeVolatileGlobals(M);
 
   // See if simd CF is used anywhere in this module.
   // We have to try each overload of llvm.genx.simdcf.any separately.
@@ -612,7 +690,7 @@ void CMSimdCFLower::determinePredicatedBlocks()
       // Get BlockL, the closest common postdominator.
       auto BlockL = PDT.findNearestCommonDominator(BlockM, BlockN);
       if (BlockL == BlockM) {
-        // need to include BlockM into the chain 
+        // need to include BlockM into the chain
         // if the branch is the do-while back-edge
         if (auto ParentNode = PDT.getNode(BlockM))
           if (auto IDom = ParentNode->getIDom())
@@ -1075,7 +1153,7 @@ void CMSimdCFLower::predicateInst(Instruction *Inst, unsigned SimdWidth) {
     // An IntrNoMem intrinsic is an ALU intrinsic and can be ignored.
     if (Callee->doesNotAccessMemory() || CI->arg_size() == 0)
       return;
-    // no predication for intrinsic marked as ISPC uniform, 
+    // no predication for intrinsic marked as ISPC uniform,
 	// for example, atomic and oword_store used in printf
     if (CI->getMetadata("ISPC-Uniform") != nullptr)
       return;
@@ -1246,11 +1324,11 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
   auto StoreVT = dyn_cast<VectorType>(V->getType());
   // Scalar store not predicated
   if (!StoreVT || VCINTR::VectorType::getNumElements(StoreVT) == 1)
-    return; 
+    return;
   // no predication for ISPC uniform store
   if (SI->getMetadata("ISPC-Uniform") != nullptr)
     return;
-  // local-variable store that is only used within the same basic block 
+  // local-variable store that is only used within the same basic block
   // do not need predicate
   if (isSingleBlockLocalStore(SI))
     return;
@@ -1749,7 +1827,7 @@ void CMSimdCFLower::lowerUnmaskOps() {
           auto Savemask = CallInst::Create(SavemaskFunc, Args, "savemask", CIB);
           Savemask->setDebugLoc(DL);
           // the use should be the store for savemask
-          CIB->replaceAllUsesWith(Savemask); 
+          CIB->replaceAllUsesWith(Savemask);
           Type *Ty1s[] = {OldEM->getType()};
           auto UnmaskFunc = GenXIntrinsic::getGenXDeclaration(
               BB->getParent()->getParent(), GenXIntrinsic::genx_simdcf_unmask,
