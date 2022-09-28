@@ -362,12 +362,13 @@ void CMSimdCFLowering::initializeVolatileGlobals(Module &M) {
       VolList.push_back(&G);
     }
   }
-  // If non-volatile global intersept with volatile global
-  // mark him volatile too
+  // If non-volatile global vector intercepts with a volatile global mark it
+  // volatile as well.
   for (auto &G : M.getGlobalList()) {
-    if (!G.hasAttribute(genx::FunctionMD::GenXVolatile)) {
-      if (isGlobalInterseptVol(G, VolList))
-        G.addAttribute(genx::FunctionMD::GenXVolatile);
+    if (isa<VectorType>(G.getValueType()) &&
+        !G.hasAttribute(genx::FunctionMD::GenXVolatile) &&
+        isGlobalInterseptVol(G, VolList)) {
+      G.addAttribute(genx::FunctionMD::GenXVolatile);
     }
   }
 
