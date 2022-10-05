@@ -365,7 +365,8 @@ void CMSimdCFLowering::initializeVolatileGlobals(Module &M) {
   // If non-volatile global vector intercepts with a volatile global mark it
   // volatile as well.
   for (auto &G : M.getGlobalList()) {
-    if (isa<VectorType>(G.getValueType()) &&
+    // For non-vectors will be not generated vstores - ignore them
+    if (G.getValueType()->isVectorTy() &&
         !G.hasAttribute(genx::FunctionMD::GenXVolatile) &&
         isGlobalInterseptVol(G, VolList)) {
       G.addAttribute(genx::FunctionMD::GenXVolatile);
