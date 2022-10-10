@@ -408,23 +408,27 @@ void GenXIntrinsic::getIntrinsicInfoTableEntries(
 /// which can't be confused with it's prefix.  This ensures we don't have
 /// collisions between two unrelated function types. Otherwise, you might
 /// parse ffXX as f(fXX) or f(fX)X.  (X is a placeholder for any other type.)
-static std::string getMangledTypeStr(Type* Ty) {
+static std::string getMangledTypeStr(Type *Ty) {
   std::string Result;
-  if (PointerType* PTyp = dyn_cast<PointerType>(Ty)) {
-    Result += "p" + llvm::utostr(PTyp->getAddressSpace()) +
-      getMangledTypeStr(PTyp->getPointerElementType());
-  } else if (ArrayType* ATyp = dyn_cast<ArrayType>(Ty)) {
+  if (PointerType *PTyp = dyn_cast<PointerType>(Ty)) {
+    Result += "p" + llvm::utostr(PTyp->getAddressSpace());
+#if VC_INTR_LLVM_VERSION_MAJOR >= 13
+    if (PTyp->isOpaque())
+      return Result;
+#endif // VC_INTR_LLVM_VERSION_MAJOR >= 13
+    Result += getMangledTypeStr(PTyp->getPointerElementType());
+  } else if (ArrayType *ATyp = dyn_cast<ArrayType>(Ty)) {
     Result += "a" + llvm::utostr(ATyp->getNumElements()) +
-      getMangledTypeStr(ATyp->getElementType());
-  } else if (StructType* STyp = dyn_cast<StructType>(Ty)) {
-    if(!STyp->isLiteral())
-        Result += STyp->getName();
+              getMangledTypeStr(ATyp->getElementType());
+  } else if (StructType *STyp = dyn_cast<StructType>(Ty)) {
+    if (!STyp->isLiteral())
+      Result += STyp->getName();
     else {
-        Result += "s" + llvm::utostr(STyp->getNumElements());
-        for(unsigned int i = 0; i < STyp->getNumElements(); i++)
-            Result += getMangledTypeStr(STyp->getElementType(i));
+      Result += "s" + llvm::utostr(STyp->getNumElements());
+      for (unsigned int i = 0; i < STyp->getNumElements(); i++)
+        Result += getMangledTypeStr(STyp->getElementType(i));
     }
-  } else if (FunctionType* FT = dyn_cast<FunctionType>(Ty)) {
+  } else if (FunctionType *FT = dyn_cast<FunctionType>(Ty)) {
     Result += "f_" + getMangledTypeStr(FT->getReturnType());
     for (size_t i = 0; i < FT->getNumParams(); i++)
       Result += getMangledTypeStr(FT->getParamType(i));
@@ -438,6 +442,7 @@ static std::string getMangledTypeStr(Type* Ty) {
               getMangledTypeStr(cast<VectorType>(Ty)->getElementType());
   else if (Ty)
     Result += EVT::getEVT(Ty).getEVTString();
+
   return Result;
 }
 
