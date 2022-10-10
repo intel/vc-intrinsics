@@ -18,6 +18,7 @@ SPDX-License-Identifier: MIT
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
@@ -428,9 +429,15 @@ static Function *
 transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
   // Collect new kernel argument types.
   std::vector<Type *> NewTypes;
-  std::transform(
-      F.arg_begin(), F.arg_end(), std::back_inserter(NewTypes),
-      [](Argument &Arg) { return getOriginalValue(Arg)->getType(); });
+  std::transform(F.arg_begin(), F.arg_end(), std::back_inserter(NewTypes),
+                 [](Argument &Arg) {
+                   auto *Ty = getOriginalValue(Arg)->getType();
+                   auto *ArgTy = Arg.getType();
+                   if (Ty->isPointerTy() && ArgTy->isPointerTy())
+                     Ty = PointerType::get(ArgTy->getPointerElementType(),
+                                           Ty->getPointerAddressSpace());
+                   return Ty;
+                 });
 
   auto *NewFTy = FunctionType::get(F.getReturnType(), NewTypes, false);
   auto *NewF = Function::Create(NewFTy, F.getLinkage(), F.getAddressSpace());
@@ -497,9 +504,22 @@ static void rewriteKernelArguments(Function &F) {
   for (int i = 0, e = ArgDescs.size(); i != e; ++i) {
     Argument &OldArg = *std::next(F.arg_begin(), i);
     Argument &NewArg = *std::next(NewF->arg_begin(), i);
-    NewArg.takeName(&OldArg);
     Value *Orig = getOriginalValue(OldArg);
-    Orig->replaceAllUsesWith(&NewArg);
+
+    NewArg.takeName(&OldArg);
+
+    auto *OrigTy = Orig->getType();
+    auto *NewTy = NewArg.getType();
+
+    Value *NewVal = &NewArg;
+
+    if (isa<Instruction>(Orig) && OrigTy != NewTy) {
+      IRBuilder<> Builder(cast<Instruction>(Orig));
+      NewVal = Builder.CreatePointerBitCastOrAddrSpaceCast(NewVal, OrigTy);
+    }
+
+    Orig->replaceAllUsesWith(NewVal);
+
     if (Orig != &OldArg) {
       cast<Instruction>(Orig)->eraseFromParent();
     }
