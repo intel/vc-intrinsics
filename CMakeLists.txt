@@ -60,9 +60,12 @@ if(LLVM_VERSION_MAJOR VERSION_LESS 8)
   message(FATAL_ERROR "VC-intrinsics do not support ${LLVM_VERSION} LLVM version")
 endif()
 
-find_package(Python REQUIRED COMPONENTS Interpreter)
-if("${Python_VERSION}" VERSION_LESS 2.7)
-  message(FATAL_ERROR "Python 2.7 or newer is required")
+if (NOT DEFINED PYTHON_EXECUTABLE)
+  find_package(Python REQUIRED COMPONENTS Interpreter)
+  if("${Python_VERSION}" VERSION_LESS 2.7)
+    message(FATAL_ERROR "Python 2.7 or newer is required")
+  endif()
+  set(PYTHON_EXECUTABLE "${Python_EXECUTABLE}")
 endif()
 
 
