@@ -422,6 +422,17 @@ static std::string mapSPIRVDescToArgDesc(SPIRVArgDesc SPIRVDesc) {
   return Desc;
 }
 
+static PointerType *getKernelArgPointerType(PointerType *ConvertTy,
+                                            PointerType *ArgTy) {
+  auto AddressSpace = ConvertTy->getPointerAddressSpace();
+  auto *ConvertPointeeTy = ConvertTy->getPointerElementType();
+  auto *ArgPointeeTy = ArgTy->getPointerElementType();
+
+  if (ConvertPointeeTy->isAggregateType())
+    return ConvertTy;
+
+  return ArgPointeeTy->getPointerTo(AddressSpace);
+}
 
 // Create new empty function with restored types based on old function and
 // arguments descriptors.
@@ -434,8 +445,8 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
                    auto *Ty = getOriginalValue(Arg)->getType();
                    auto *ArgTy = Arg.getType();
                    if (Ty->isPointerTy() && ArgTy->isPointerTy())
-                     Ty = PointerType::get(ArgTy->getPointerElementType(),
-                                           Ty->getPointerAddressSpace());
+                     Ty = getKernelArgPointerType(cast<PointerType>(Ty),
+                                                  cast<PointerType>(ArgTy));
                    return Ty;
                  });
 
