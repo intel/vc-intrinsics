@@ -10,6 +10,7 @@
 ; annotation should be matched.
 
 ; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
+; XFAIL: llvm16
 
 define void @test(i32 %im2d, i32 %samp, i64 %ptr, i32 %gen) {
 ; CHECK-LABEL: @test(
