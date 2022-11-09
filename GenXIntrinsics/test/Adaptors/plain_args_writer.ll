@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2020-2021 Intel Corporation
+; Copyright (C) 2020-2022 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -12,7 +12,6 @@
 
 ; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
 ; RUN: opt -S -GenXSPIRVWriterAdaptor -GenXSPIRVWriterAdaptor < %s | FileCheck %s
-; XFAIL: llvm16
 
 define spir_kernel void @test(i32 %surf, i32 %samp, i64 %ptr, i32 %gen) {
 ; CHECK-LABEL: @test(

@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2021 Intel Corporation
+; Copyright (C) 2021-2022 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -10,7 +10,6 @@
 
 ; UNSUPPORTED: llvm8
 ; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
-; XFAIL: llvm16
 ; CHECK: @test
 ; CHECK-SAME: i8
 ; CHECK-SAME: byval(i8)

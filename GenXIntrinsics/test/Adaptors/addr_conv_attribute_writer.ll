@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2021-2021 Intel Corporation
+; Copyright (C) 2021-2022 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -9,7 +9,6 @@
 ; Test @llvm.genx.address.convert intrinsic generation with proper attributes
 
 ; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
-; XFAIL: llvm16
 
 define void @test(i32 %buf) {
 ; CHECK-LABEL: @test(

@@ -20,6 +20,9 @@ SPDX-License-Identifier: MIT
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Metadata.h"
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
+#include "llvm/IR/ModRef.h"
+#endif
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Process.h"
@@ -233,6 +236,13 @@ static Instruction *rewriteArgumentUses(Argument &OldArg, Argument &NewArg) {
       M, GenXIntrinsic::genx_address_convert, {OldTy, NewTy});
   ConvFn->addFnAttr(VCFunctionMD::VCFunction);
   auto *Conv = CallInst::Create(ConvFn, {&NewArg});
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
+  // Modify ReadNone attribute to support llvm16
+  if (ConvFn->getFnAttribute(llvm::Attribute::ReadNone).isValid()) {
+    ConvFn->removeFnAttr(llvm::Attribute::ReadNone);
+    Conv->setMemoryEffects(llvm::MemoryEffects::none());
+  }
+#endif
   OldArg.replaceAllUsesWith(Conv);
   return Conv;
 }

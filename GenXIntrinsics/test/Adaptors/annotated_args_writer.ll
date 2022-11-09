@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2020-2021 Intel Corporation
+; Copyright (C) 2020-2022 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -12,7 +12,6 @@
 
 ; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
 ; RUN: opt -S -GenXSPIRVWriterAdaptor -GenXSPIRVWriterAdaptor < %s | FileCheck %s
-; XFAIL: llvm16
 
 define void @test(i32 %buf, i32 %im1d, i32 %im1db, i32 %im2d, i32 %im3d, i32 %samp, i64 %ptr, <4 x i32> %gen) {
 ; CHECK-LABEL: @test(
