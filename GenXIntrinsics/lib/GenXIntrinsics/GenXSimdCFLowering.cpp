@@ -174,6 +174,7 @@ SPDX-License-Identifier: MIT
 #include <set>
 
 #include "llvmVCWrapper/IR/DerivedTypes.h"
+#include "llvmVCWrapper/IR/Type.h"
 
 #define DEBUG_TYPE "cmsimdcflowering"
 
@@ -413,7 +414,7 @@ void CMSimdCFLowering::initializeVolatileGlobals(Module &M) {
         auto AS1 = LI->getPointerAddressSpace();
         if (AS1 != AS0) {
           auto PtrTy = cast<PointerType>(Ptr->getType());
-          PtrTy = PointerType::get(PtrTy->getPointerElementType(), AS0);
+          PtrTy = PointerType::get(VCINTR::Type::getNonOpaquePtrEltTy(PtrTy), AS0);
           Ptr = Builder.CreateAddrSpaceCast(Ptr, PtrTy);
         }
         Type* Tys[] = { LI->getType(), Ptr->getType() };
@@ -430,7 +431,7 @@ void CMSimdCFLowering::initializeVolatileGlobals(Module &M) {
         auto AS1 = SI->getPointerAddressSpace();
         if (AS1 != AS0) {
           auto PtrTy = cast<PointerType>(Ptr->getType());
-          PtrTy = PointerType::get(PtrTy->getPointerElementType(), AS0);
+          PtrTy = PointerType::get(VCINTR::Type::getNonOpaquePtrEltTy(PtrTy), AS0);
           Ptr = Builder.CreateAddrSpaceCast(Ptr, PtrTy);
         }
         Type* Tys[] = { SI->getValueOperand()->getType(), Ptr->getType() };
@@ -1441,14 +1442,14 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
   Instruction *Load = nullptr;
   if (auto SInst = dyn_cast<StoreInst>(SI)) {
     auto *PtrOp = SInst->getPointerOperand();
-    Load = new LoadInst(PtrOp->getType()->getPointerElementType(), PtrOp,
+    Load = new LoadInst(VCINTR::Type::getNonOpaquePtrEltTy(PtrOp->getType()), PtrOp,
                         PtrOp->getName() + ".simdcfpred.load",
                         false /* isVolatile */, SI);
   }
   else {
     auto ID = GenXIntrinsic::genx_vload;
     Value *Addr = SI->getOperand(1);
-    Type *Tys[] = {Addr->getType()->getPointerElementType(), Addr->getType()};
+    Type *Tys[] = {VCINTR::Type::getNonOpaquePtrEltTy(Addr->getType()), Addr->getType()};
     auto Fn = GenXIntrinsic::getGenXDeclaration(
         SI->getParent()->getParent()->getParent(), ID, Tys);
     Load = CallInst::Create(Fn, Addr, ".simdcfpred.vload", SI);
@@ -1694,11 +1695,11 @@ void CMSimdCFLower::lowerSimdCF()
         Br);
     Value *RMAddr = getRMAddr(UIP, SimdWidth);
     Instruction *OldEM =
-        new LoadInst(EMVar->getType()->getPointerElementType(), EMVar,
+        new LoadInst(VCINTR::Type::getNonOpaquePtrEltTy(EMVar->getType()), EMVar,
                      EMVar->getName(), false /* isVolatile */, Br);
     OldEM->setDebugLoc(DL);
     auto OldRM =
-        new LoadInst(RMAddr->getType()->getPointerElementType(), RMAddr,
+        new LoadInst(VCINTR::Type::getNonOpaquePtrEltTy(RMAddr->getType()), RMAddr,
                      RMAddr->getName(), false /* isVolatile */, Br);
     OldRM->setDebugLoc(DL);
     Type *Tys[] = { OldEM->getType(), OldRM->getType() };
@@ -1733,11 +1734,11 @@ void CMSimdCFLower::lowerSimdCF()
     // Insert {NewEM,BranchCond} = llvm.genx.simdcf.join(OldEM,RM)
     Value *RMAddr = getRMAddr(JP, SimdWidth);
     Instruction *OldEM =
-        new LoadInst(EMVar->getType()->getPointerElementType(), EMVar,
+        new LoadInst(VCINTR::Type::getNonOpaquePtrEltTy(EMVar->getType()), EMVar,
                      EMVar->getName(), false /* isVolatile */, InsertBefore);
     OldEM->setDebugLoc(DL);
     auto RM =
-        new LoadInst(RMAddr->getType()->getPointerElementType(), RMAddr,
+        new LoadInst(VCINTR::Type::getNonOpaquePtrEltTy(RMAddr->getType()), RMAddr,
                      RMAddr->getName(), false /* isVolatile */, InsertBefore);
     RM->setDebugLoc(DL);
     Type *Tys[] = { OldEM->getType(), RM->getType() };
@@ -1818,7 +1819,7 @@ void CMSimdCFLower::lowerUnmaskOps() {
           // put in genx_simdcf_savemask and genx_simdcf_remask
           auto DL = CIB->getDebugLoc();
           Instruction *OldEM =
-              new LoadInst(EMVar->getType()->getPointerElementType(), EMVar,
+              new LoadInst(VCINTR::Type::getNonOpaquePtrEltTy(EMVar->getType()), EMVar,
                            EMVar->getName(), false /* isVolatile */, CIB);
           OldEM->setDebugLoc(DL);
           Type *Tys[] = {OldEM->getType()};
@@ -1841,7 +1842,7 @@ void CMSimdCFLower::lowerUnmaskOps() {
               ->setDebugLoc(DL);
           // put in genx_simdcf_remask
           DL = CIE->getDebugLoc();
-          OldEM = new LoadInst(EMVar->getType()->getPointerElementType(), EMVar,
+          OldEM = new LoadInst(VCINTR::Type::getNonOpaquePtrEltTy(EMVar->getType()), EMVar,
                                EMVar->getName(), false /* isVolatile */, CIE);
           OldEM->setDebugLoc(DL);
           Type *Ty2s[] = {OldEM->getType()};
@@ -1918,7 +1919,7 @@ Value *CMSimdCFLower::replicateMask(Value *EM, Instruction *InsertBefore,
 Instruction *CMSimdCFLower::loadExecutionMask(Instruction *InsertBefore,
                                               unsigned SimdWidth) {
   Instruction *EM =
-      new LoadInst(EMVar->getType()->getPointerElementType(), EMVar,
+      new LoadInst(VCINTR::Type::getNonOpaquePtrEltTy(EMVar->getType()), EMVar,
                    EMVar->getName(), false /* isVolatile */, InsertBefore);
 
   // If the simd width is not MAX_SIMD_CF_WIDTH, extract the part of EM we want.
@@ -1962,7 +1963,7 @@ Value *CMSimdCFLower::getRMAddr(BasicBlock *JP, unsigned SimdWidth)
   }
   assert(!SimdWidth ||
          VCINTR::VectorType::getNumElements(cast<VectorType>(
-             (*RMAddr)->getType()->getPointerElementType())) == SimdWidth);
+             VCINTR::Type::getNonOpaquePtrEltTy((*RMAddr)->getType()))) == SimdWidth);
   return *RMAddr;
 }
 

@@ -33,6 +33,7 @@ See LICENSE.TXT for details.
 
 #include "llvmVCWrapper/IR/DerivedTypes.h"
 #include "llvmVCWrapper/IR/Intrinsics.h"
+#include "llvmVCWrapper/IR/Type.h"
 
 #include <cstring>
 #include <map>
@@ -416,7 +417,7 @@ static std::string getMangledTypeStr(Type *Ty) {
     if (PTyp->isOpaque())
       return Result;
 #endif // VC_INTR_LLVM_VERSION_MAJOR >= 13
-    Result += getMangledTypeStr(PTyp->getPointerElementType());
+    Result += getMangledTypeStr(VCINTR::Type::getNonOpaquePtrEltTy(PTyp));
   } else if (ArrayType *ATyp = dyn_cast<ArrayType>(Ty)) {
     Result += "a" + llvm::utostr(ATyp->getNumElements()) +
               getMangledTypeStr(ATyp->getElementType());

@@ -25,6 +25,7 @@ SPDX-License-Identifier: MIT
 
 #include "llvmVCWrapper/IR/Attributes.h"
 #include "llvmVCWrapper/IR/Function.h"
+#include "llvmVCWrapper/IR/Type.h"
 
 using namespace llvm;
 using namespace genx;
@@ -295,7 +296,7 @@ static SPIRVArgDesc analyzeKernelArg(const Argument &Arg) {
       AddressSpace != SPIRVParams::SPIRVConstantAS)
     return {SPIRVType::Other};
 
-  Type *PointeeTy = PointerTy->getPointerElementType();
+  Type *PointeeTy = VCINTR::Type::getNonOpaquePtrEltTy(PointerTy);
   // Not a pointer to struct, cannot be sampler or image.
   if (!isa<StructType>(PointeeTy))
     return {SPIRVType::Pointer};
@@ -425,8 +426,8 @@ static std::string mapSPIRVDescToArgDesc(SPIRVArgDesc SPIRVDesc) {
 static PointerType *getKernelArgPointerType(PointerType *ConvertTy,
                                             PointerType *ArgTy) {
   auto AddressSpace = ConvertTy->getPointerAddressSpace();
-  auto *ConvertPointeeTy = ConvertTy->getPointerElementType();
-  auto *ArgPointeeTy = ArgTy->getPointerElementType();
+  auto *ConvertPointeeTy = VCINTR::Type::getNonOpaquePtrEltTy(ConvertTy);
+  auto *ArgPointeeTy = VCINTR::Type::getNonOpaquePtrEltTy(ArgTy);
 
   if (ConvertPointeeTy->isAggregateType())
     return ConvertTy;

@@ -27,6 +27,7 @@ SPDX-License-Identifier: MIT
 #include "llvmVCWrapper/IR/DerivedTypes.h"
 #include "llvmVCWrapper/IR/Function.h"
 #include "llvmVCWrapper/IR/Instructions.h"
+#include "llvmVCWrapper/IR/Type.h"
 #include "llvmVCWrapper/Support/Alignment.h"
 
 namespace llvm {
@@ -92,7 +93,7 @@ static size_t getPointerNesting(Type *T, Type **ReturnNested = nullptr) {
   auto NPtrs = size_t{0};
   auto *NestedType = T;
   while (dyn_cast<PointerType>(NestedType)) {
-    NestedType = cast<PointerType>(NestedType)->getPointerElementType();
+    NestedType = VCINTR::Type::getNonOpaquePtrEltTy(NestedType);
     ++NPtrs;
   }
   if (ReturnNested)
@@ -138,8 +139,8 @@ static size_t getInnerPointerVectorNesting(Type *T) {
 static Type *getTypeFreeFromSingleElementVector(Type *T) {
   // Pointer types should be "undressed" first
   if (auto *Ptr = dyn_cast<PointerType>(T)) {
-    auto UT = getTypeFreeFromSingleElementVector(Ptr->getPointerElementType());
-    if (UT == Ptr->getPointerElementType())
+    auto UT = getTypeFreeFromSingleElementVector(VCINTR::Type::getNonOpaquePtrEltTy(Ptr));
+    if (UT == VCINTR::Type::getNonOpaquePtrEltTy(Ptr))
       return Ptr;
     return PointerType::get(UT, Ptr->getAddressSpace());
   } else if (auto *VecTy = dyn_cast<VectorType>(T)) {
@@ -166,7 +167,7 @@ static Type *getTypeWithSingleElementVector(Type *T, size_t InnerPointers = 0) {
     return VCINTR::getVectorType(T, 1);
 
   auto *Ptr = cast<PointerType>(T);
-  auto *UT = getTypeWithSingleElementVector(Ptr->getPointerElementType(),
+  auto *UT = getTypeWithSingleElementVector(VCINTR::Type::getNonOpaquePtrEltTy(Ptr),
                                             InnerPointers);
   return PointerType::get(UT, Ptr->getAddressSpace());
 }
@@ -770,7 +771,7 @@ static void manageSingleElementVectorAttribute(GlobalVariable &GV, Type *OldT,
 static GlobalVariable &createAndTakeFrom(GlobalVariable &GV, PointerType *NewT,
                                          Constant *Initializer) {
   auto *NewGV = new GlobalVariable(
-      *GV.getParent(), NewT->getPointerElementType(), GV.isConstant(),
+      *GV.getParent(), VCINTR::Type::getNonOpaquePtrEltTy(NewT), GV.isConstant(),
       GV.getLinkage(), Initializer, "sev.global.", &GV, GV.getThreadLocalMode(),
       GV.getAddressSpace(), GV.isExternallyInitialized());
   auto DebugInfoVec = SmallVector<DIGlobalVariableExpression *, 2>{};
@@ -818,7 +819,7 @@ static void restoreGlobalVariable(GlobalVariable &GV) {
   auto *Initializer = static_cast<Constant *>(nullptr);
   if (GV.hasInitializer())
     Initializer = cast<Constant>(createScalarToVectorValue(
-        GV.getInitializer(), NewT->getPointerElementType(),
+        GV.getInitializer(), VCINTR::Type::getNonOpaquePtrEltTy(NewT),
         static_cast<Instruction *>(nullptr)));
   auto &&NewGV = createAndTakeFrom(GV, NewT, Initializer);
   while (GV.use_begin() != GV.use_end()) {

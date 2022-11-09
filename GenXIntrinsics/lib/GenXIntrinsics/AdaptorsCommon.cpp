@@ -10,7 +10,8 @@ SPDX-License-Identifier: MIT
 
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/Type.h"
+
+#include "llvmVCWrapper/IR/Type.h"
 
 namespace llvm {
 namespace genx {
@@ -43,7 +44,7 @@ void legalizeParamAttributes(Function *F) {
       continue;
 #endif // VC_INTR_LLVM_VERSION_MAJOR >= 13
 
-    auto *ElemType = PTy->getPointerElementType();
+    auto *ElemType = VCINTR::Type::getNonOpaquePtrEltTy(PTy);
 
     legalizeAttribute(Arg, ElemType, Attribute::ByVal);
 
