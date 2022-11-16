@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Metadata.h"
 #if VC_INTR_LLVM_VERSION_MAJOR >= 16
-#include "llvm/IR/ModRef.h"
+#include <llvm/Support/ModRef.h>
 #endif
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"

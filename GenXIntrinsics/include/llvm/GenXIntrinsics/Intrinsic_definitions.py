@@ -1,6 +1,6 @@
 # ========================== begin_copyright_notice ============================
 #
-# Copyright (C) 2019-2021 Intel Corporation
+# Copyright (C) 2019-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -38,12 +38,12 @@
 # CPU can be any from "platforms" in Intrinsics.py or "ALL"
 # when field is absent - ALL by default
 # additional commands :
-# "CPU" = "-SKL" - unsupported since SKL
-# "CPU" = "KBL+" - supported from KBL
-# "CPU" = "~ICLLP" - unsupported on ICLLP
+# "CPU" = "-Gen9" - unsupported since Gen9
+# "CPU" = "Gen11+" - supported from Gen11
+# "CPU" = "~XeLP" - unsupported on XeLP
 # CPU can be list:
-# ["CNL+", "KBL"] - supported on KBL and all started from CNL
-# ["ALL", "~TGLLP"] - supported everyvere except TGLLP
+# ["XeLP+", "Gen9"] - supported on Gen9 and all started from XeLP
+# ["ALL", "~XeLP"] - supported everyvere except XeLP
 
 Imported_Intrinsics = \
 {

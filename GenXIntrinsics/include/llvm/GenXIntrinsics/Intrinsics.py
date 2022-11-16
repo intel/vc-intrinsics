@@ -2,7 +2,7 @@
 
 # ========================== begin_copyright_notice ============================
 #
-# Copyright (C) 2019-2021 Intel Corporation
+# Copyright (C) 2019-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -80,24 +80,33 @@ attribute_map = {
 # It is used to define ordering between the respected platforms
 platform_list = [
     "HSW",
+    "Gen8",
     "BDW",
     "CHV",
+    "Gen9",
     "SKL",
+    "Gen9LP",
     "BXT",
     "KBL",
     "GLK",
     "CNL",
+    "Gen11",
     "ICL",
     "ICLLP",
+    "XeLP",
     "TGLLP",
     "RKL",
     "DG1",
     "ADLP",
     "ADLS",
     "ADLN",
+    "XeHP",
     "XEHP",
+    "XeHPG",
     "DG2",
+    "XeLPG",
     "MTL",
+    "XeHPC",
     "PVC",
     "PVCXT_A0",
     "PVCXT",
