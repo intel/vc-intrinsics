@@ -267,10 +267,10 @@ static Optional<SPIRVArgDesc> parseSPIRVIRType(StringRef TyName) {
 // Assume that "opencl." "spirv." and "intel.buffer" types are well-formed.
 static Optional<SPIRVArgDesc> parseOpaqueType(StringRef TyName) {
   if (auto MaybeIntelTy = parseIntelType(TyName))
-    return MaybeIntelTy.getValue();
+    return MaybeIntelTy.value();
 
   if (auto MaybeOCL = parseOCLType(TyName))
-    return MaybeOCL.getValue();
+    return MaybeOCL.value();
 
   return parseSPIRVIRType(TyName);
 }
@@ -306,7 +306,7 @@ static SPIRVArgDesc analyzeKernelArg(const Argument &Arg) {
     return {SPIRVType::Pointer};
 
   if (auto MaybeDesc = parseOpaqueType(StrTy->getName())) {
-    SPIRVArgDesc Desc = MaybeDesc.getValue();
+    SPIRVArgDesc Desc = MaybeDesc.value();
     assert(getOpaqueTypeAddressSpace(Desc.Ty) == AddressSpace &&
            "Mismatching address space for type");
     return Desc;

@@ -54,7 +54,7 @@ private:
   void overrideOptionsWithEnv() {
     auto RewriteSEVOpt = llvm::sys::Process::GetEnv("GENX_REWRITE_SEV");
     if (RewriteSEVOpt)
-      RewriteSingleElementVectors = RewriteSEVOpt.getValue() == "1";
+      RewriteSingleElementVectors = RewriteSEVOpt.value() == "1";
   }
 
   bool runOnFunction(Function &F);
@@ -285,7 +285,7 @@ static SPIRVArgDesc parseArgDesc(StringRef Desc) {
   if (!AccTy)
     AccTy = AccessType::ReadWrite;
 
-  return {Ty.getValue(), AccTy.getValue()};
+  return {Ty.value(), AccTy.value()};
 }
 
 // General arguments can be either pointers or any other types.
@@ -386,7 +386,7 @@ static StringRef extractArgumentDesc(const Argument &Arg) {
 static SPIRVArgDesc analyzeKernelArg(const Argument &Arg) {
   if (auto Kind = extractArgumentKind(Arg)) {
     const StringRef Desc = extractArgumentDesc(Arg);
-    return analyzeArgumentAttributes(Kind.getValue(), Desc);
+    return analyzeArgumentAttributes(Kind.value(), Desc);
   }
 
   return {SPIRVType::None};
