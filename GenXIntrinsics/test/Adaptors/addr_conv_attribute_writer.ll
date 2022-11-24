@@ -9,6 +9,7 @@
 ; Test @llvm.genx.address.convert intrinsic generation with proper attributes
 
 ; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
+; XFAIL: llvm16
 
 define void @test(i32 %buf) {
 ; CHECK-LABEL: @test(

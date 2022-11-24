@@ -11,6 +11,7 @@
 ; understand. This test checks access qualifiers translation.
 
 ; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
+; XFAIL: llvm16
 
 define void @test(i32 %buf, i32 %im1d, i32 %im1db, i32 %im2d, i32 %im3d) {
 ; CHECK-LABEL: @test(
