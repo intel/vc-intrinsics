@@ -25,6 +25,7 @@ SPDX-License-Identifier: MIT
 
 #include "llvmVCWrapper/IR/Attributes.h"
 #include "llvmVCWrapper/IR/Function.h"
+#include "llvmVCWrapper/IR/Instructions.h"
 #include "llvmVCWrapper/IR/Type.h"
 
 using namespace llvm;
@@ -269,10 +270,10 @@ static Optional<SPIRVArgDesc> parseSPIRVIRType(StringRef TyName) {
 // Assume that "opencl." "spirv." and "intel.buffer" types are well-formed.
 static Optional<SPIRVArgDesc> parseOpaqueType(StringRef TyName) {
   if (auto MaybeIntelTy = parseIntelType(TyName))
-    return MaybeIntelTy.getValue();
+    return VCINTR::getValue(MaybeIntelTy);
 
   if (auto MaybeOCL = parseOCLType(TyName))
-    return MaybeOCL.getValue();
+    return VCINTR::getValue(MaybeOCL);
 
   return parseSPIRVIRType(TyName);
 }
@@ -308,7 +309,7 @@ static SPIRVArgDesc analyzeKernelArg(const Argument &Arg) {
     return {SPIRVType::Pointer};
 
   if (auto MaybeDesc = parseOpaqueType(StrTy->getName())) {
-    SPIRVArgDesc Desc = MaybeDesc.getValue();
+    SPIRVArgDesc Desc = VCINTR::getValue(MaybeDesc);
     assert(getOpaqueTypeAddressSpace(Desc.Ty) == AddressSpace &&
            "Mismatching address space for type");
     return Desc;
