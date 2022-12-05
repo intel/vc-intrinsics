@@ -10,7 +10,6 @@
 
 ; UNSUPPORTED: llvm8
 ; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
-; XFAIL: llvm16
 ; CHECK: @test
 ; CHECK-SAME: i8
 ; CHECK-SAME: byval(i8)

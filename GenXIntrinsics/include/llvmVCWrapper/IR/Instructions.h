@@ -43,8 +43,17 @@ inline llvm::ArrayRef<int> getShuffleMask(llvm::ArrayRef<int> Mask,
 
 } // namespace ShuffleVectorInst
 
-template<class ArgKind>
-inline auto getValue(llvm::Optional<ArgKind> &opt) {
+template <class ArgKind>
+inline ArgKind &getValue(llvm::Optional<ArgKind> &opt) {
+#if VC_INTR_LLVM_VERSION_MAJOR < 15
+  return opt.getValue();
+#else
+  return opt.value();
+#endif
+}
+
+template <class ArgKind>
+inline const ArgKind &getValue(const llvm::Optional<ArgKind> &opt) {
 #if VC_INTR_LLVM_VERSION_MAJOR < 15
   return opt.getValue();
 #else

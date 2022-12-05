@@ -9,7 +9,6 @@
 ; Test writer translation of image array arguments.
 
 ; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
-; XFAIL: llvm16
 
 define void @test(i32 %im1darr, i32 %im2darr) {
 ; CHECK-LABEL: @test(
