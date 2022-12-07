@@ -1,12 +1,11 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2021 Intel Corporation
+; Copyright (C) 2021-2022 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
 ;============================ end_copyright_notice =============================
 
-; XFAIL: llvm13, llvm14, llvm15, llvm16
 ; Test general translation of attributes within module that has no kernels
 
 ; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s

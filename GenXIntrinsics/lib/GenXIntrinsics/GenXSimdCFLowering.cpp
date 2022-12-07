@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2015-2021 Intel Corporation
+Copyright (C) 2015-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -261,22 +261,16 @@ public:
 };
 
 // The CM SIMD CF lowering pass (a function pass)
-class CMSimdCFLowering : public FunctionPass {
+class CMSimdCFLoweringImpl final {
   using GListType = std::vector<llvm::GlobalVariable*>;
   std::map<const Function *, DominatorTree *> DTs;
   GListType VolList;
 public:
-  static char ID;
-
-  CMSimdCFLowering() : FunctionPass(ID) {
-    initializeCMSimdCFLoweringPass(*PassRegistry::getPassRegistry());
+  CMSimdCFLoweringImpl() {
+    initializeCMSimdCFLoweringLegacyPass(*PassRegistry::getPassRegistry());
   }
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    FunctionPass::getAnalysisUsage(AU);
-  }
+  bool run(Module &M);
 
-  virtual bool doInitialization(Module &M) override;
-  virtual bool runOnFunction(Function &F) override { return false; }
 private:
   DominatorTree *getDomTree(Function *F);
   bool isGlobalInterseptVol(GlobalVariable &G, const GListType& VolList);
@@ -286,13 +280,6 @@ private:
 
 } // namespace
 
-char CMSimdCFLowering::ID = 0;
-INITIALIZE_PASS_BEGIN(CMSimdCFLowering, "cmsimdcflowering", "Lower CM SIMD control flow", false, false)
-INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass);
-INITIALIZE_PASS_END(CMSimdCFLowering, "cmsimdcflowering", "Lower CM SIMD control flow", false, false)
-
-Pass *llvm::createCMSimdCFLoweringPass() { return new CMSimdCFLowering(); }
-
 char ISPCSimdCFLowering::ID = 0;
 namespace llvm {
 void initializeISPCSimdCFLoweringPass(PassRegistry&);
@@ -301,17 +288,15 @@ INITIALIZE_PASS_BEGIN(ISPCSimdCFLowering, "ispcsimdcflowering", "Lower ISPC SIMD
 INITIALIZE_PASS_END(ISPCSimdCFLowering, "ispcsimdcflowering", "Lower ISPC SIMD control flow", false, false)
 
 Pass *llvm::createISPCSimdCFLoweringPass() {
-    initializeISPCSimdCFLoweringPass(*PassRegistry::getPassRegistry());
-    return new ISPCSimdCFLowering();
+  initializeISPCSimdCFLoweringPass(*PassRegistry::getPassRegistry());
+  return new ISPCSimdCFLowering();
 }
 
 bool ISPCSimdCFLowering::runOnModule(Module &M) {
-    return CMSimdCFLowering().doInitialization(M);
+  return CMSimdCFLoweringImpl().run(M);
 }
 
-
-DominatorTree *CMSimdCFLowering::getDomTree(Function *F)
-{
+DominatorTree *CMSimdCFLoweringImpl::getDomTree(Function *F) {
   if (!DTs[F]) {
     auto DT = new DominatorTree;
     DT->recalculate(*F);
@@ -324,7 +309,8 @@ DominatorTree *CMSimdCFLowering::getDomTree(Function *F)
  * isGlobalInterseptVol : Check interseption between global var and
  * a list of global volatile variables
  */
-bool CMSimdCFLowering::isGlobalInterseptVol(GlobalVariable &G, const GListType& VolList) {
+bool CMSimdCFLoweringImpl::isGlobalInterseptVol(GlobalVariable &G,
+                                                const GListType &VolList) {
   for (auto UI = G.user_begin(), UE = G.user_end(); UI != UE; UI++) {
     llvm::Instruction *U = dyn_cast<Instruction>(*UI);
     if (!U)
@@ -343,6 +329,118 @@ bool CMSimdCFLowering::isGlobalInterseptVol(GlobalVariable &G, const GListType& 
   return false;
 }
 
+//-----------------------------------------------------------------------------
+// New PM support
+//-----------------------------------------------------------------------------
+PreservedAnalyses llvm::CMSimdCFLowering::run(Module &M,
+                                              ModuleAnalysisManager &) {
+  CMSimdCFLoweringImpl Impl;
+
+  if (!Impl.run(M))
+    return PreservedAnalyses::all();
+
+  return PreservedAnalyses::none();
+}
+
+//-----------------------------------------------------------------------------
+// Legacy PM support
+//-----------------------------------------------------------------------------
+namespace {
+class CMSimdCFLoweringLegacy : public FunctionPass {
+public:
+  static char ID;
+
+  CMSimdCFLoweringLegacy() : FunctionPass(ID) {}
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    FunctionPass::getAnalysisUsage(AU);
+  }
+
+  /***********************************************************************
+   * doInitialization : per-module initialization for CM simd CF lowering
+   *
+   * Really we want a module pass for CM simd CF lowering. But, without
+   * modifying llvm's PassManagerBuilder, the earliest place to insert a pass is
+   * EP_EarlyAsPossible, which must be a function pass. So, we do our
+   * per-module processing here in doInitialization.
+   */
+  bool doInitialization(Module &M) override {
+    CMSimdCFLoweringImpl Impl;
+    return Impl.run(M);
+  }
+  bool runOnFunction(Function &F) override { return false; }
+};
+} // namespace
+
+char CMSimdCFLoweringLegacy::ID = 0;
+INITIALIZE_PASS_BEGIN(CMSimdCFLoweringLegacy, CMSimdCFLowering::getArgString(),
+                      "Lower CM SIMD control flow", false, false)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass);
+INITIALIZE_PASS_END(CMSimdCFLoweringLegacy, CMSimdCFLowering::getArgString(),
+                    "Lower CM SIMD control flow", false, false)
+
+Pass *llvm::createCMSimdCFLoweringPass() {
+  return new CMSimdCFLoweringLegacy();
+}
+
+bool CMSimdCFLoweringImpl::run(Module &M) {
+
+  VolList.clear();
+  DTs.clear();
+
+  initializeVolatileGlobals(M);
+
+  // See if simd CF is used anywhere in this module.
+  // We have to try each overload of llvm.genx.simdcf.any separately.
+  bool HasSimdCF = false;
+  for (unsigned Width = 2; Width <= CMSimdCFLower::MAX_SIMD_CF_WIDTH;
+       Width <<= 1) {
+    auto VT = VCINTR::getVectorType(Type::getInt1Ty(M.getContext()), Width);
+    Function *SimdCFAny = GenXIntrinsic::getGenXDeclaration(
+        &M, GenXIntrinsic::genx_simdcf_any, VT);
+    if (!SimdCFAny->use_empty()) {
+      HasSimdCF = true;
+      break;
+    }
+  }
+
+  if (HasSimdCF) {
+    // Create the global variable for the execution mask.
+    auto EMTy = VCINTR::getVectorType(Type::getInt1Ty(M.getContext()),
+                                      CMSimdCFLower::MAX_SIMD_CF_WIDTH);
+    auto EMVar = new GlobalVariable(M, EMTy, false /*isConstant*/,
+                                    GlobalValue::InternalLinkage,
+                                    Constant::getAllOnesValue(EMTy), "EM");
+    // Derive an order to process functions such that a function is visited
+    // after anything that calls it.
+    std::vector<Function *> VisitOrder;
+    calculateVisitOrder(&M, &VisitOrder);
+    // Process functions in that order.
+    CMSimdCFLower CFL(EMVar);
+    for (auto i = VisitOrder.begin(), e = VisitOrder.end(); i != e; ++i) {
+      Function *Fn = *i;
+      if (Fn->hasFnAttribute("CMGenxNoSIMDPred"))
+        continue;
+      CFL.processFunction(Fn);
+    }
+  }
+
+  // Any predication calls which remain are not in SIMD CF regions,
+  // so can be deleted.
+  for (auto mi = M.begin(), me = M.end(); mi != me; ++mi) {
+    Function *F = &*mi;
+    if (GenXIntrinsic::getGenXIntrinsicID(F) !=
+        GenXIntrinsic::genx_simdcf_predicate)
+      continue;
+    while (!F->use_empty()) {
+      auto CI = cast<CallInst>(F->use_begin()->getUser());
+      auto EnabledValues = CI->getArgOperand(0);
+      CI->replaceAllUsesWith(EnabledValues);
+      CI->eraseFromParent();
+    }
+  }
+  return HasSimdCF;
+}
+
 /***********************************************************************
  * initializeVolatileGlobals : Check and modify global variables for vc
  *
@@ -356,7 +454,7 @@ bool CMSimdCFLowering::isGlobalInterseptVol(GlobalVariable &G, const GListType& 
  * same register. It is special case in coalescing, that's why here
  * we mark them as volatile too.
  */
-void CMSimdCFLowering::initializeVolatileGlobals(Module &M) {
+void CMSimdCFLoweringImpl::initializeVolatileGlobals(Module &M) {
   // Analise interseption between globals
   for (auto &G : M.getGlobalList()) {
     if (G.hasAttribute(genx::FunctionMD::GenXVolatile)) {
@@ -444,91 +542,12 @@ void CMSimdCFLowering::initializeVolatileGlobals(Module &M) {
   }
 }
 
-
-/***********************************************************************
- * doInitialization : per-module initialization for CM simd CF lowering
- *
- * Really we want a module pass for CM simd CF lowering. But, without modifying
- * llvm's PassManagerBuilder, the earliest place to insert a pass is
- * EP_EarlyAsPossible, which must be a function pass. So, we do our
- * per-module processing here in doInitialization.
- */
-bool CMSimdCFLowering::doInitialization(Module &M)
-{
-  VolList.clear();
-  DTs.clear();
-#if 0
-  for (auto &F : M.getFunctionList()) {
-    if (F.hasFnAttribute("CMGenxSIMT")) {
-      if (F.hasFnAttribute(Attribute::AlwaysInline)) {
-        F.removeFnAttr(Attribute::AlwaysInline);
-        F.removeFnAttr(Attribute::InlineHint);
-        F.addFnAttr("CMGenxInline");
-        F.addFnAttr(Attribute::NoInline);
-      }
-    }
-  }
-#endif
-
-  initializeVolatileGlobals(M);
-
-  // See if simd CF is used anywhere in this module.
-  // We have to try each overload of llvm.genx.simdcf.any separately.
-  bool HasSimdCF = false;
-  for (unsigned Width = 2; Width <= CMSimdCFLower::MAX_SIMD_CF_WIDTH; Width <<= 1) {
-    auto VT = VCINTR::getVectorType(Type::getInt1Ty(M.getContext()), Width);
-    Function *SimdCFAny = GenXIntrinsic::getGenXDeclaration(
-        &M, GenXIntrinsic::genx_simdcf_any, VT);
-    if (!SimdCFAny->use_empty()) {
-      HasSimdCF = true;
-      break;
-    }
-  }
-
-  if (HasSimdCF) {
-    // Create the global variable for the execution mask.
-    auto EMTy = VCINTR::getVectorType(Type::getInt1Ty(M.getContext()),
-      CMSimdCFLower::MAX_SIMD_CF_WIDTH);
-    auto EMVar = new GlobalVariable(M, EMTy, false/*isConstant*/,
-        GlobalValue::InternalLinkage, Constant::getAllOnesValue(EMTy), "EM");
-    // Derive an order to process functions such that a function is visited
-    // after anything that calls it.
-    std::vector<Function *> VisitOrder;
-    calculateVisitOrder(&M, &VisitOrder);
-    // Process functions in that order.
-    CMSimdCFLower CFL(EMVar);
-    for (auto i = VisitOrder.begin(), e = VisitOrder.end(); i != e; ++i) {
-      Function *Fn = *i;
-      if (Fn->hasFnAttribute("CMGenxNoSIMDPred"))
-        continue;
-      CFL.processFunction(Fn);
-    }
-  }
-
-  // Any predication calls which remain are not in SIMD CF regions,
-  // so can be deleted.
-  for (auto mi = M.begin(), me = M.end(); mi != me; ++ mi) {
-    Function *F = &*mi;
-    if (GenXIntrinsic::getGenXIntrinsicID(F) !=
-        GenXIntrinsic::genx_simdcf_predicate)
-      continue;
-    while (!F->use_empty()) {
-      auto CI = cast<CallInst>(F->use_begin()->getUser());
-      auto EnabledValues = CI->getArgOperand(0);
-      CI->replaceAllUsesWith(EnabledValues);
-      CI->eraseFromParent();
-    }
-  }
-  return HasSimdCF;
-}
-
 /***********************************************************************
  * calculateVisitOrder : calculate the order we want to visit functions,
  *    such that a function is not visited until all its callers have been
  */
-void CMSimdCFLowering::calculateVisitOrder(Module *M,
-    std::vector<Function *> *VisitOrder)
-{
+void CMSimdCFLoweringImpl::calculateVisitOrder(
+    Module *M, std::vector<Function *> *VisitOrder) {
   // First build the call graph.
   // We roll our own call graph here, because it is simpler than the general
   // case supported by LLVM's call graph analysis (CM does not support
@@ -590,7 +609,8 @@ void CMSimdCFLowering::calculateVisitOrder(Module *M,
 void CMSimdCFLower::processFunction(Function *ArgF)
 {
   F = ArgF;
-  LLVM_DEBUG(dbgs() << "CMSimdCFLowering::processFunction:\n" << *F << "\n");
+  LLVM_DEBUG(dbgs() << "CMSimdCFLoweringImpl::processFunction:\n"
+                    << *F << "\n");
   LLVM_DEBUG(F->print(dbgs()));
   unsigned CMWidth = PredicatedSubroutines[F];
   // Find the simd branches.

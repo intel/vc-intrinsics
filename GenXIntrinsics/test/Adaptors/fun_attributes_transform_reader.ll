@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2021 Intel Corporation
+; Copyright (C) 2021-2022 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -10,7 +10,7 @@
 ; metadata (the processed attributes are expected to be discarded)
 
 ; UNSUPPORTED: llvm8
-; XFAIL: llvm13, llvm14, llvm15, llvm16
+; XFAIL: llvm16
 ; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
 ; CHECK: @test_VCFunction()
 ; CHECK: @test_VCStackCall()

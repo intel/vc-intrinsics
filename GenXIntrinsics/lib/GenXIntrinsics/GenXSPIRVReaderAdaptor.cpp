@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -33,15 +33,10 @@ using namespace genx;
 
 namespace {
 
-class GenXSPIRVReaderAdaptor final : public ModulePass {
+class GenXSPIRVReaderAdaptorImpl final {
 public:
-  static char ID;
-  explicit GenXSPIRVReaderAdaptor() : ModulePass(ID) {}
-  llvm::StringRef getPassName() const override {
-    return "GenX SPIRVReader Adaptor";
-  }
-  void getAnalysisUsage(AnalysisUsage &AU) const override;
-  bool runOnModule(Module &M) override;
+  explicit GenXSPIRVReaderAdaptorImpl() {}
+  bool run(Module &M);
 
 private:
   bool runOnFunction(Function &F);
@@ -60,21 +55,6 @@ private:
 };
 
 } // namespace
-
-char GenXSPIRVReaderAdaptor::ID = 0;
-
-INITIALIZE_PASS_BEGIN(GenXSPIRVReaderAdaptor, "GenXSPIRVReaderAdaptor",
-                      "GenXSPIRVReaderAdaptor", false, false)
-INITIALIZE_PASS_END(GenXSPIRVReaderAdaptor, "GenXSPIRVReaderAdaptor",
-                    "GenXSPIRVReaderAdaptor", false, false)
-
-ModulePass *llvm::createGenXSPIRVReaderAdaptorPass() {
-  return new GenXSPIRVReaderAdaptor();
-}
-
-void GenXSPIRVReaderAdaptor::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.setPreservesCFG();
-}
 
 static std::pair<SPIRVType, StringRef> parseImageDim(StringRef TyName) {
   // Greedy match: 1d_buffer first.
@@ -558,7 +538,7 @@ static void rewriteKernelsTypes(Module &M) {
   }
 }
 
-bool GenXSPIRVReaderAdaptor::runOnModule(Module &M) {
+bool GenXSPIRVReaderAdaptorImpl::run(Module &M) {
   auto *KernelMDs = M.getNamedMetadata(FunctionMD::GenXKernels);
   if (KernelMDs)
     return false;
@@ -584,7 +564,7 @@ bool GenXSPIRVReaderAdaptor::runOnModule(Module &M) {
   return true;
 }
 
-bool GenXSPIRVReaderAdaptor::processVCFunctionAttributes(Function &F) {
+bool GenXSPIRVReaderAdaptorImpl::processVCFunctionAttributes(Function &F) {
   auto Attrs = F.getAttributes();
   if (!VCINTR::AttributeList::hasFnAttr(Attrs, VCFunctionMD::VCFunction))
     return false;
@@ -644,7 +624,7 @@ bool GenXSPIRVReaderAdaptor::processVCFunctionAttributes(Function &F) {
   return true;
 }
 
-bool GenXSPIRVReaderAdaptor::processVCKernelAttributes(Function &F) {
+bool GenXSPIRVReaderAdaptorImpl::processVCKernelAttributes(Function &F) {
   if (!(F.getCallingConv() == CallingConv::SPIR_KERNEL))
     return false;
 
@@ -739,10 +719,64 @@ bool GenXSPIRVReaderAdaptor::processVCKernelAttributes(Function &F) {
   return true;
 }
 
-bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
+bool GenXSPIRVReaderAdaptorImpl::runOnFunction(Function &F) {
   if (!processVCFunctionAttributes(F))
     return true;
 
   processVCKernelAttributes(F);
   return true;
+}
+
+//-----------------------------------------------------------------------------
+// New PM support
+//-----------------------------------------------------------------------------
+PreservedAnalyses llvm::GenXSPIRVReaderAdaptor::run(Module &M,
+                                                    ModuleAnalysisManager &) {
+  GenXSPIRVReaderAdaptorImpl Impl;
+
+  if (!Impl.run(M))
+    return PreservedAnalyses::all();
+
+  PreservedAnalyses PA;
+  PA.preserveSet<CFGAnalyses>();
+  return PA;
+}
+
+//-----------------------------------------------------------------------------
+// Legacy PM support
+//-----------------------------------------------------------------------------
+namespace {
+class GenXSPIRVReaderAdaptorLegacy final : public ModulePass {
+public:
+  static char ID;
+
+public:
+  explicit GenXSPIRVReaderAdaptorLegacy() : ModulePass(ID) {}
+
+  llvm::StringRef getPassName() const override {
+    return GenXSPIRVReaderAdaptor::getArgString();
+  }
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  bool runOnModule(Module &M) override;
+}; // class GenXSPIRVReaderAdaptorLegacy
+
+} // namespace
+
+char GenXSPIRVReaderAdaptorLegacy::ID = 0;
+
+INITIALIZE_PASS(GenXSPIRVReaderAdaptorLegacy,
+                GenXSPIRVReaderAdaptor::getArgString(),
+                GenXSPIRVReaderAdaptor::getArgString(), false, false)
+
+ModulePass *llvm::createGenXSPIRVReaderAdaptorPass() {
+  return new GenXSPIRVReaderAdaptorLegacy();
+}
+
+void GenXSPIRVReaderAdaptorLegacy::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesCFG();
+}
+
+bool GenXSPIRVReaderAdaptorLegacy::runOnModule(Module &M) {
+  GenXSPIRVReaderAdaptorImpl impl;
+  return impl.run(M);
 }

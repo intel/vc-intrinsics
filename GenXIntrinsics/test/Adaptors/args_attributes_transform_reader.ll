@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2021 Intel Corporation
+; Copyright (C) 2021-2022 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -9,7 +9,6 @@
 ; Test that adaptor correctly handles parameter attributes with types.
 
 ; UNSUPPORTED: llvm8
-; XFAIL: llvm13, llvm14, llvm15, llvm16
 ; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
 ; CHECK: @test
 ; CHECK-SAME: (%foo addrspace(1)* byval(%foo) %arg)

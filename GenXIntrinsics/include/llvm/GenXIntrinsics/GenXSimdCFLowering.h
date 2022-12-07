@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2019-2021 Intel Corporation
+Copyright (C) 2019-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -12,17 +12,17 @@ SPDX-License-Identifier: MIT
 #ifndef CMSIMDCF_LOWER_H
 #define CMSIMDCF_LOWER_H
 
-#include "llvm/PassRegistry.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/PassManager.h"
+#include "llvm/Pass.h"
+#include "llvm/PassRegistry.h"
 #include <algorithm>
 #include <map>
 #include <set>
 
 namespace llvm {
-
-void initializeCMSimdCFLoweringPass(PassRegistry &);
 
 // The worker class for lowering CM SIMD CF
 class CMSimdCFLower {
@@ -98,6 +98,27 @@ private:
   Instruction *loadExecutionMask(Instruction *InsertBefore, unsigned SimdWidth);
   Value *getRMAddr(BasicBlock *JP, unsigned SimdWidth);
 };
+
+//-----------------------------------------------------------------------------
+// New PM support
+//-----------------------------------------------------------------------------
+// CMSimdCFLovering adaptor for new PM.
+class CMSimdCFLowering final : public PassInfoMixin<CMSimdCFLowering> {
+
+public:
+  CMSimdCFLowering() {}
+
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
+
+  static StringRef getArgString() { return "cmsimdcflowering"; }
+};
+
+//-----------------------------------------------------------------------------
+// Legacy PM support
+//-----------------------------------------------------------------------------
+void initializeCMSimdCFLoweringLegacyPass(PassRegistry &);
+
+Pass *createCMSimdCFLoweringPass();
 
 } // namespace
 
