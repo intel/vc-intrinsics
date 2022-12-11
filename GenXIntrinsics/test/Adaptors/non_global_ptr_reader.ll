@@ -9,7 +9,7 @@
 ; Test that reader treats only global pointer as svmptr type
 ; and ignores other address spaces.
 
-; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
+; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
 define spir_kernel void @test(i32* %ptr) #0 {
 

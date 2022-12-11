@@ -8,7 +8,7 @@
 
 ; Test general translation of attributes within module that has no kernels
 
-; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
+; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
 ; CHECK: @some_func
 ; CHECK-SAME: #[[ATTR_GROUP:[0-9]+]]

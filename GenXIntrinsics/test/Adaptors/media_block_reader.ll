@@ -8,7 +8,7 @@
 
 ; Test reader translation of media block image arguments.
 
-; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
+; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
 %intel.image2d_media_block_ro_t = type opaque
 

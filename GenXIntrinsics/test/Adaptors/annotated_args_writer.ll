@@ -9,9 +9,9 @@
 ; Test kernel arguments translation from old style with metadata to
 ; new style with opaque types that SPIRV translator can
 ; understand. Here annotations for OCL runtime are used.
-
-; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
-; RUN: opt -S -GenXSPIRVWriterAdaptor -GenXSPIRVWriterAdaptor < %s | FileCheck %s
+; XFAIL: llvm13, llvm14, llvm15
+; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
+; RUN: opt %pass%GenXSPIRVWriterAdaptor %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 
 define void @test(i32 %buf, i32 %im1d, i32 %im1db, i32 %im2d, i32 %im3d, i32 %samp, i64 %ptr, <4 x i32> %gen) {
 ; CHECK-LABEL: @test(

@@ -58,6 +58,11 @@ opt_extra_args = ['-load', config.vc_intrinsics_plugin]
 if int(config.llvm_version_major) >= 13:
     opt_extra_args.extend(['-load-pass-plugin', config.vc_intrinsics_plugin])
 
+if int(config.llvm_version_major) < 13:
+  config.substitutions.append(('%pass%', ' -'))
+else:
+  config.substitutions.append(('%pass%', ' -passes='))
+
 tools = [ToolSubst('opt', extra_args=opt_extra_args)]
 
 llvm_config.add_tool_substitutions(tools, tool_dirs)

@@ -8,7 +8,7 @@
 
 ; Test reader translation of image array arguments.
 
-; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
+; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
 %opencl.image1d_array_ro_t = type opaque
 %opencl.image2d_array_wo_t = type opaque

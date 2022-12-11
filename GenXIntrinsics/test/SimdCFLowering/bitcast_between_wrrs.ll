@@ -7,7 +7,7 @@
 ;============================ end_copyright_notice =============================
 
 ; XFAIL: llvm16
-; RUN: opt -S -cmsimdcflowering < %s | FileCheck %s
+; RUN: opt %pass%cmsimdcflowering -S < %s | FileCheck %s
 
 @Rcp_T2 = internal global <64 x double> undef
 

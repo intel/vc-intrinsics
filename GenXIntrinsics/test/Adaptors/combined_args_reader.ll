@@ -10,7 +10,7 @@
 ; and impicit arguments. Implicit arguments would not show in normal
 ; flow, though they appear in old cmc.
 
-; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
+; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
 %opencl.image2d_ro_t = type opaque
 %opencl.image2d_wo_t = type opaque

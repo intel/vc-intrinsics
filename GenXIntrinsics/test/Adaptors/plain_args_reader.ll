@@ -10,7 +10,7 @@
 ; that SPIRV translator can understand to old style with
 ; metadata. Arguments without annotations are used here (CMRT like).
 
-; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
+; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
 %intel.buffer_rw_t = type opaque
 %opencl.sampler_t = type opaque

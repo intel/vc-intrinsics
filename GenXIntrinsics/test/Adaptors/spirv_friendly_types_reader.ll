@@ -8,7 +8,7 @@
 
 ; Test reader translation of SPIRV friendly IR types
 
-; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
+; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
 %spirv.Sampler = type opaque
 %spirv.Image._void_0_0_1_0_0_0_0 = type opaque

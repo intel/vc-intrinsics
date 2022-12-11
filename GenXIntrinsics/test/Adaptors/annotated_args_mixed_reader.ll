@@ -9,7 +9,7 @@
 ; Test that reader can cope with mixed mode when some
 ; arguments use address convert and some do not.
 
-; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
+; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
 %intel.buffer_rw_t = type opaque
 %opencl.image1d_rw_t = type opaque

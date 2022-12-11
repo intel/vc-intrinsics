@@ -9,7 +9,7 @@
 ; Test that adaptor correctly handles parameter attributes with types.
 
 ; UNSUPPORTED: llvm8
-; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
+; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 ; CHECK: @test
 ; CHECK-SAME: (%foo addrspace(1)* byval(%foo) %arg)
 

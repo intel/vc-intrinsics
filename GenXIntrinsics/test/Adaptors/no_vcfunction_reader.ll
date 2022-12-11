@@ -9,7 +9,7 @@
 ; Test that reader ignores signature rewriting for kernels
 ; that are not VCFunction.
 
-; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
+; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
 define spir_kernel void @test(i8 addrspace(1) *%ptr) {
 ; CHECK-LABEL: @test(

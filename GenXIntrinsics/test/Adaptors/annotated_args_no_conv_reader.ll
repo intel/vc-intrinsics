@@ -10,7 +10,7 @@
 ; not change other things if there is no address conversion
 ; but correct SPIRV types in signature.
 
-; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
+; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
 %intel.buffer_rw_t = type opaque
 %opencl.image1d_rw_t = type opaque

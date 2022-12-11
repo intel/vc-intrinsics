@@ -18,12 +18,12 @@ SPDX-License-Identifier: MIT
 #define GENX_INTRINSIC_INTERFACE_H
 
 #include "llvm/IR/Module.h"
-
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/GenXIntrinsics/GenXVersion.h"
+#include "llvmVCWrapper/ADT/None.h"
 
 namespace llvm {
 
@@ -173,7 +173,7 @@ inline bool isGenXNonTrivialIntrinsic(const Value *V) {
 
 /// GenXIntrinsic::getGenXName(ID) - Return the LLVM name for a GenX intrinsic,
 /// such as "llvm.genx.lane.id".
-std::string getGenXName(ID id, ArrayRef<Type *> Tys = None);
+std::string getGenXName(ID id, ArrayRef<Type *> Tys = VCINTR::None);
 
 ID lookupGenXIntrinsicID(StringRef Name);
 
@@ -181,7 +181,7 @@ AttributeList getAttributes(LLVMContext &C, ID id);
 
 /// GenXIntrinsic::getGenXType(ID) - Return the function type for an intrinsic.
 FunctionType *getGenXType(LLVMContext &Context, GenXIntrinsic::ID id,
-                          ArrayRef<Type *> Tys = None);
+                          ArrayRef<Type *> Tys = VCINTR::None);
 
 /// GenXIntrinsic::getGenXDeclaration(M, ID) - Create or insert a GenX LLVM
 /// Function declaration for an intrinsic, and return it.
@@ -190,7 +190,7 @@ FunctionType *getGenXType(LLVMContext &Context, GenXIntrinsic::ID id,
 /// using iAny, fAny, vAny, or iPTRAny).  For a declaration of an overloaded
 /// intrinsic, Tys must provide exactly one type for each overloaded type in
 /// the intrinsic.
-Function *getGenXDeclaration(Module *M, ID id, ArrayRef<Type *> Tys = None);
+Function *getGenXDeclaration(Module *M, ID id, ArrayRef<Type *> Tys = VCINTR::None);
 
 void getIntrinsicInfoTableEntries(
     GenXIntrinsic::ID id,
@@ -262,11 +262,11 @@ inline bool isAnyNonTrivialIntrinsic(const Value *V) {
 
 /// GenXIntrinsic::getAnyName(ID) - Return the LLVM name for LLVM or GenX
 /// intrinsic, such as "llvm.genx.lane.id".
-std::string getAnyName(unsigned id, ArrayRef<Type *> Tys = None);
+std::string getAnyName(unsigned id, ArrayRef<Type *> Tys = VCINTR::None);
 
 /// GenXIntrinsic::getAnyType(ID) - Return the function type for an intrinsic.
 inline FunctionType *getAnyType(LLVMContext &Context, unsigned id,
-                                ArrayRef<Type *> Tys = None) {
+                                ArrayRef<Type *> Tys = VCINTR::None) {
   assert(isAnyNonTrivialIntrinsic(id));
   if (isGenXIntrinsic(id))
     return getGenXType(Context, (ID)id, Tys);
@@ -294,7 +294,7 @@ bool isOverloadedRet(unsigned IntrinID);
 /// intrinsic, Tys must provide exactly one type for each overloaded type in
 /// the intrinsic.
 inline Function *getAnyDeclaration(Module *M, unsigned id,
-                                   ArrayRef<Type *> Tys = None) {
+                                   ArrayRef<Type *> Tys = VCINTR::None) {
   assert(isAnyNonTrivialIntrinsic(id));
   if (isGenXIntrinsic(id)) {
     return getGenXDeclaration(M, (ID)id, Tys);

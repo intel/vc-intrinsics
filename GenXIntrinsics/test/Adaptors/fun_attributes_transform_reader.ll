@@ -11,7 +11,7 @@
 
 ; UNSUPPORTED: llvm8
 ; XFAIL: llvm16
-; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
+; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 ; CHECK: @test_VCFunction()
 ; CHECK: @test_VCStackCall()
 ; CHECK-SAME: #[[FATR_STACK_CALL_ATTR_IDX:[0-9]+]]

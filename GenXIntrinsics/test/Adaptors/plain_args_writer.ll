@@ -9,9 +9,9 @@
 ; Test kernel arguments translation from old style with metadata to
 ; new style with opaque types that SPIRV translator can
 ; understand. Arguments without annotations are used here (CMRT like).
-
-; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
-; RUN: opt -S -GenXSPIRVWriterAdaptor -GenXSPIRVWriterAdaptor < %s | FileCheck %s
+; XFAIL: llvm13, llvm14, llvm15
+; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
+; RUN: opt %pass%GenXSPIRVWriterAdaptor %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 
 define spir_kernel void @test(i32 %surf, i32 %samp, i64 %ptr, i32 %gen) {
 ; CHECK-LABEL: @test(

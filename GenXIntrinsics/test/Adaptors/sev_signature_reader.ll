@@ -6,10 +6,12 @@
 ;
 ;============================ end_copyright_notice =============================
 
-; XFAIL: llvm16
 ; Test simple signatures tranform
 
-; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
+; LLVM16 error: symbol with local linkage cannot have a DLL storage class 
+; for test-function (internal dllexport)
+; XFAIL: llvm16
+; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
 ; CHECK: @global_var_0 = internal global <1 x i32> undef, align 4
 @global_var_0 = internal global i32 undef, align 4 #2
