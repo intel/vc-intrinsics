@@ -17,13 +17,22 @@ SPDX-License-Identifier: MIT
 #ifndef GENX_INTRINSIC_INTERFACE_H
 #define GENX_INTRINSIC_INTERFACE_H
 
+#include "llvm/ADT/None.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/GenXIntrinsics/GenXVersion.h"
-#include "llvmVCWrapper/ADT/None.h"
+
+
+namespace VCINTR {
+#if VC_INTR_LLVM_VERSION_MAJOR < 16
+const llvm::NoneType None = llvm::None;
+#else
+inline constexpr std::nullopt_t None = std::nullopt;
+#endif
+} // namespace VCINTR
 
 namespace llvm {
 
