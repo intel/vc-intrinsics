@@ -273,7 +273,7 @@ static SPIRVArgDesc parseArgDesc(StringRef Desc) {
                .Case(ArgDesc::Image3d, SPIRVType::Image3d)
                .Case(ArgDesc::SVM, SPIRVType::Pointer)
                .Case(ArgDesc::Sampler, SPIRVType::Sampler)
-               .Default(None);
+               .Default({});
     }
 
     if (!AccTy) {
@@ -281,7 +281,7 @@ static SPIRVArgDesc parseArgDesc(StringRef Desc) {
                   .Case(ArgDesc::ReadOnly, AccessType::ReadOnly)
                   .Case(ArgDesc::WriteOnly, AccessType::WriteOnly)
                   .Case(ArgDesc::ReadWrite, AccessType::ReadWrite)
-                  .Default(None);
+                  .Default({});
     }
 
     if (Ty && AccTy)
@@ -372,7 +372,7 @@ static Optional<ArgKind> extractArgumentKind(const Argument &Arg) {
   const Function *F = Arg.getParent();
   const AttributeList Attrs = F->getAttributes();
   if (!Attrs.hasParamAttr(Arg.getArgNo(), VCFunctionMD::VCArgumentKind))
-    return None;
+    return {};
 
   const Attribute Attr =
       Attrs.getParamAttr(Arg.getArgNo(), VCFunctionMD::VCArgumentKind);
@@ -434,7 +434,11 @@ static void rewriteKernelArguments(Function &F) {
 
   Function *NewF = transformKernelSignature(F, ArgDescs);
   F.getParent()->getFunctionList().insert(F.getIterator(), NewF);
+#if VC_INTR_LLVM_VERSION_MAJOR > 15
+  NewF->splice(NewF->begin(), &F);
+#else
   NewF->getBasicBlockList().splice(NewF->begin(), F.getBasicBlockList());
+#endif
 
   Instruction *InsPt = &NewF->getEntryBlock().front();
   for (auto ArgPair : llvm::zip(F.args(), NewF->args())) {

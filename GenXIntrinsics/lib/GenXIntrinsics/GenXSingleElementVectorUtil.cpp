@@ -567,11 +567,14 @@ static void rewriteSingleElementVectorSignature(Function &F,
   NewF.copyMetadata(&F, 0);
   NewF.recalculateIntrinsicID();
   F.getParent()->getFunctionList().insert(F.getIterator(), &NewF);
+#if VC_INTR_LLVM_VERSION_MAJOR > 15
+  NewF.splice(NewF.begin(), &F);
+#else
   NewF.getBasicBlockList().splice(NewF.begin(), F.getBasicBlockList());
-
+#endif
   manageSingleElementVectorAttributes(F, NewF);
 
-  if (NewF.getBasicBlockList().size() > 0) {
+  if (NewF.size() > 0) {
     for (auto ArgPair : llvm::zip(F.args(), NewF.args()))
       replaceAllUsesWith(std::get<0>(ArgPair), std::get<1>(ArgPair), NewF);
     if (NewF.getReturnType() != F.getReturnType())

@@ -203,7 +203,7 @@ static SPIRVArgDesc parseSPIRVIRImageType(StringRef TyName) {
 
 static Optional<SPIRVArgDesc> parseIntelType(StringRef TyName) {
   if (!TyName.consume_front(IntelTypes::TypePrefix))
-    return None;
+    return {};
 
   SPIRVType MainType;
   std::tie(MainType, TyName) = parseIntelMainType(TyName);
@@ -215,7 +215,7 @@ static Optional<SPIRVArgDesc> parseIntelType(StringRef TyName) {
 
 static Optional<SPIRVArgDesc> parseOCLType(StringRef TyName) {
   if (!TyName.consume_front(OCLTypes::TypePrefix))
-    return None;
+    return {};
 
   // Sampler type.
   if (TyName.consume_front(OCLTypes::Sampler)) {
@@ -229,7 +229,7 @@ static Optional<SPIRVArgDesc> parseOCLType(StringRef TyName) {
 
 static Optional<SPIRVArgDesc> parseSPIRVIRType(StringRef TyName) {
   if (!TyName.consume_front(SPIRVIRTypes::TypePrefix))
-    return None;
+    return {};
 
   if (TyName.consume_front(SPIRVIRTypes::Sampler))
     return {SPIRVType::Sampler};
@@ -491,8 +491,11 @@ static void rewriteKernelArguments(Function &F) {
 
   Function *NewF = transformKernelSignature(F, ArgDescs);
   F.getParent()->getFunctionList().insert(F.getIterator(), NewF);
+#if VC_INTR_LLVM_VERSION_MAJOR > 15
+  NewF->splice(NewF->begin(), &F);
+#else
   NewF->getBasicBlockList().splice(NewF->begin(), F.getBasicBlockList());
-
+#endif
   // Rewrite uses and delete conversion intrinsics.
   for (int i = 0, e = ArgDescs.size(); i != e; ++i) {
     Argument &OldArg = *std::next(F.arg_begin(), i);

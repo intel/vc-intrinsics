@@ -61,16 +61,6 @@ inline const ArgKind &getValue(const llvm::Optional<ArgKind> &opt) {
 #endif
 }
 
-#if VC_INTR_LLVM_VERSION_MAJOR > 15
-template <class ArgKind> inline ArgKind &getValue(std::optional<ArgKind> &opt) {
-  return opt.value();
-}
-
-template <class ArgKind>
-inline const ArgKind &getValue(const std::optional<ArgKind> &opt) {
-  return opt.value();
-}
-#endif
 } // namespace VCINTR
 
 #endif // VCINTR_IR_INSTRUCTIONS_H
