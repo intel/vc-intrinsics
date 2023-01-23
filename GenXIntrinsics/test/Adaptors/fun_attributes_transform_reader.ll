@@ -10,7 +10,6 @@
 ; metadata (the processed attributes are expected to be discarded)
 
 ; UNSUPPORTED: llvm8
-; XFAIL: llvm16
 ; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 ; CHECK: @test_VCFunction()
 ; CHECK: @test_VCStackCall()
