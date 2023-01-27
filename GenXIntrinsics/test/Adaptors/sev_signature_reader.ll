@@ -59,7 +59,7 @@ entry:
   ret i32 0
 }
 
-define internal dllexport spir_kernel void @test() #1 {
+define dllexport spir_kernel void @test() #1 {
 entry:
   ret void
 }

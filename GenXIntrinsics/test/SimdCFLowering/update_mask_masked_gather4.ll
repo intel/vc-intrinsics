@@ -6,7 +6,6 @@
 ;
 ;============================ end_copyright_notice =============================
 
-; XFAIL: llvm16
 ; RUN: opt %pass%cmsimdcflowering -S < %s | FileCheck %s
 
 @g1 = internal global <64 x i32> undef

@@ -170,6 +170,9 @@ SPDX-License-Identifier: MIT
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
+#include "llvm/Support/ModRef.h"
+#endif
 #include <algorithm>
 #include <set>
 
@@ -305,6 +308,21 @@ DominatorTree *CMSimdCFLoweringImpl::getDomTree(Function *F) {
   return DTs[F];
 }
 
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
+static inline void updateFnAttr(Function *Fn) {
+    // Modify ReadNone attribute to support llvm16
+        if (Fn->getFnAttribute(llvm::Attribute::ReadNone).isValid()) {
+          Fn->removeFnAttr(llvm::Attribute::ReadNone);
+          for(auto ui = Fn->use_begin(), ue = Fn->use_end(); ui != ue; ++ui) {
+            if (auto I = dyn_cast<CallInst>(ui->getUser()))
+              I->setMemoryEffects(llvm::MemoryEffects::none());
+          }
+        }
+   }
+#else
+static inline void updateFnAttr(Function *) {}
+#endif
+
 /***********************************************************************
  * isGlobalInterseptVol : Check interseption between global var and
  * a list of global volatile variables
@@ -398,6 +416,7 @@ bool CMSimdCFLoweringImpl::run(Module &M) {
     Function *SimdCFAny = GenXIntrinsic::getGenXDeclaration(
         &M, GenXIntrinsic::genx_simdcf_any, VT);
     if (!SimdCFAny->use_empty()) {
+      updateFnAttr(SimdCFAny);
       HasSimdCF = true;
       break;
     }
@@ -520,6 +539,7 @@ void CMSimdCFLoweringImpl::initializeVolatileGlobals(Module &M) {
         Value* VLoad = Builder.CreateCall(Fn, Ptr, "gload");
         LI->replaceAllUsesWith(VLoad);
         LI->eraseFromParent();
+        updateFnAttr(Fn);
       }
       else if (auto SI = dyn_cast<StoreInst>(Inst)) {
         if (!SI->getValueOperand()->getType()->isVectorTy())
@@ -537,6 +557,7 @@ void CMSimdCFLoweringImpl::initializeVolatileGlobals(Module &M) {
         Function* Fn = GenXIntrinsic::getGenXDeclaration(&M, GenXIntrinsic::genx_vstore, Tys);
         Builder.CreateCall(Fn, Args);
         SI->eraseFromParent();
+        updateFnAttr(Fn);
       }
     }
   }
@@ -1113,6 +1134,7 @@ static CallInst *createWrRegion(ArrayRef<Value *> Args, const Twine &Name,
       OverloadedTypes);
   auto WrRegion = CallInst::Create(Decl, Args, Name, InsertBefore);
   WrRegion->setDebugLoc(InsertBefore->getDebugLoc());
+  updateFnAttr(Decl);
   return WrRegion;
 }
 
@@ -1473,6 +1495,7 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
     auto Fn = GenXIntrinsic::getGenXDeclaration(
         SI->getParent()->getParent()->getParent(), ID, Tys);
     Load = CallInst::Create(Fn, Addr, ".simdcfpred.vload", SI);
+    updateFnAttr(Fn);
   }
   Load->setDebugLoc(SI->getDebugLoc());
   Value *EM = loadExecutionMask(SI, SimdWidth);
@@ -1564,6 +1587,7 @@ void CMSimdCFLower::predicateSend(CallInst *CI, unsigned IntrinsicID,
   eraseInstruction(CI);
   // Now we can predicate the new send instruction.
   predicateScatterGather(NewCI, SimdWidth, PredOperandNum);
+  updateFnAttr(Decl);
 }
 
 /***********************************************************************
@@ -1742,6 +1766,7 @@ void CMSimdCFLower::lowerSimdCF()
     // Erase the old llvm.genx.simdcf.any.
     if (OldCond && OldCond->use_empty())
       eraseInstruction(OldCond);
+    updateFnAttr(GotoFunc);
   }
   // Then lower the join points.
   for (auto jpi = JoinPoints.begin(), jpe = JoinPoints.end();
@@ -1800,6 +1825,7 @@ void CMSimdCFLower::lowerSimdCF()
       getRMAddr(JIP, VCINTR::VectorType::getNumElements(
                          cast<VectorType>(RM->getType())));
     }
+    updateFnAttr(JoinFunc);
   }
 }
 
@@ -1874,6 +1900,9 @@ void CMSimdCFLower::lowerUnmaskOps() {
           Remask->setDebugLoc(DL);
           (new StoreInst(Remask, EMVar, false /* isVolatile */, CIE))
               ->setDebugLoc(DL);
+          updateFnAttr(SavemaskFunc);
+          updateFnAttr(UnmaskFunc);
+          updateFnAttr(RemaskFunc);
         }
       }
     }

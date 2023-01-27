@@ -6,7 +6,6 @@
 ;
 ;============================ end_copyright_notice =============================
 
-; XFAIL: llvm16
 ; RUN: opt %pass%cmsimdcflowering -S < %s | FileCheck %s
 
 ; CHECK: @EM = internal global <32 x i1> 
