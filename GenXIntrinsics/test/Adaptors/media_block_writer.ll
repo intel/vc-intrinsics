@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2021-2022 Intel Corporation
+; Copyright (C) 2021-2023 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -17,7 +17,7 @@ define void @test(i32 %image) {
 ; CHECK: [[IMAGE:%[^)]+]])
 
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[TMP0:%.*]] = call i32 @llvm.genx.address.convert.i32.p1intel.image2d_media_block_ro_t(%intel.image2d_media_block_ro_t addrspace(1)* [[IMAGE]])
+; CHECK-NEXT:    [[TMP0:%.*]] = ptrtoint %intel.image2d_media_block_ro_t addrspace(1)* [[IMAGE]] to i32
 ; CHECK-NEXT:    ret void
 ;
 entry:

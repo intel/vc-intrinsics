@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2021-2022 Intel Corporation
+; Copyright (C) 2021-2023 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -15,18 +15,14 @@ define void @test(i32 %buf) {
 ; CHECK: %intel.buffer_rw_t addrspace(1)*
 ; CHECK: [[BUF:%[^,]+]])
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[TMP0:%.*]] = call i32 @llvm.genx.address.convert.i32.p1intel.buffer_rw_t(%intel.buffer_rw_t addrspace(1)* [[BUF]])
+; CHECK-NEXT:    [[TMP0:%.*]] = ptrtoint %intel.buffer_rw_t addrspace(1)* [[BUF]] to i32
 ; CHECK-NEXT:    ret void
 ;
 entry:
   ret void
 }
 
-; CHECK: declare !genx_intrinsic_id !{{[0-9]+}} i32 @llvm.genx.address.convert.i32.p1intel.buffer_rw_t(%intel.buffer_rw_t addrspace(1)*) #[[ATTRS:[0-9]+]]
 !genx.kernels = !{!0}
-
-; CHECK: attributes #[[ATTRS]]
-; CHECK-SAME: "VCFunction"
 
 !0 = !{void (i32)* @test, !"test", !1, i32 0, i32 0, !2, !3, i32 0, i32 0}
 !1 = !{i32 2}

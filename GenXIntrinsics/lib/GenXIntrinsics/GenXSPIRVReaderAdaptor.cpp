@@ -318,7 +318,7 @@ static bool isArgConvIntrinsic(const Value *V) {
 static Value *getOriginalValue(Argument &Arg) {
   if (Arg.hasOneUse()) {
     User *U = Arg.user_back();
-    if (isArgConvIntrinsic(U))
+    if (isArgConvIntrinsic(U) || isa<CastInst>(U))
       return U;
   }
 
@@ -468,7 +468,7 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
 // Rewrite function if it has SPIRV types as parameters.
 // Function
 //  define spir_kernel @foo(%opencl.image2d_rw_t addrspace(1)* %im) {
-//    %conv = call @llvm.genx.address.convert(%im)
+//    %conv = ptrtoint %opencl.image2d_rw_t addrspace(1)* %im to i32
 //   ...
 //  }
 // will be changed to

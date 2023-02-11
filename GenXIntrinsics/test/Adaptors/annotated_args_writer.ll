@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2020-2022 Intel Corporation
+; Copyright (C) 2020-2023 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -57,13 +57,13 @@ define void @test(i32 %buf, i32 %im1d, i32 %im1db, i32 %im2d, i32 %im3d, i32 %sa
 ; CHECK: [[GEN:%[^)]+]])
 
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[TMP0:%.*]] = call i32 @llvm.genx.address.convert.i32.p1intel.buffer_rw_t(%intel.buffer_rw_t addrspace(1)* [[BUF]])
-; CHECK-NEXT:    [[TMP1:%.*]] = call i32 @llvm.genx.address.convert.i32.p1opencl.image1d_rw_t(%opencl.image1d_rw_t addrspace(1)* [[IM1D]])
-; CHECK-NEXT:    [[TMP2:%.*]] = call i32 @llvm.genx.address.convert.i32.p1opencl.image1d_buffer_rw_t(%opencl.image1d_buffer_rw_t addrspace(1)* [[IM1DB]])
-; CHECK-NEXT:    [[TMP3:%.*]] = call i32 @llvm.genx.address.convert.i32.p1opencl.image2d_rw_t(%opencl.image2d_rw_t addrspace(1)* [[IM2D]])
-; CHECK-NEXT:    [[TMP4:%.*]] = call i32 @llvm.genx.address.convert.i32.p1opencl.image3d_rw_t(%opencl.image3d_rw_t addrspace(1)* [[IM3D]])
-; CHECK-NEXT:    [[TMP5:%.*]] = call i32 @llvm.genx.address.convert.i32.p2opencl.sampler_t(%opencl.sampler_t addrspace(2)* [[SAMP]])
-; CHECK-NEXT:    [[TMP6:%.*]] = call i64 @llvm.genx.address.convert.i64.p1i8(i8 addrspace(1)* [[PTR]])
+; CHECK-NEXT:    [[TMP0:%.*]] = ptrtoint %intel.buffer_rw_t addrspace(1)* [[BUF]] to i32
+; CHECK-NEXT:    [[TMP1:%.*]] = ptrtoint %opencl.image1d_rw_t addrspace(1)* [[IM1D]] to i32
+; CHECK-NEXT:    [[TMP2:%.*]] = ptrtoint %opencl.image1d_buffer_rw_t addrspace(1)* [[IM1DB]] to i32
+; CHECK-NEXT:    [[TMP3:%.*]] = ptrtoint %opencl.image2d_rw_t addrspace(1)* [[IM2D]] to i32
+; CHECK-NEXT:    [[TMP4:%.*]] = ptrtoint %opencl.image3d_rw_t addrspace(1)* [[IM3D]] to i32
+; CHECK-NEXT:    [[TMP5:%.*]] = ptrtoint %opencl.sampler_t addrspace(2)* [[SAMP]] to i32
+; CHECK-NEXT:    [[TMP6:%.*]] = ptrtoint i8 addrspace(1)* [[PTR]] to i64
 ; CHECK-NEXT:    ret void
 ;
 entry:

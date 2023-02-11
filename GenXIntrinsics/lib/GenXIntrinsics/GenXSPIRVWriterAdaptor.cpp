@@ -11,9 +11,9 @@ SPDX-License-Identifier: MIT
 #include "AdaptorsCommon.h"
 #include "GenXSingleElementVectorUtil.h"
 
-#include "llvm/GenXIntrinsics/GenXSPIRVWriterAdaptor.h"
 #include "llvm/GenXIntrinsics/GenXIntrinsics.h"
 #include "llvm/GenXIntrinsics/GenXMetadata.h"
+#include "llvm/GenXIntrinsics/GenXSPIRVWriterAdaptor.h"
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -180,7 +180,9 @@ static Type *getArgTypeFromDesc(SPIRVArgDesc Desc, Argument &Arg) {
   std::string TypeName;
   switch (Desc.Ty) {
   case SPIRVType::Pointer:
-    return getGlobalPtrType(Arg.getContext());
+    if (!Arg.hasByValAttr())
+      return getGlobalPtrType(Arg.getContext());
+    LLVM_FALLTHROUGH;
   case SPIRVType::Other:
   case SPIRVType::None:
     return Arg.getType();
@@ -232,13 +234,17 @@ static Instruction *rewriteArgumentUses(Argument &OldArg, Argument &NewArg) {
     return nullptr;
   }
 
-  Module *M = OldArg.getParent()->getParent();
-  Function *ConvFn = GenXIntrinsic::getGenXDeclaration(
-      M, GenXIntrinsic::genx_address_convert, {OldTy, NewTy});
-  ConvFn->addFnAttr(VCFunctionMD::VCFunction);
-  auto *Conv = CallInst::Create(ConvFn, {&NewArg});
-  OldArg.replaceAllUsesWith(Conv);
-  return Conv;
+  Instruction *Cast = nullptr;
+  if (OldTy->isPointerTy() && NewTy->isPointerTy())
+    Cast = CastInst::CreatePointerBitCastOrAddrSpaceCast(&NewArg, OldTy);
+  if (OldTy->isPointerTy() && NewTy->isIntegerTy())
+    Cast = new IntToPtrInst(&NewArg, OldTy);
+  if (OldTy->isIntegerTy() && NewTy->isPointerTy())
+    Cast = new PtrToIntInst(&NewArg, OldTy);
+
+  if (Cast)
+    OldArg.replaceAllUsesWith(Cast);
+  return Cast;
 }
 
 // Parse argument desc.
@@ -411,7 +417,7 @@ static std::vector<SPIRVArgDesc> analyzeKernelArguments(const Function &F) {
 //  }
 // will be changed to
 //  define spir_kernel @foo(%opencl.image2d_rw_t addrspace(1)* %im) {
-//    %conv = call @llvm.genx.address.convert(%im)
+//    %conv = ptrtoint %opencl.image2d_rw_t addrspace(1)* %im to i32
 //   ...
 //  }
 // Parameters that are not part of public interface (implicit arguments)
@@ -491,7 +497,7 @@ bool GenXSPIRVWriterAdaptorImpl::run(Module &M) {
 
 
   for (auto &&F : M)
-      runOnFunction(F);
+    runOnFunction(F);
 
   // Old metadata is not needed anymore at this point.
   if (auto *MD = M.getNamedMetadata(FunctionMD::GenXKernels))

@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2021-2022 Intel Corporation
+; Copyright (C) 2021-2023 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -20,8 +20,8 @@ define void @test(i32 %im1darr, i32 %im2darr) {
 ; CHECK: [[IM2D:%[^)]+]])
 
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[TMP0:%.*]] = call i32 @llvm.genx.address.convert.i32.p1opencl.image1d_array_ro_t(%opencl.image1d_array_ro_t addrspace(1)* [[IM1D]])
-; CHECK-NEXT:    [[TMP1:%.*]] = call i32 @llvm.genx.address.convert.i32.p1opencl.image2d_array_wo_t(%opencl.image2d_array_wo_t addrspace(1)* [[IM2D]])
+; CHECK-NEXT:    [[TMP0:%.*]] = ptrtoint %opencl.image1d_array_ro_t addrspace(1)* [[IM1D]] to i32
+; CHECK-NEXT:    [[TMP1:%.*]] = ptrtoint %opencl.image2d_array_wo_t addrspace(1)* [[IM2D]] to i32
 ; CHECK-NEXT:     ret void
 ;
 entry:
