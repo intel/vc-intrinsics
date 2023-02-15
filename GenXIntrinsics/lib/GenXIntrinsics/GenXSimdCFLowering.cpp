@@ -475,14 +475,14 @@ bool CMSimdCFLoweringImpl::run(Module &M) {
  */
 void CMSimdCFLoweringImpl::initializeVolatileGlobals(Module &M) {
   // Analise interseption between globals
-  for (auto &G : M.getGlobalList()) {
+  for (auto &G : M.globals()) {
     if (G.hasAttribute(genx::FunctionMD::GenXVolatile)) {
       VolList.push_back(&G);
     }
   }
   // If non-volatile global vector intercepts with a volatile global mark it
   // volatile as well.
-  for (auto &G : M.getGlobalList()) {
+  for (auto &G : M.globals()) {
     // For non-vectors will be not generated vstores - ignore them
     if (G.getValueType()->isVectorTy() &&
         !G.hasAttribute(genx::FunctionMD::GenXVolatile) &&
@@ -492,7 +492,7 @@ void CMSimdCFLoweringImpl::initializeVolatileGlobals(Module &M) {
   }
 
   // Replace instructions to save them untill the end of vc
-  for (auto &G : M.getGlobalList()) {
+  for (auto &G : M.globals()) {
     if (!G.hasAttribute(genx::FunctionMD::GenXVolatile))
       continue;
     // Transform all load store on volatile globals to vload/vstore to disable

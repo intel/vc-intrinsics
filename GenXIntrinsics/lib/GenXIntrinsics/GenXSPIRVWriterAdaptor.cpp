@@ -471,7 +471,7 @@ bool GenXSPIRVWriterAdaptorImpl::run(Module &M) {
       M.setTargetTriple("spir64");
   }
 
-  for (auto &&GV : M.getGlobalList()) {
+  for (auto &&GV : M.globals()) {
     GV.addAttribute(VCModuleMD::VCGlobalVariable);
     if (GV.hasAttribute(FunctionMD::GenXVolatile))
       GV.addAttribute(VCModuleMD::VCVolatile);

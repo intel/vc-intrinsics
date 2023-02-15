@@ -546,7 +546,7 @@ bool GenXSPIRVReaderAdaptorImpl::run(Module &M) {
   if (KernelMDs)
     return false;
 
-  for (auto &&GV : M.getGlobalList()) {
+  for (auto &&GV : M.globals()) {
     if (!GV.hasAttribute(VCModuleMD::VCGlobalVariable))
       continue;
     if (GV.hasAttribute(VCModuleMD::VCVolatile))
