@@ -30,6 +30,8 @@ SPDX-License-Identifier: MIT
 #include "llvmVCWrapper/IR/Type.h"
 #include "llvmVCWrapper/Support/Alignment.h"
 
+#include <unordered_map>
+
 namespace llvm {
 namespace genx {
 /// This section contains some arbitrary constants
@@ -134,6 +136,9 @@ static size_t getInnerPointerVectorNesting(Type *T) {
 /// * Finalizing replacement of SEV-rich or SEV-free instruction with its
 ///   antipod
 
+static std::unordered_map<StructType*, StructType*> SEVFreeStructMap;
+static std::unordered_map<StructType*, StructType*> SEVRichStructMap;
+
 // Returns SEV-free analogue of Type T accordingly to the following scheme:
 // <1 x U>**...* ---> U**...*
 static Type *getTypeFreeFromSingleElementVector(Type *T) {
@@ -146,6 +151,24 @@ static Type *getTypeFreeFromSingleElementVector(Type *T) {
   } else if (auto *VecTy = dyn_cast<VectorType>(T)) {
     if (VCINTR::VectorType::getNumElements(VecTy) == 1)
       return VecTy->getElementType();
+  } else if (auto *StructTy = dyn_cast<StructType>(T)) {
+    auto It = SEVFreeStructMap.find(StructTy);
+    if (It != SEVFreeStructMap.end())
+      return It->second;
+    bool HasSEV = false;
+    std::vector<Type *> NewElements;
+    for (auto *ElemTy : StructTy->elements()) {
+      Type *NewElemTy = getTypeFreeFromSingleElementVector(ElemTy);
+      if (NewElemTy != ElemTy)
+        HasSEV = true;
+      NewElements.push_back(NewElemTy);
+    }
+    if (HasSEV) {
+      StructType *NewStructTy = StructType::create(NewElements);
+      SEVFreeStructMap.insert(std::make_pair(StructTy, NewStructTy));
+      SEVRichStructMap.insert(std::make_pair(NewStructTy, StructTy));
+      return NewStructTy;
+    }
   }
   return T;
 }
@@ -159,6 +182,10 @@ static Type *getTypeWithSingleElementVector(Type *T, size_t InnerPointers = 0) {
     assert(VCINTR::VectorType::getNumElements(VecTy) == 1 &&
            "Cannot put vector type inside another vector!");
     return T;
+  } else if (auto *StructTy = dyn_cast<StructType>(T)) {
+    auto It = SEVRichStructMap.find(StructTy);
+    assert(It != SEVRichStructMap.end());
+    return It->second;
   }
   auto NPtrs = getPointerNesting(T);
 
@@ -736,6 +763,19 @@ public:
     std::tie(NewT, NewVals) = getOperandsFreeFromSingleElementVector(OldInst);
     return ExtractValueInst::Create(NewVals[0], OldInst.getIndices(), "",
                                     &OldInst);
+  }
+  Instruction *visitGetElementPtrInst(GetElementPtrInst &OldInst) {
+    auto *NewT = static_cast<llvm::Type *>(nullptr);
+    auto NewVals = ValueCont{};
+    std::tie(NewT, NewVals) = getOperandsFreeFromSingleElementVector(OldInst);
+    std::vector<Value *> IdxList;
+    std::transform(NewVals.begin() + 1, NewVals.end(),
+                   std::back_inserter(IdxList), [](Value *V) { return V; });
+    auto *PointeeType =
+        cast<PointerType>(NewVals[0]->getType()->getScalarType())
+            ->getPointerElementType();
+    return GetElementPtrInst::Create(PointeeType, NewVals[0], IdxList, "",
+                                     &OldInst);
   }
   Instruction *visitExtractElementInst(ExtractElementInst &OldInst) {
     // No processing required
