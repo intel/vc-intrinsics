@@ -771,9 +771,8 @@ public:
     std::vector<Value *> IdxList;
     std::transform(NewVals.begin() + 1, NewVals.end(),
                    std::back_inserter(IdxList), [](Value *V) { return V; });
-    auto *PointeeType =
-        cast<PointerType>(NewVals[0]->getType()->getScalarType())
-            ->getPointerElementType();
+    auto *PointeeType = VCINTR::Type::getNonOpaquePtrEltTy(
+        cast<PointerType>(NewVals[0]->getType()->getScalarType()));
     return GetElementPtrInst::Create(PointeeType, NewVals[0], IdxList, "",
                                      &OldInst);
   }
