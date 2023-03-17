@@ -19,6 +19,11 @@
 %opencl.image3d_rw_t = type opaque
 %opencl.sampler_t = type opaque
 
+@0 = private unnamed_addr constant [15 x i8] c"some attribute\00", section "llvm.metadata"
+@llvm.global.annotations = appending global [1 x { i8*, i8*, i8*, i32 }] [{ i8*, i8*, i8*, i32 } { i8* bitcast (void (%intel.buffer_rw_t addrspace(1)*, %opencl.image1d_rw_t addrspace(1)*, %opencl.image1d_buffer_rw_t addrspace(1)*, %opencl.image2d_rw_t addrspace(1)*, %opencl.image3d_rw_t addrspace(1)*, %opencl.sampler_t addrspace(2)*, i8 addrspace(1)*, <4 x i32>)* @test to i8*), i8* getelementptr inbounds ([15 x i8], [15 x i8]* @0, i32 0, i32 0), i8* undef, i32 undef }], section "llvm.metadata"
+; CHECK-LABEL: @llvm.global.annotations
+; CHECK void (i32, i32, i32, i32, i32, i32, i64, <4 x i32>)* @test
+
 define spir_kernel void @test(%intel.buffer_rw_t addrspace(1)* %buf, %opencl.image1d_rw_t addrspace(1)* %im1d, %opencl.image1d_buffer_rw_t addrspace(1)* %im1db, %opencl.image2d_rw_t addrspace(1)* %im2d, %opencl.image3d_rw_t addrspace(1)* %im3d, %opencl.sampler_t addrspace(2)* %samp, i8 addrspace(1)* %ptr, <4 x i32> %gen) #0 {
 ; CHECK-LABEL: @test(
 

@@ -486,8 +486,24 @@ static void rewriteKernelArguments(Function &F) {
     // All arguments are in old style.
     return;
 
-  // No uses. Fast composite is not converted in writer part for now.
-  assert(F.use_empty() && "FC is not supported yet");
+  // At the moment there are only two cases when kernel function with converted
+  // parameters can have users:
+  // 1. Kernel is called from another function via fast composite
+  //    For such kernels we just don't rewrite arguments on SPIRV write, so
+  //    there should not be presented on read
+  // 2. Kernel is referenced in @llvm.global.annotations
+  //    We have to replace the original function with the new one
+  if (!F.use_empty()) {
+    assert(F.hasOneUse());
+    auto *Bitcast = F.user_back();
+    assert(Bitcast->hasOneUse());
+    auto *Struct = Bitcast->user_back();
+    assert(Struct->hasOneUse());
+    auto *Array = Struct->user_back();
+    assert(Array->hasOneUse());
+    auto *GV = dyn_cast<GlobalVariable>(Array->user_back());
+    assert(GV && GV->getName() == "llvm.global.annotations");
+  }
 
   Function *NewF = transformKernelSignature(F, ArgDescs);
   F.getParent()->getFunctionList().insert(F.getIterator(), NewF);
@@ -521,6 +537,8 @@ static void rewriteKernelArguments(Function &F) {
     }
   }
 
+  F.mutateType(NewF->getType());
+  F.replaceAllUsesWith(NewF);
   F.eraseFromParent();
 }
 
