@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2020-2022 Intel Corporation
+; Copyright (C) 2020-2023 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -10,7 +10,6 @@
 
 ; LLVM16 error: symbol with local linkage cannot have a DLL storage class 
 ; for test-function (internal dllexport)
-; XFAIL: llvm16
 ; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
 ; CHECK: @global_var_0 = internal global <1 x i32> undef, align 4

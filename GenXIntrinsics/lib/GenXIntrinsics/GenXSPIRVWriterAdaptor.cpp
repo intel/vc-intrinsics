@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -237,13 +237,6 @@ static Instruction *rewriteArgumentUses(Argument &OldArg, Argument &NewArg) {
       M, GenXIntrinsic::genx_address_convert, {OldTy, NewTy});
   ConvFn->addFnAttr(VCFunctionMD::VCFunction);
   auto *Conv = CallInst::Create(ConvFn, {&NewArg});
-#if VC_INTR_LLVM_VERSION_MAJOR >= 16
-  // Modify ReadNone attribute to support llvm16
-  if (ConvFn->getFnAttribute(llvm::Attribute::ReadNone).isValid()) {
-    ConvFn->removeFnAttr(llvm::Attribute::ReadNone);
-    Conv->setMemoryEffects(llvm::MemoryEffects::none());
-  }
-#endif
   OldArg.replaceAllUsesWith(Conv);
   return Conv;
 }
@@ -462,6 +455,20 @@ static void rewriteKernelsTypes(Module &M) {
       rewriteKernelArguments(*F);
 }
 
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
+static inline void FixAttributes(Function &F, Attribute::AttrKind Attr,
+                                 MemoryEffects MemEf) {
+  if (F.getFnAttribute(Attr).isValid()) {
+    for (auto &U : F.uses()) {
+      if (auto *Call = dyn_cast<CallInst>(&*U)) {
+        Call->setMemoryEffects(MemEf);
+      }
+    }
+    F.removeFnAttr(Attr);
+  }
+}
+#endif
+
 bool GenXSPIRVWriterAdaptorImpl::run(Module &M) {
   auto TargetTriple = StringRef(M.getTargetTriple());
   if (TargetTriple.startswith("genx")) {
@@ -495,6 +502,18 @@ bool GenXSPIRVWriterAdaptorImpl::run(Module &M) {
 
   if (RewriteSingleElementVectors)
     rewriteSingleElementVectors(M);
+
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
+  // ReadNone and ReadOnly is no more supported for intrinsics:
+  // https://reviews.llvm.org/D135780
+  for (auto &&F : M) {
+    FixAttributes(F, llvm::Attribute::ReadNone, llvm::MemoryEffects::none());
+    FixAttributes(F, llvm::Attribute::ReadOnly,
+                  llvm::MemoryEffects::readOnly());
+    FixAttributes(F, llvm::Attribute::WriteOnly,
+                  llvm::MemoryEffects::writeOnly());
+  }
+#endif
 
   return true;
 }
