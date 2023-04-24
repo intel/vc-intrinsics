@@ -134,8 +134,11 @@ static constexpr unsigned SPIRVAddressingModel32 = 1;
 static constexpr unsigned SPIRVAddressingModel64 = 2;
 
 // Has to correspond to spir address space encoding.
+static constexpr unsigned SPIRVPrivateAS = 0;
 static constexpr unsigned SPIRVGlobalAS = 1;
 static constexpr unsigned SPIRVConstantAS = 2;
+static constexpr unsigned SPIRVLocalAS = 3;
+static constexpr unsigned SPIRVGenericAS = 4;
 } // namespace SPIRVParams
 
 inline unsigned getOpaqueTypeAddressSpace(SPIRVType Ty) {

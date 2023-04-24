@@ -19,6 +19,7 @@ SPDX-License-Identifier: MIT
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Metadata.h"
 #if VC_INTR_LLVM_VERSION_MAJOR >= 16
 #include <llvm/Support/ModRef.h>
@@ -224,27 +225,42 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
 
 // Replace old arguments with new ones generating conversion
 // intrinsics for types that were changed.
-static Instruction *rewriteArgumentUses(Argument &OldArg, Argument &NewArg) {
+static void rewriteArgumentUses(Instruction *InsertBefore, Argument &OldArg,
+                                Argument &NewArg) {
   NewArg.takeName(&OldArg);
 
   Type *OldTy = OldArg.getType();
   Type *NewTy = NewArg.getType();
   if (OldTy == NewTy) {
     OldArg.replaceAllUsesWith(&NewArg);
-    return nullptr;
+    return;
   }
 
-  Instruction *Cast = nullptr;
-  if (OldTy->isPointerTy() && NewTy->isPointerTy())
-    Cast = CastInst::CreatePointerBitCastOrAddrSpaceCast(&NewArg, OldTy);
+  IRBuilder<> Builder(InsertBefore);
+
+  Value *Cast = nullptr;
+  if (OldTy->isPointerTy() && NewTy->isPointerTy()) {
+    auto OldAS = OldTy->getPointerAddressSpace();
+    auto NewAS = NewTy->getPointerAddressSpace();
+    // Some frontends mix private and global pointers which is not allowed by
+    // SPIR-V. Using ptr->i64->ptr cast in this case to avoid failures until the
+    // frontends are fixed.
+    if (OldAS == NewAS || OldAS == SPIRVParams::SPIRVGenericAS ||
+        NewAS == SPIRVParams::SPIRVGenericAS) {
+      Cast = Builder.CreatePointerBitCastOrAddrSpaceCast(&NewArg, OldTy);
+    } else {
+      auto *Int64Ty = Builder.getInt64Ty();
+      auto *PToI = Builder.CreatePtrToInt(&NewArg, Int64Ty);
+      Cast = Builder.CreateIntToPtr(PToI, OldTy);
+    }
+  }
   if (OldTy->isPointerTy() && NewTy->isIntegerTy())
-    Cast = new IntToPtrInst(&NewArg, OldTy);
+    Cast = Builder.CreateIntToPtr(&NewArg, OldTy);
   if (OldTy->isIntegerTy() && NewTy->isPointerTy())
-    Cast = new PtrToIntInst(&NewArg, OldTy);
+    Cast = Builder.CreatePtrToInt(&NewArg, OldTy);
 
   if (Cast)
     OldArg.replaceAllUsesWith(Cast);
-  return Cast;
 }
 
 // Parse argument desc.
@@ -440,12 +456,8 @@ static void rewriteKernelArguments(Function &F) {
 #endif
 
   Instruction *InsPt = &NewF->getEntryBlock().front();
-  for (auto ArgPair : llvm::zip(F.args(), NewF->args())) {
-    Instruction *Convert =
-        rewriteArgumentUses(std::get<0>(ArgPair), std::get<1>(ArgPair));
-    if (Convert)
-      Convert->insertBefore(InsPt);
-  }
+  for (auto ArgPair : llvm::zip(F.args(), NewF->args()))
+    rewriteArgumentUses(InsPt, std::get<0>(ArgPair), std::get<1>(ArgPair));
 
   F.eraseFromParent();
 }
