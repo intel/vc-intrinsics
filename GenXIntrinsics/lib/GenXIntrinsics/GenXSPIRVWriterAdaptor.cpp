@@ -192,7 +192,7 @@ static Type *getArgTypeFromDesc(SPIRVArgDesc Desc, Argument &Arg) {
   }
 }
 
-#if VC_INTR_LLVM_VERSION_MAJOR >= 14
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
 static Type *getImageTargetType(SPIRVArgDesc Desc, Argument &Arg) {
   auto &Ctx = Arg.getContext();
   auto *VoidTy = Type::getVoidTy(Ctx);
@@ -247,25 +247,25 @@ static Type *getArgTargetTypeFromDesc(SPIRVArgDesc Desc, Argument &Arg) {
     return getImageTargetType(SPIRVArgDesc(SPIRVType::Image2d, Desc.Acc), Arg);
   }
 }
-#endif // VC_INTR_LLVM_VERSION_MAJOR >= 14
+#endif // VC_INTR_LLVM_VERSION_MAJOR >= 16
 
 static Function *
 transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
   SmallVector<Type *, 8> NewParams;
 
   auto GetArgType =
-#if VC_INTR_LLVM_VERSION_MAJOR >= 14
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
       [UseTargetTypes = !F.getContext().supportsTypedPointers()](
           SPIRVArgDesc Desc, Argument &Arg) {
         if (UseTargetTypes)
           return getArgTargetTypeFromDesc(Desc, Arg);
         return getArgTypeFromDesc(Desc, Arg);
       };
-#else  // VC_INTR_LLVM_VERSION_MAJOR >= 14
+#else  // VC_INTR_LLVM_VERSION_MAJOR >= 16
       [](SPIRVArgDesc Desc, Argument &Arg) {
         return getArgTypeFromDesc(Desc, Arg);
       };
-#endif // VC_INTR_LLVM_VERSION_MAJOR >= 14
+#endif // VC_INTR_LLVM_VERSION_MAJOR >= 16
 
   std::transform(Descs.begin(), Descs.end(), F.arg_begin(),
                  std::back_inserter(NewParams), GetArgType);
@@ -282,14 +282,14 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
   for (int i = 0, e = Descs.size(); i != e; ++i) {
     if (Descs[i].Ty == SPIRVType::None)
       continue;
-#if VC_INTR_LLVM_VERSION_MAJOR >= 14
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
     if (!F.getContext().supportsTypedPointers() &&
         Descs[i].Ty == SPIRVType::Image2dMediaBlock) {
       AttrBuilder AttrBuilder(NewF->getContext());
       AttrBuilder.addAttribute(VCFunctionMD::VCMediaBlockIO);
       NewF->addParamAttrs(i, AttrBuilder);
     }
-#endif // VC_INTR_LLVM_VERSION_MAJOR >= 14
+#endif // VC_INTR_LLVM_VERSION_MAJOR >= 16
 
     NewF->removeParamAttr(i, VCFunctionMD::VCArgumentKind);
     NewF->removeParamAttr(i, VCFunctionMD::VCArgumentDesc);
