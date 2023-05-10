@@ -441,14 +441,14 @@ static std::string getMangledTypeStr(Type *Ty) {
     Result += "v" +
               utostr(VCINTR::VectorType::getNumElements(cast<VectorType>(Ty))) +
               getMangledTypeStr(cast<VectorType>(Ty)->getElementType());
-#if VC_INTR_LLVM_VERSION_MAJOR >= 14
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
   } else if (auto *TargetTy = dyn_cast<TargetExtType>(Ty)) {
     Result += "t_" + TargetTy->getName().str();
     for (auto *PTy : TargetTy->type_params())
       Result += "_" + getMangledTypeStr(PTy);
     for (auto I : TargetTy->int_params())
       Result += "_" + llvm::utostr(I);
-#endif // VC_INTR_LLVM_VERSION_MAJOR >= 14
+#endif // VC_INTR_LLVM_VERSION_MAJOR >= 16
   } else if (Ty) {
     Result += EVT::getEVT(Ty).getEVTString();
   }
