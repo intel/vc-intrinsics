@@ -338,6 +338,7 @@ static void rewriteArgumentUses(Instruction *InsertBefore, Argument &OldArg,
     auto *M = OldArg.getParent()->getParent();
     auto *ConvFn = GenXIntrinsic::getGenXDeclaration(
         M, GenXIntrinsic::genx_address_convert, {OldTy, NewTy});
+    ConvFn->addFnAttr(VCFunctionMD::VCFunction);
     Cast = Builder.CreateCall(ConvFn, {&NewArg});
   }
 
