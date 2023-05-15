@@ -466,6 +466,13 @@ inline LSCCategory getLSCCategory(unsigned IntrinID) {
     case GenXIntrinsic::genx_lsc_load_quad_bti:
     case GenXIntrinsic::genx_lsc_load_quad_slm:
     case GenXIntrinsic::genx_lsc_load_quad_stateless:
+    case GenXIntrinsic::genx_lsc_load_merge_bti:
+    case GenXIntrinsic::genx_lsc_load_merge_stateless:
+    case GenXIntrinsic::genx_lsc_load_merge_slm:
+    case GenXIntrinsic::genx_lsc_load_merge_bindless:
+    case GenXIntrinsic::genx_lsc_load_merge_quad_bti:
+    case GenXIntrinsic::genx_lsc_load_merge_quad_slm:
+    case GenXIntrinsic::genx_lsc_load_merge_quad_stateless:
       return LSCCategory::Load;
     case GenXIntrinsic::genx_lsc_load2d_stateless:
       return LSCCategory::Load2D;
