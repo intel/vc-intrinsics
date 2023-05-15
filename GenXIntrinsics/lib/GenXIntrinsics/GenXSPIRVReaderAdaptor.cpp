@@ -319,8 +319,7 @@ static Value *getOriginalValue(Argument &Arg) {
   if (Arg.hasOneUse()) {
     User *U = Arg.user_back();
     if (isArgConvIntrinsic(U) || isa<BitCastInst>(U) ||
-        isa<AddrSpaceCastInst>(U) || isa<IntToPtrInst>(U) ||
-        isa<PtrToIntInst>(U))
+        isa<AddrSpaceCastInst>(U) || isa<IntToPtrInst>(U))
       return U;
   }
 
