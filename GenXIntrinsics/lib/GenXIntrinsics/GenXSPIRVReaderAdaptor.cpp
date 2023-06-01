@@ -201,7 +201,7 @@ static SPIRVArgDesc parseSPIRVIRImageType(StringRef TyName) {
   return {ResultType, AccessTy};
 }
 
-static Optional<SPIRVArgDesc> parseIntelType(StringRef TyName) {
+static std::optional<SPIRVArgDesc> parseIntelType(StringRef TyName) {
   if (!TyName.consume_front(IntelTypes::TypePrefix))
     return {};
 
@@ -213,7 +213,7 @@ static Optional<SPIRVArgDesc> parseIntelType(StringRef TyName) {
   return SPIRVArgDesc{MainType, AccType};
 }
 
-static Optional<SPIRVArgDesc> parseOCLType(StringRef TyName) {
+static std::optional<SPIRVArgDesc> parseOCLType(StringRef TyName) {
   if (!TyName.consume_front(OCLTypes::TypePrefix))
     return {};
 
@@ -227,7 +227,7 @@ static Optional<SPIRVArgDesc> parseOCLType(StringRef TyName) {
   return parseImageType(TyName);
 }
 
-static Optional<SPIRVArgDesc> parseSPIRVIRType(StringRef TyName) {
+static std::optional<SPIRVArgDesc> parseSPIRVIRType(StringRef TyName) {
   if (!TyName.consume_front(SPIRVIRTypes::TypePrefix))
     return {};
 
@@ -248,7 +248,7 @@ static Optional<SPIRVArgDesc> parseSPIRVIRType(StringRef TyName) {
 // SPVImageTy -> "Image." _..._{Dim}_..._{Arrayed}_..._{Acc}
 // Dim, Arrayed, Acc - literal operands matching OpTypeImage operands in SPIRV
 // Assume that "opencl." "spirv." and "intel.buffer" types are well-formed.
-static Optional<SPIRVArgDesc> parseOpaqueType(StringRef TyName) {
+static std::optional<SPIRVArgDesc> parseOpaqueType(StringRef TyName) {
   if (auto MaybeIntelTy = parseIntelType(TyName))
     return VCINTR::getValue(MaybeIntelTy);
 

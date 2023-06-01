@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 #define VCINTR_IR_INSTRUCTIONS_H
 
 #include <algorithm>
-#include <llvm/ADT/Optional.h>
 #include <llvm/IR/Instructions.h>
 
 namespace VCINTR {
@@ -44,7 +43,7 @@ inline llvm::ArrayRef<int> getShuffleMask(llvm::ArrayRef<int> Mask,
 } // namespace ShuffleVectorInst
 
 template <class ArgKind>
-inline ArgKind &getValue(llvm::Optional<ArgKind> &opt) {
+inline ArgKind &getValue(std::optional<ArgKind> &opt) {
 #if VC_INTR_LLVM_VERSION_MAJOR < 15
   return opt.getValue();
 #else
@@ -53,7 +52,7 @@ inline ArgKind &getValue(llvm::Optional<ArgKind> &opt) {
 }
 
 template <class ArgKind>
-inline const ArgKind &getValue(const llvm::Optional<ArgKind> &opt) {
+inline const ArgKind &getValue(const std::optional<ArgKind> &opt) {
 #if VC_INTR_LLVM_VERSION_MAJOR < 15
   return opt.getValue();
 #else

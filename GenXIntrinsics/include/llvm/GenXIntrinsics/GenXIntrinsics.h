@@ -17,7 +17,6 @@ SPDX-License-Identifier: MIT
 #ifndef GENX_INTRINSIC_INTERFACE_H
 #define GENX_INTRINSIC_INTERFACE_H
 
-#include "llvm/ADT/None.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Function.h"

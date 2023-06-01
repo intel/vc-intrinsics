@@ -356,11 +356,11 @@ static SPIRVArgDesc parseArgDesc(StringRef Desc) {
   Desc.split(Tokens, /*Separator=*/' ', /*MaxSplit=*/-1, /*KeepEmpty=*/false);
 
   // Scan tokens until end or required info is found.
-  Optional<AccessType> AccTy;
-  Optional<SPIRVType> Ty;
+  std::optional<AccessType> AccTy;
+  std::optional<SPIRVType> Ty;
   for (StringRef Tok : Tokens) {
     if (!Ty) {
-      Ty = StringSwitch<Optional<SPIRVType>>(Tok)
+      Ty = StringSwitch<std::optional<SPIRVType>>(Tok)
                .Case(ArgDesc::Buffer, SPIRVType::Buffer)
                .Case(ArgDesc::Image1d, SPIRVType::Image1d)
                .Case(ArgDesc::Image1dArray, SPIRVType::Image1dArray)
@@ -375,7 +375,7 @@ static SPIRVArgDesc parseArgDesc(StringRef Desc) {
     }
 
     if (!AccTy) {
-      AccTy = StringSwitch<Optional<AccessType>>(Tok)
+      AccTy = StringSwitch<std::optional<AccessType>>(Tok)
                   .Case(ArgDesc::ReadOnly, AccessType::ReadOnly)
                   .Case(ArgDesc::WriteOnly, AccessType::WriteOnly)
                   .Case(ArgDesc::ReadWrite, AccessType::ReadWrite)
@@ -466,7 +466,7 @@ static SPIRVArgDesc analyzeArgumentAttributes(ArgKind Kind, StringRef Desc) {
 // value can be out of listed in ArgKind enum.
 // Such values are not processed later.
 // Return None if there is no such attribute.
-static Optional<ArgKind> extractArgumentKind(const Argument &Arg) {
+static std::optional<ArgKind> extractArgumentKind(const Argument &Arg) {
   const Function *F = Arg.getParent();
   const AttributeList Attrs = F->getAttributes();
   if (!Attrs.hasParamAttr(Arg.getArgNo(), VCFunctionMD::VCArgumentKind))
