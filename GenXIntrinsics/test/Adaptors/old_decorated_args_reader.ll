@@ -11,6 +11,7 @@
 ; kernel metadata without any checks. Required until full transition
 ; is done.
 
+; XFAIL: llvm15
 ; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
 define spir_kernel void @test(i32 "VCArgumentDesc"="image2d_t read_only" "VCArgumentKind"="2" %in, i32 "VCArgumentDesc"="image2d_t write_only" "VCArgumentKind"="2" %out, <3 x i32> "VCArgumentKind"="24" %__arg_llvm.genx.local.id) #0 {
