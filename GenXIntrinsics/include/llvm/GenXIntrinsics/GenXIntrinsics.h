@@ -17,9 +17,6 @@ SPDX-License-Identifier: MIT
 #ifndef GENX_INTRINSIC_INTERFACE_H
 #define GENX_INTRINSIC_INTERFACE_H
 
-#if VC_INTR_LLVM_VERSION_MAJOR < 16
-#include "llvm/ADT/None.h"
-#endif
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Function.h"
