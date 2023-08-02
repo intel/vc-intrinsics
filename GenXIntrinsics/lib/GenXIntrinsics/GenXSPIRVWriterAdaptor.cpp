@@ -539,7 +539,7 @@ static void rewriteKernelArguments(Function &F) {
 #endif
 
   Instruction *InsPt = &NewF->getEntryBlock().front();
-  for (auto ArgPair : llvm::zip(F.args(), NewF->args()))
+  for (auto &&ArgPair : llvm::zip(F.args(), NewF->args()))
     rewriteArgumentUses(InsPt, std::get<0>(ArgPair), std::get<1>(ArgPair));
 
   F.eraseFromParent();

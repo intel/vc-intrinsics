@@ -428,7 +428,7 @@ static void replaceAllUsesWith(Function &OldF, Function &NewF) {
     assert(OldInst);
     auto NewParams = SmallVector<Value *, 8>{};
 
-    for (auto ArgPair : llvm::zip(OldF.args(), NewF.args())) {
+    for (auto &&ArgPair : llvm::zip(OldF.args(), NewF.args())) {
       auto &&OldArg = std::get<0>(ArgPair);
       auto &&NewArg = std::get<1>(ArgPair);
       auto ArgNo = OldArg.getArgNo();
@@ -622,7 +622,7 @@ static void rewriteSingleElementVectorSignature(Function &F,
   manageSingleElementVectorAttributes(F, NewF);
 
   if (NewF.size() > 0) {
-    for (auto ArgPair : llvm::zip(F.args(), NewF.args()))
+    for (auto &&ArgPair : llvm::zip(F.args(), NewF.args()))
       replaceAllUsesWith(std::get<0>(ArgPair), std::get<1>(ArgPair), NewF);
     if (NewF.getReturnType() != F.getReturnType())
       rewriteSingleElementVectorReturns(NewF);

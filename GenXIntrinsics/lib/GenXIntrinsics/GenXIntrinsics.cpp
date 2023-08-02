@@ -443,10 +443,9 @@ static std::string getMangledTypeStr(Type *Ty) {
       Result += "vararg";
     // Ensure nested function types are distinguishable.
     Result += "f";
-  } else if (isa<VectorType>(Ty)) {
-    Result += "v" +
-              utostr(VCINTR::VectorType::getNumElements(cast<VectorType>(Ty))) +
-              getMangledTypeStr(cast<VectorType>(Ty)->getElementType());
+  } else if (auto *VTy = dyn_cast<VectorType>(Ty)) {
+    Result += "v" + utostr(VCINTR::VectorType::getNumElements(VTy)) +
+              getMangledTypeStr(VTy->getElementType());
 #if VC_INTR_LLVM_VERSION_MAJOR >= 16
   } else if (auto *TargetTy = dyn_cast<TargetExtType>(Ty)) {
     Result += "t_" + TargetTy->getName().str();
