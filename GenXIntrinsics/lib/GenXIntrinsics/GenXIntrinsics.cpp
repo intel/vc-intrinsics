@@ -240,7 +240,7 @@ DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
                                              ArgInfo));
     return;
   }
-#if VC_INTR_LLVM_VERSION_MAJOR < 18
+#if VC_INTR_LLVM_VERSION_MAJOR < 17
   case IIT_PTR_TO_ARG: {
     unsigned ArgInfo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::PtrToArgument,
@@ -341,7 +341,7 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
     }
     llvm_unreachable("unhandled");
   }
-#if VC_INTR_LLVM_VERSION_MAJOR < 18
+#if VC_INTR_LLVM_VERSION_MAJOR < 17
   case IITDescriptor::PtrToArgument: {
     Type *Ty = Tys[D.getArgumentNumber()];
     return PointerType::getUnqual(Ty);
