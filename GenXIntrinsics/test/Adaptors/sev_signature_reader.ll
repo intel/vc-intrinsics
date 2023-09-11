@@ -8,7 +8,8 @@
 
 ; Test simple signatures tranform
 
-; LLVM16 error: symbol with local linkage cannot have a DLL storage class 
+; UNSUPPORTED: llvm17, llvm18
+; LLVM16 error: symbol with local linkage cannot have a DLL storage class
 ; for test-function (internal dllexport)
 ; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 

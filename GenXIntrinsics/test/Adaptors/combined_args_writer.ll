@@ -10,6 +10,7 @@
 ; arguments and impicit arguments. Implicit arguments would not show
 ; in normal flow, though they appear in old cmc.
 ; XFAIL: llvm13, llvm14, llvm15
+; UNSUPPORTED: llvm17, llvm18
 ; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 ; RUN: opt %pass%GenXSPIRVWriterAdaptor %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 

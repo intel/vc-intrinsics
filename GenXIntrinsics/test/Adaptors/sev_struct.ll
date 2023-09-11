@@ -6,12 +6,13 @@
 ;
 ;============================ end_copyright_notice =============================
 
+; UNSUPPORTED: llvm17, llvm18
 ; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 
 target datalayout = "e-p:64:64-i64:64-n8:16:32"
 target triple = "spir64"
 
-; CHECK: [[STRUCT1:[^ ]+]] = type { i32, <2 x i32>, [[STRUCT2:[^ ]+]] }  
+; CHECK: [[STRUCT1:[^ ]+]] = type { i32, <2 x i32>, [[STRUCT2:[^ ]+]] }
 %struct.sev_test = type { <1 x i32>, <2 x i32>, %struct.sev_test_nested }
 ; CHECK: [[STRUCT2]] = type { i32*, <2 x i32>*, [[STRUCT1]]* }
 %struct.sev_test_nested = type { <1 x i32>*, <2 x i32>*, %struct.sev_test* }

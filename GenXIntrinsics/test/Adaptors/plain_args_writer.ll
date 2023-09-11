@@ -9,6 +9,7 @@
 ; Test kernel arguments translation from old style with metadata to
 ; new style with opaque types that SPIRV translator can
 ; understand. Arguments without annotations are used here (CMRT like).
+; UNSUPPORTED: llvm17, llvm18
 ; XFAIL: llvm13, llvm14, llvm15
 ; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 ; RUN: opt %pass%GenXSPIRVWriterAdaptor %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s

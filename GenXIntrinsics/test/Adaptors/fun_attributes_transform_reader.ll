@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2021-2022 Intel Corporation
+; Copyright (C) 2021-2023 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -9,7 +9,7 @@
 ; Test that adaptor correctly translates function attributes to VC-specific
 ; metadata (the processed attributes are expected to be discarded)
 
-; UNSUPPORTED: llvm8
+; UNSUPPORTED: llvm8, llvm17, llvm18
 ; XFAIL: llvm15
 ; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 ; CHECK: @test_VCFunction()

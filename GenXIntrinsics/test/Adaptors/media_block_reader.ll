@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2021-2022 Intel Corporation
+; Copyright (C) 2021-2023 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -8,6 +8,7 @@
 
 ; Test reader translation of media block image arguments.
 
+; UNSUPPORTED: llvm17, llvm18
 ; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
 %intel.image2d_media_block_ro_t = type opaque

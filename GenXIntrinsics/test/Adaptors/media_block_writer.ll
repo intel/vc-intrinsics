@@ -8,6 +8,7 @@
 
 ; Test writer translation of media block images arguments.
 
+; UNSUPPORTED: llvm17, llvm18
 ; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 
 define void @test(i32 %image) {

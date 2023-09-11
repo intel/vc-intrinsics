@@ -10,6 +10,7 @@
 ; metadata to new style with opaque types that SPIRV translator can
 ; understand. This test checks access qualifiers translation.
 
+; UNSUPPORTED: llvm17, llvm18
 ; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 
 define void @test(i32 %buf, i32 %im1d, i32 %im1db, i32 %im2d, i32 %im3d) {

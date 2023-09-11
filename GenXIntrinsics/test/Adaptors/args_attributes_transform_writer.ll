@@ -8,7 +8,7 @@
 
 ; Test that adaptor correctly handles parameter attributes with types.
 
-; UNSUPPORTED: llvm8
+; UNSUPPORTED: llvm8, llvm17, llvm18
 ; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 ; CHECK: @test
 ; CHECK-SAME: %foo addrspace(1)* byval(%foo)

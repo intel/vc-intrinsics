@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2020-2022 Intel Corporation
+; Copyright (C) 2020-2023 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -10,6 +10,7 @@
 ; that SPIRV translator can understand to old style with
 ; metadata. Arguments without annotations are used here (CMRT like).
 
+; UNSUPPORTED: llvm17, llvm18
 ; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
 %intel.buffer_rw_t = type opaque

@@ -6,6 +6,7 @@
 ;
 ;============================ end_copyright_notice =============================
 
+; UNSUPPORTED: llvm17, llvm18
 ; RUN: opt %pass%cmsimdcflowering -S < %s | FileCheck %s
 
 @Rcp_T2 = internal global <64 x double> undef

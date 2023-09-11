@@ -8,6 +8,7 @@
 
 ; Test writer translation of image array arguments.
 
+; UNSUPPORTED: llvm17, llvm18
 ; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 
 define void @test(i32 %im1darr, i32 %im2darr) {

@@ -1,14 +1,15 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2020-2022 Intel Corporation
+; Copyright (C) 2020-2023 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
 ;============================ end_copyright_notice =============================
 
+; UNSUPPORTED: llvm17, llvm18
 ; RUN: opt %pass%cmsimdcflowering -S < %s | FileCheck %s
 
-; CHECK: @EM = internal global <32 x i1> 
+; CHECK: @EM = internal global <32 x i1>
 
 @g2 = internal global <32 x i32> undef
 

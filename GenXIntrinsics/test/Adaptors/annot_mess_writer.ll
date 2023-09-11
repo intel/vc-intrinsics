@@ -9,6 +9,7 @@
 ; Test messy annnotations translation in writer. First valid
 ; annotation should be matched.
 
+; UNSUPPORTED: llvm17, llvm18
 ; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 
 define void @test(i32 %im2d, i32 %samp, i64 %ptr, i32 %gen) {

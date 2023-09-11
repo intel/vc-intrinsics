@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2021-2022 Intel Corporation
+; Copyright (C) 2021-2023 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -8,6 +8,7 @@
 
 ; Test reader translation of SPIRV friendly IR types
 
+; UNSUPPORTED: llvm17, llvm18
 ; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
 %spirv.Sampler = type opaque

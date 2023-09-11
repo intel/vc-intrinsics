@@ -63,7 +63,8 @@ if int(config.llvm_version_major) < 13:
 else:
   config.substitutions.append(('%pass%', ' -passes='))
 
-if int(config.llvm_version_major) >= 16:
+print(f"llvm_version_major:{config.llvm_version_major}")
+if int(config.llvm_version_major) == 16:
     opt_extra_args.insert(0, '-opaque-pointers=0')
 
 tools = [ToolSubst('opt', extra_args=opt_extra_args)]

@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2022 Intel Corporation
+; Copyright (C) 2022-2023 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -9,6 +9,7 @@
 ; Test GenXSingleElementVectorUtil preserves calling convention
 ; (spir_func here)
 
+; UNSUPPORTED: llvm17, llvm18
 ; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 
 ; ModuleID = 'sev_calling_conv_reader.ll'

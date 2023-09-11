@@ -8,6 +8,7 @@
 
 ; Test @llvm.genx.address.convert intrinsic generation with proper attributes
 
+; UNSUPPORTED: llvm17, llvm18
 ; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 
 define void @test(i32 %buf) {
