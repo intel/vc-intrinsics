@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -305,7 +305,8 @@ static Value *createScalarToVectorValue(Value *Scalar, Type *ReferenceType,
                                         Instruction *InsertBefore) {
   if (isa<UndefValue>(Scalar))
     return UndefValue::get(ReferenceType);
-  else if (isa<PointerType>(Scalar->getType())) {
+  else if (isa<PointerType>(Scalar->getType()) &&
+           isa<PointerType>(ReferenceType)) {
     auto Inner = getInnerPointerVectorNesting(ReferenceType);
     return new BitCastInst(
         Scalar, getTypeWithSingleElementVector(Scalar->getType(), Inner),
