@@ -542,6 +542,7 @@ static void rewriteKernelArguments(Function &F) {
   for (auto &&ArgPair : llvm::zip(F.args(), NewF->args()))
     rewriteArgumentUses(InsPt, std::get<0>(ArgPair), std::get<1>(ArgPair));
 
+  F.replaceAllUsesWith(NewF);
   F.eraseFromParent();
 }
 
