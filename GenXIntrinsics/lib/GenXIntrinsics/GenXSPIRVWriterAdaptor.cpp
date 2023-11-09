@@ -542,7 +542,11 @@ static void rewriteKernelArguments(Function &F) {
   for (auto &&ArgPair : llvm::zip(F.args(), NewF->args()))
     rewriteArgumentUses(InsPt, std::get<0>(ArgPair), std::get<1>(ArgPair));
 
+#if VC_INTR_LLVM_VERSION_MAJOR >= 17
+  // There might be module level named metadata referencing old function, so replace those usages with new function.
+  // This can be done safely (will not cause type mismatch) when only opaque pointers are used (since LLVM 17).
   F.replaceAllUsesWith(NewF);
+#endif
   F.eraseFromParent();
 }
 
