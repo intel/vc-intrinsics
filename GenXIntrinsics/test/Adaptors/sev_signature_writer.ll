@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2020-2021 Intel Corporation
+; Copyright (C) 2020-2023 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -8,7 +8,17 @@
 
 ; Test simple signatures tranform
 
-; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
+; UNSUPPORTED: llvm17, llvm18
+; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
+
+; CHECK: @global_var_0 = internal global i32 undef, align 4
+@global_var_0 = internal global <1 x i32> undef, align 4 #0
+
+; CHECK: @global_var_1 = internal global i32** undef, align 4
+@global_var_1 = internal global <1 x i32**> undef, align 4 #0
+
+; CHECK: @global_var_2 = external global i32**
+@global_var_2 = external global <1 x i32**> #0
 
 ; CHECK: @global_var_0 = internal global i32 undef, align 4
 @global_var_0 = internal global <1 x i32> undef, align 4 #0

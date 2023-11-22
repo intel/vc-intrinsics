@@ -9,7 +9,7 @@
 ; Test writer translation of implicit argument. Implicit arguments
 ; should not appear in current form after transition from cmc.
 
-; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
+; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 
 define void @test(<3 x i32> %__arg_llvm.genx.local.id) {
 ; CHECK-LABEL: @test(

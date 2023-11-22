@@ -33,6 +33,7 @@ See LICENSE.TXT for details.
 
 #include "llvmVCWrapper/IR/DerivedTypes.h"
 #include "llvmVCWrapper/IR/Intrinsics.h"
+#include "llvmVCWrapper/IR/Type.h"
 
 #include <cstring>
 #include <map>
@@ -96,8 +97,10 @@ enum IIT_Info {
   IIT_VARARG = 29,
   IIT_HALF_VEC_ARG = 30,
   IIT_SAME_VEC_WIDTH_ARG = 31,
+#if VC_INTR_LLVM_VERSION_MAJOR < 18
   IIT_PTR_TO_ARG = 32,
   IIT_PTR_TO_ELT = 33,
+#endif
   IIT_VEC_OF_ANYPTRS_TO_ELT = 34,
   IIT_I128 = 35,
   IIT_V512 = 36,
@@ -107,6 +110,15 @@ enum IIT_Info {
   IIT_STRUCT8 = 40,
   IIT_F128 = 41
 };
+
+static Intrinsic::IITDescriptor getVector(unsigned Width) {
+  using namespace Intrinsic;
+#if VC_INTR_LLVM_VERSION_MAJOR >= 11
+  return IITDescriptor::getVector(Width, false);
+#else
+  return IITDescriptor::get(IITDescriptor::Vector, Width);
+#endif
+}
 
 static void
 DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
@@ -163,39 +175,39 @@ DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::Integer, 128));
     return;
   case IIT_V1:
-    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 1));
+    OutputTable.push_back(getVector(1));
     DecodeIITType(NextElt, Infos, OutputTable);
     return;
   case IIT_V2:
-    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 2));
+    OutputTable.push_back(getVector(2));
     DecodeIITType(NextElt, Infos, OutputTable);
     return;
   case IIT_V4:
-    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 4));
+    OutputTable.push_back(getVector(4));
     DecodeIITType(NextElt, Infos, OutputTable);
     return;
   case IIT_V8:
-    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 8));
+    OutputTable.push_back(getVector(8));
     DecodeIITType(NextElt, Infos, OutputTable);
     return;
   case IIT_V16:
-    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 16));
+    OutputTable.push_back(getVector(16));
     DecodeIITType(NextElt, Infos, OutputTable);
     return;
   case IIT_V32:
-    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 32));
+    OutputTable.push_back(getVector(32));
     DecodeIITType(NextElt, Infos, OutputTable);
     return;
   case IIT_V64:
-    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 64));
+    OutputTable.push_back(getVector(64));
     DecodeIITType(NextElt, Infos, OutputTable);
     return;
   case IIT_V512:
-    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 512));
+    OutputTable.push_back(getVector(512));
     DecodeIITType(NextElt, Infos, OutputTable);
     return;
   case IIT_V1024:
-    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 1024));
+    OutputTable.push_back(getVector(1024));
     DecodeIITType(NextElt, Infos, OutputTable);
     return;
   case IIT_PTR:
@@ -237,6 +249,7 @@ DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
                                              ArgInfo));
     return;
   }
+#if VC_INTR_LLVM_VERSION_MAJOR < 17
   case IIT_PTR_TO_ARG: {
     unsigned ArgInfo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::PtrToArgument,
@@ -248,6 +261,7 @@ DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::PtrToElt, ArgInfo));
     return;
   }
+#endif
   case IIT_VEC_OF_ANYPTRS_TO_ELT: {
     unsigned short ArgNo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
     unsigned short RefNo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
@@ -336,6 +350,7 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
     }
     llvm_unreachable("unhandled");
   }
+#if VC_INTR_LLVM_VERSION_MAJOR < 17
   case IITDescriptor::PtrToArgument: {
     Type *Ty = Tys[D.getArgumentNumber()];
     return PointerType::getUnqual(Ty);
@@ -348,6 +363,7 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
     Type *EltTy = cast<VectorType>(VTy)->getElementType();
     return PointerType::getUnqual(EltTy);
   }
+#endif
   case IITDescriptor::VecOfAnyPtrsToElt:
     // Return the overloaded type (which determines the pointers address space)
     return Tys[D.getOverloadArgNumber()];
@@ -408,23 +424,27 @@ void GenXIntrinsic::getIntrinsicInfoTableEntries(
 /// which can't be confused with it's prefix.  This ensures we don't have
 /// collisions between two unrelated function types. Otherwise, you might
 /// parse ffXX as f(fXX) or f(fX)X.  (X is a placeholder for any other type.)
-static std::string getMangledTypeStr(Type* Ty) {
+static std::string getMangledTypeStr(Type *Ty) {
   std::string Result;
-  if (PointerType* PTyp = dyn_cast<PointerType>(Ty)) {
-    Result += "p" + llvm::utostr(PTyp->getAddressSpace()) +
-      getMangledTypeStr(PTyp->getPointerElementType());
-  } else if (ArrayType* ATyp = dyn_cast<ArrayType>(Ty)) {
+  if (PointerType *PTyp = dyn_cast<PointerType>(Ty)) {
+    Result += "p" + llvm::utostr(PTyp->getAddressSpace());
+#if VC_INTR_LLVM_VERSION_MAJOR >= 13
+    if (PTyp->isOpaque())
+      return Result;
+#endif // VC_INTR_LLVM_VERSION_MAJOR >= 13
+    Result += getMangledTypeStr(VCINTR::Type::getNonOpaquePtrEltTy(PTyp));
+  } else if (ArrayType *ATyp = dyn_cast<ArrayType>(Ty)) {
     Result += "a" + llvm::utostr(ATyp->getNumElements()) +
-      getMangledTypeStr(ATyp->getElementType());
-  } else if (StructType* STyp = dyn_cast<StructType>(Ty)) {
-    if(!STyp->isLiteral())
-        Result += STyp->getName();
+              getMangledTypeStr(ATyp->getElementType());
+  } else if (StructType *STyp = dyn_cast<StructType>(Ty)) {
+    if (!STyp->isLiteral())
+      Result += STyp->getName();
     else {
-        Result += "s" + llvm::utostr(STyp->getNumElements());
-        for(unsigned int i = 0; i < STyp->getNumElements(); i++)
-            Result += getMangledTypeStr(STyp->getElementType(i));
+      Result += "s" + llvm::utostr(STyp->getNumElements());
+      for (unsigned int i = 0; i < STyp->getNumElements(); i++)
+        Result += getMangledTypeStr(STyp->getElementType(i));
     }
-  } else if (FunctionType* FT = dyn_cast<FunctionType>(Ty)) {
+  } else if (FunctionType *FT = dyn_cast<FunctionType>(Ty)) {
     Result += "f_" + getMangledTypeStr(FT->getReturnType());
     for (size_t i = 0; i < FT->getNumParams(); i++)
       Result += getMangledTypeStr(FT->getParamType(i));
@@ -432,12 +452,21 @@ static std::string getMangledTypeStr(Type* Ty) {
       Result += "vararg";
     // Ensure nested function types are distinguishable.
     Result += "f";
-  } else if (isa<VectorType>(Ty))
-    Result += "v" +
-              utostr(VCINTR::VectorType::getNumElements(cast<VectorType>(Ty))) +
-              getMangledTypeStr(cast<VectorType>(Ty)->getElementType());
-  else if (Ty)
+  } else if (auto *VTy = dyn_cast<VectorType>(Ty)) {
+    Result += "v" + utostr(VCINTR::VectorType::getNumElements(VTy)) +
+              getMangledTypeStr(VTy->getElementType());
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
+  } else if (auto *TargetTy = dyn_cast<TargetExtType>(Ty)) {
+    Result += "t_" + TargetTy->getName().str();
+    for (auto *PTy : TargetTy->type_params())
+      Result += "_" + getMangledTypeStr(PTy);
+    for (auto I : TargetTy->int_params())
+      Result += "_" + llvm::utostr(I);
+#endif // VC_INTR_LLVM_VERSION_MAJOR >= 16
+  } else if (Ty) {
     Result += EVT::getEVT(Ty).getEVTString();
+  }
+
   return Result;
 }
 
@@ -515,7 +544,7 @@ static ArrayRef<const char *> findTargetSubtable(StringRef Name) {
   // We've either found the target or just fall back to the generic set, which
   // is always first.
   const auto &TI = It != Targets.end() && It->Name == Target ? *It : Targets[0];
-  return makeArrayRef(&GenXIntrinsicNameTable[1] + TI.Offset, TI.Count);
+  return ArrayRef<const char *>(&GenXIntrinsicNameTable[1] + TI.Offset, TI.Count);
 }
 
 GenXIntrinsic::ID GenXIntrinsic::getGenXIntrinsicID(const Function *F) {
@@ -724,4 +753,3 @@ unsigned GenXIntrinsic::getLSCWidth(const Instruction *I) {
     return VCINTR::VectorType::getNumElements(VT);
   return 1;
 }
-

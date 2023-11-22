@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2020-2021 Intel Corporation
+; Copyright (C) 2020-2022 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -8,7 +8,7 @@
 
 ; Test empty kernel metadata translation: old -> new.
 
-; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
+; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 
 ; CHECK: @test() #[[ATTR_GROUP:[0-9]+]]
 define void @test() #0 {

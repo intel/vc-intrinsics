@@ -26,7 +26,6 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
       C CXX
   )
 
-  set(CMAKE_CXX_STANDARD 14)
   set(CMAKE_CXX_STANDARD_REQUIRED OFF)
 
   find_package(LLVM REQUIRED HINTS "${LLVM_CMAKE_PATH}")
@@ -36,6 +35,12 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   )
   include(AddLLVM)
   include(HandleLLVMOptions)
+
+  if (LLVM_PACKAGE_VERSION GREATER_EQUAL 14)
+    set(CMAKE_CXX_STANDARD 17)
+  else ()
+    set(CMAKE_CXX_STANDARD 14)
+  endif()
 
   include_directories("${LLVM_INCLUDE_DIR}")
   link_directories("${LLVM_LIBRARY_DIR}")
@@ -55,16 +60,14 @@ if(LLVM_VERSION_MAJOR VERSION_LESS 8)
   message(FATAL_ERROR "VC-intrinsics do not support ${LLVM_VERSION} LLVM version")
 endif()
 
-include(FindPythonInterp)
-if(NOT PYTHONINTERP_FOUND)
-  message(FATAL_ERROR
-"Unable to find Python interpreter, required for builds and testing.
-
-Please install Python or specify the PYTHON_EXECUTABLE CMake variable.")
-endif()
-
-if("${PYTHON_VERSION_STRING}" VERSION_LESS 2.7)
-  message(FATAL_ERROR "Python 2.7 or newer is required")
+if (DEFINED PYTHON_EXECUTABLE)
+  get_filename_component(PYTHON_EXECUTABLE "${PYTHON_EXECUTABLE}" ABSOLUTE)
+else()
+  find_package(Python REQUIRED COMPONENTS Interpreter)
+  if("${Python_VERSION}" VERSION_LESS 2.7)
+    message(FATAL_ERROR "Python 2.7 or newer is required")
+  endif()
+  set(PYTHON_EXECUTABLE "${Python_EXECUTABLE}")
 endif()
 
 

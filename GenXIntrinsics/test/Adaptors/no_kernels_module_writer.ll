@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2021 Intel Corporation
+; Copyright (C) 2021-2022 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -8,7 +8,7 @@
 
 ; Test general translation of attributes within module that has no kernels
 
-; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
+; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 
 ; CHECK: @some_func
 ; CHECK: #[[ATTR_GROUP:[0-9]+]]

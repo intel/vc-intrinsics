@@ -18,7 +18,6 @@ SPDX-License-Identifier: MIT
 #define GENX_INTRINSIC_INTERFACE_H
 
 #include "llvm/IR/Module.h"
-
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Intrinsics.h"
@@ -173,7 +172,7 @@ inline bool isGenXNonTrivialIntrinsic(const Value *V) {
 
 /// GenXIntrinsic::getGenXName(ID) - Return the LLVM name for a GenX intrinsic,
 /// such as "llvm.genx.lane.id".
-std::string getGenXName(ID id, ArrayRef<Type *> Tys = None);
+std::string getGenXName(ID id, ArrayRef<Type *> Tys = {});
 
 ID lookupGenXIntrinsicID(StringRef Name);
 
@@ -181,7 +180,7 @@ AttributeList getAttributes(LLVMContext &C, ID id);
 
 /// GenXIntrinsic::getGenXType(ID) - Return the function type for an intrinsic.
 FunctionType *getGenXType(LLVMContext &Context, GenXIntrinsic::ID id,
-                          ArrayRef<Type *> Tys = None);
+                          ArrayRef<Type *> Tys = {});
 
 /// GenXIntrinsic::getGenXDeclaration(M, ID) - Create or insert a GenX LLVM
 /// Function declaration for an intrinsic, and return it.
@@ -190,7 +189,7 @@ FunctionType *getGenXType(LLVMContext &Context, GenXIntrinsic::ID id,
 /// using iAny, fAny, vAny, or iPTRAny).  For a declaration of an overloaded
 /// intrinsic, Tys must provide exactly one type for each overloaded type in
 /// the intrinsic.
-Function *getGenXDeclaration(Module *M, ID id, ArrayRef<Type *> Tys = None);
+Function *getGenXDeclaration(Module *M, ID id, ArrayRef<Type *> Tys = {});
 
 void getIntrinsicInfoTableEntries(
     GenXIntrinsic::ID id,
@@ -262,11 +261,11 @@ inline bool isAnyNonTrivialIntrinsic(const Value *V) {
 
 /// GenXIntrinsic::getAnyName(ID) - Return the LLVM name for LLVM or GenX
 /// intrinsic, such as "llvm.genx.lane.id".
-std::string getAnyName(unsigned id, ArrayRef<Type *> Tys = None);
+std::string getAnyName(unsigned id, ArrayRef<Type *> Tys = {});
 
 /// GenXIntrinsic::getAnyType(ID) - Return the function type for an intrinsic.
 inline FunctionType *getAnyType(LLVMContext &Context, unsigned id,
-                                ArrayRef<Type *> Tys = None) {
+                                ArrayRef<Type *> Tys = {}) {
   assert(isAnyNonTrivialIntrinsic(id));
   if (isGenXIntrinsic(id))
     return getGenXType(Context, (ID)id, Tys);
@@ -294,7 +293,7 @@ bool isOverloadedRet(unsigned IntrinID);
 /// intrinsic, Tys must provide exactly one type for each overloaded type in
 /// the intrinsic.
 inline Function *getAnyDeclaration(Module *M, unsigned id,
-                                   ArrayRef<Type *> Tys = None) {
+                                   ArrayRef<Type *> Tys = {}) {
   assert(isAnyNonTrivialIntrinsic(id));
   if (isGenXIntrinsic(id)) {
     return getGenXDeclaration(M, (ID)id, Tys);
@@ -466,6 +465,13 @@ inline LSCCategory getLSCCategory(unsigned IntrinID) {
     case GenXIntrinsic::genx_lsc_load_quad_bti:
     case GenXIntrinsic::genx_lsc_load_quad_slm:
     case GenXIntrinsic::genx_lsc_load_quad_stateless:
+    case GenXIntrinsic::genx_lsc_load_merge_bti:
+    case GenXIntrinsic::genx_lsc_load_merge_stateless:
+    case GenXIntrinsic::genx_lsc_load_merge_slm:
+    case GenXIntrinsic::genx_lsc_load_merge_bindless:
+    case GenXIntrinsic::genx_lsc_load_merge_quad_bti:
+    case GenXIntrinsic::genx_lsc_load_merge_quad_slm:
+    case GenXIntrinsic::genx_lsc_load_merge_quad_stateless:
       return LSCCategory::Load;
     case GenXIntrinsic::genx_lsc_load2d_stateless:
       return LSCCategory::Load2D;

@@ -9,7 +9,8 @@
 ; Test that writer does not changes signature if correct
 ; types are already used. Just drop all annotations.
 
-; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
+; UNSUPPORTED: llvm17, llvm18
+; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 
 %intel.buffer_rw_t = type opaque
 %opencl.image1d_rw_t = type opaque

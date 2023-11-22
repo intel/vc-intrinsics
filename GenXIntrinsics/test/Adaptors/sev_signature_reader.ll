@@ -1,15 +1,29 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2020-2021 Intel Corporation
+; Copyright (C) 2020-2023 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
 ;============================ end_copyright_notice =============================
 
-; XFAIL: llvm13, llvm14, llvm15
 ; Test simple signatures tranform
 
-; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
+; UNSUPPORTED: llvm17, llvm18
+; LLVM16 error: symbol with local linkage cannot have a DLL storage class
+; for test-function (internal dllexport)
+; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
+
+; CHECK: @global_var_0 = internal global <1 x i32> undef, align 4
+@global_var_0 = internal global i32 undef, align 4 #2
+
+; CHECK: @global_var_1 = internal global <1 x i32**> undef, align 4
+@global_var_1 = internal global i32** undef, align 4 #3
+
+; CHECK: @global_var_2 = external global <1 x i32**>
+@global_var_2 = external global i32** #3
+
+; CHECK: @global_var_3 = internal global i32** undef, align 4
+@global_var_3 = internal global i32** undef, align 4
 
 ; CHECK: @global_var_0 = internal global <1 x i32> undef, align 4
 @global_var_0 = internal global i32 undef, align 4 #2
@@ -57,7 +71,7 @@ entry:
   ret i32 0
 }
 
-define internal dllexport spir_kernel void @test() #1 {
+define dllexport spir_kernel void @test() #1 {
 entry:
   ret void
 }

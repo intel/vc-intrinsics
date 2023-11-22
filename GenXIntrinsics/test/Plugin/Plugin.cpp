@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -35,8 +35,10 @@ static void registerModulePass(PassBuilder &PB, ArgsT... PassArgs) {
 }
 
 static void registerPasses(PassBuilder &PB) {
+  registerModulePass<CMSimdCFLowering>(PB);
   registerModulePass<GenXSPIRVWriterAdaptor>(
       PB, /*RewriteTypes=*/true, /*RewriteSingleElementVectors=*/true);
+  registerModulePass<GenXSPIRVReaderAdaptor>(PB);
 }
 
 static PassPluginLibraryInfo getIntrinsicsPluginInfo() {
@@ -57,8 +59,8 @@ llvmGetPassPluginInfo() {
 static int initializePasses() {
   PassRegistry &PR = *PassRegistry::getPassRegistry();
 
-  initializeCMSimdCFLoweringPass(PR);
-  initializeGenXSPIRVReaderAdaptorPass(PR);
+  initializeCMSimdCFLoweringLegacyPass(PR);
+  initializeGenXSPIRVReaderAdaptorLegacyPass(PR);
   initializeGenXSPIRVWriterAdaptorLegacyPass(PR);
 
   return 0;

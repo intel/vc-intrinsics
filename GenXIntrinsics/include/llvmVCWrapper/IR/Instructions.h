@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 
 #include <algorithm>
 #include <llvm/IR/Instructions.h>
+#include <llvmVCWrapper/ADT/Optional.h>
 
 namespace VCINTR {
 namespace ShuffleVectorInst {
@@ -40,7 +41,25 @@ inline llvm::ArrayRef<int> getShuffleMask(llvm::ArrayRef<int> Mask,
 }
 #endif
 
-} // namespace VCINTR
+} // namespace ShuffleVectorInst
+
+template <class ArgKind>
+inline ArgKind &getValue(VCINTR::Optional<ArgKind> &opt) {
+#if VC_INTR_LLVM_VERSION_MAJOR < 15
+  return opt.getValue();
+#else
+  return opt.value();
+#endif
+}
+
+template <class ArgKind>
+inline const ArgKind &getValue(const VCINTR::Optional<ArgKind> &opt) {
+#if VC_INTR_LLVM_VERSION_MAJOR < 15
+  return opt.getValue();
+#else
+  return opt.value();
+#endif
+}
 
 } // namespace VCINTR
 

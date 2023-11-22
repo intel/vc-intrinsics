@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2020-2021 Intel Corporation
+; Copyright (C) 2020-2023 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -9,9 +9,10 @@
 ; Test kernel arguments translation from old style with metadata to
 ; new style with opaque types that SPIRV translator can
 ; understand. Arguments without annotations are used here (CMRT like).
-
-; RUN: opt -S -GenXSPIRVWriterAdaptor < %s | FileCheck %s
-; RUN: opt -S -GenXSPIRVWriterAdaptor -GenXSPIRVWriterAdaptor < %s | FileCheck %s
+; UNSUPPORTED: llvm17, llvm18
+; XFAIL: llvm13, llvm14, llvm15
+; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
+; RUN: opt %pass%GenXSPIRVWriterAdaptor %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 
 define spir_kernel void @test(i32 %surf, i32 %samp, i64 %ptr, i32 %gen) {
 ; CHECK-LABEL: @test(
@@ -37,8 +38,8 @@ define spir_kernel void @test(i32 %surf, i32 %samp, i64 %ptr, i32 %gen) {
 ; CHECK: [[GEN:%[^)]+]])
 
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[TMP0:%.*]] = call i32 @llvm.genx.address.convert.i32.p1intel.buffer_rw_t(%intel.buffer_rw_t addrspace(1)* [[SURF]])
-; CHECK-NEXT:    [[TMP1:%.*]] = call i32 @llvm.genx.address.convert.i32.p2opencl.sampler_t(%opencl.sampler_t addrspace(2)* [[SAMP]])
+; CHECK-NEXT:    [[TMP0:%.*]] = ptrtoint %intel.buffer_rw_t addrspace(1)* [[SURF]] to i32
+; CHECK-NEXT:    [[TMP1:%.*]] = ptrtoint %opencl.sampler_t addrspace(2)* [[SAMP]] to i32
 ; CHECK-NEXT:    ret void
 ;
 entry:

@@ -1,17 +1,17 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2020-2021 Intel Corporation
+; Copyright (C) 2020-2023 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
 ;============================ end_copyright_notice =============================
 
-; XFAIL: llvm13, llvm14, llvm15
 ; Test kernel surface argument translation from new style with opaque
 ; types that SPIRV translator can understand to old style with
 ; metadata. This test checks access qualifiers translation.
 
-; RUN: opt -S -GenXSPIRVReaderAdaptor < %s | FileCheck %s
+; UNSUPPORTED: llvm17, llvm18
+; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
 %intel.buffer_ro_t = type opaque
 %opencl.image1d_rw_t = type opaque

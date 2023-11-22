@@ -1,17 +1,17 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2020-2021 Intel Corporation
+; Copyright (C) 2020-2023 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
 ;============================ end_copyright_notice =============================
 
-; XFAIL: llvm13, llvm14, llvm15
-; RUN: opt -S -cmsimdcflowering < %s | FileCheck %s
+; UNSUPPORTED: llvm17, llvm18
+; RUN: opt %pass%cmsimdcflowering -S < %s | FileCheck %s
 
 @g1 = internal global <64 x i32> undef
 
-; CHECK: @EM = internal global <32 x i1> 
+; CHECK: @EM = internal global <32 x i1>
 
 define dso_local dllexport void @test(<32 x i16> %cond1, <32 x i16> %cond2, <32 x i32> %addrs, <32 x i1> %pred) {
 entry:

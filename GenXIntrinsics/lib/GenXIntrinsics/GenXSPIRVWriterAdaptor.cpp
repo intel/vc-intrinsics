@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -11,15 +11,19 @@ SPDX-License-Identifier: MIT
 #include "AdaptorsCommon.h"
 #include "GenXSingleElementVectorUtil.h"
 
-#include "llvm/GenXIntrinsics/GenXSPIRVWriterAdaptor.h"
 #include "llvm/GenXIntrinsics/GenXIntrinsics.h"
 #include "llvm/GenXIntrinsics/GenXMetadata.h"
+#include "llvm/GenXIntrinsics/GenXSPIRVWriterAdaptor.h"
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Metadata.h"
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
+#include <llvm/Support/ModRef.h>
+#endif
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Process.h"
@@ -27,6 +31,7 @@ SPDX-License-Identifier: MIT
 #include "llvmVCWrapper/IR/Attributes.h"
 #include "llvmVCWrapper/IR/DerivedTypes.h"
 #include "llvmVCWrapper/IR/Function.h"
+#include "llvmVCWrapper/IR/Instructions.h"
 
 using namespace llvm;
 using namespace genx;
@@ -54,7 +59,7 @@ private:
   void overrideOptionsWithEnv() {
     auto RewriteSEVOpt = llvm::sys::Process::GetEnv("GENX_REWRITE_SEV");
     if (RewriteSEVOpt)
-      RewriteSingleElementVectors = RewriteSEVOpt.getValue() == "1";
+      RewriteSingleElementVectors = VCINTR::getValue(RewriteSEVOpt) == "1";
   }
 
   bool runOnFunction(Function &F);
@@ -176,7 +181,9 @@ static Type *getArgTypeFromDesc(SPIRVArgDesc Desc, Argument &Arg) {
   std::string TypeName;
   switch (Desc.Ty) {
   case SPIRVType::Pointer:
-    return getGlobalPtrType(Arg.getContext());
+    if (!Arg.hasByValAttr())
+      return getGlobalPtrType(Arg.getContext());
+    LLVM_FALLTHROUGH;
   case SPIRVType::Other:
   case SPIRVType::None:
     return Arg.getType();
@@ -185,14 +192,83 @@ static Type *getArgTypeFromDesc(SPIRVArgDesc Desc, Argument &Arg) {
   }
 }
 
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
+static Type *getImageTargetType(SPIRVArgDesc Desc, Argument &Arg) {
+  auto &Ctx = Arg.getContext();
+  auto *VoidTy = Type::getVoidTy(Ctx);
+
+  SmallVector<unsigned, 7> IntParams = {
+      0, 0, 0, 0, 0, 0, static_cast<unsigned>(Desc.Acc)};
+
+  switch (Desc.Ty) {
+  case SPIRVType::Image1d:
+    break;
+  case SPIRVType::Image1dArray:
+    IntParams[2] = 1;
+    break;
+  case SPIRVType::Image1dBuffer:
+    IntParams[0] = 5;
+    break;
+  case SPIRVType::Image2d:
+    IntParams[0] = 1;
+    break;
+  case SPIRVType::Image2dArray:
+    IntParams[0] = 1;
+    IntParams[2] = 1;
+    break;
+  case SPIRVType::Image3d:
+    IntParams[0] = 2;
+    break;
+  default:
+    llvm_unreachable("Only images are supported here");
+  }
+
+  return TargetExtType::get(Ctx, "spirv.Image", {VoidTy}, IntParams);
+}
+
+static Type *getArgTargetTypeFromDesc(SPIRVArgDesc Desc, Argument &Arg) {
+  auto &Ctx = Arg.getContext();
+  SmallVector<unsigned, 1> Acc = {static_cast<unsigned>(Desc.Acc)};
+  switch (Desc.Ty) {
+  default:
+    return getImageTargetType(Desc, Arg);
+  case SPIRVType::Sampler:
+    return TargetExtType::get(Ctx, "spirv.Sampler");
+  case SPIRVType::Pointer:
+    if (!Arg.hasByValAttr())
+      return getGlobalPtrType(Ctx);
+    LLVM_FALLTHROUGH;
+  case SPIRVType::Other:
+  case SPIRVType::None:
+    return Arg.getType();
+  case SPIRVType::Buffer:
+    return TargetExtType::get(Ctx, "spirv.BufferSurfaceINTEL", {}, Acc);
+  case SPIRVType::Image2dMediaBlock:
+    return getImageTargetType(SPIRVArgDesc(SPIRVType::Image2d, Desc.Acc), Arg);
+  }
+}
+#endif // VC_INTR_LLVM_VERSION_MAJOR >= 16
+
 static Function *
 transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
   SmallVector<Type *, 8> NewParams;
+
+  auto GetArgType =
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
+      [UseTargetTypes = !F.getContext().supportsTypedPointers()](
+          SPIRVArgDesc Desc, Argument &Arg) {
+        if (UseTargetTypes)
+          return getArgTargetTypeFromDesc(Desc, Arg);
+        return getArgTypeFromDesc(Desc, Arg);
+      };
+#else  // VC_INTR_LLVM_VERSION_MAJOR >= 16
+      [](SPIRVArgDesc Desc, Argument &Arg) {
+        return getArgTypeFromDesc(Desc, Arg);
+      };
+#endif // VC_INTR_LLVM_VERSION_MAJOR >= 16
+
   std::transform(Descs.begin(), Descs.end(), F.arg_begin(),
-                 std::back_inserter(NewParams),
-                 [](SPIRVArgDesc Desc, Argument &Arg) {
-                   return getArgTypeFromDesc(Desc, Arg);
-                 });
+                 std::back_inserter(NewParams), GetArgType);
 
   assert(!F.isVarArg() && "Kernel cannot be vararg");
   auto *NewFTy = FunctionType::get(F.getReturnType(), NewParams, false);
@@ -206,6 +282,14 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
   for (int i = 0, e = Descs.size(); i != e; ++i) {
     if (Descs[i].Ty == SPIRVType::None)
       continue;
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
+    if (!F.getContext().supportsTypedPointers() &&
+        Descs[i].Ty == SPIRVType::Image2dMediaBlock) {
+      AttrBuilder AttrBuilder(NewF->getContext());
+      AttrBuilder.addAttribute(VCFunctionMD::VCMediaBlockIO);
+      NewF->addParamAttrs(i, AttrBuilder);
+    }
+#endif // VC_INTR_LLVM_VERSION_MAJOR >= 16
 
     NewF->removeParamAttr(i, VCFunctionMD::VCArgumentKind);
     NewF->removeParamAttr(i, VCFunctionMD::VCArgumentDesc);
@@ -218,23 +302,48 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
 
 // Replace old arguments with new ones generating conversion
 // intrinsics for types that were changed.
-static Instruction *rewriteArgumentUses(Argument &OldArg, Argument &NewArg) {
+static void rewriteArgumentUses(Instruction *InsertBefore, Argument &OldArg,
+                                Argument &NewArg) {
   NewArg.takeName(&OldArg);
 
   Type *OldTy = OldArg.getType();
   Type *NewTy = NewArg.getType();
   if (OldTy == NewTy) {
     OldArg.replaceAllUsesWith(&NewArg);
-    return nullptr;
+    return;
   }
 
-  Module *M = OldArg.getParent()->getParent();
-  Function *ConvFn = GenXIntrinsic::getGenXDeclaration(
-      M, GenXIntrinsic::genx_address_convert, {OldTy, NewTy});
-  ConvFn->addFnAttr(VCFunctionMD::VCFunction);
-  auto *Conv = CallInst::Create(ConvFn, {&NewArg});
-  OldArg.replaceAllUsesWith(Conv);
-  return Conv;
+  IRBuilder<> Builder(InsertBefore);
+
+  Value *Cast = nullptr;
+  if (OldTy->isPointerTy() && NewTy->isPointerTy()) {
+    auto OldAS = OldTy->getPointerAddressSpace();
+    auto NewAS = NewTy->getPointerAddressSpace();
+    // Some frontends mix private and global pointers which is not allowed by
+    // SPIR-V. Using ptr->i64->ptr cast in this case to avoid failures until
+    // the frontends are fixed.
+    if (OldAS == NewAS || OldAS == SPIRVParams::SPIRVGenericAS ||
+        NewAS == SPIRVParams::SPIRVGenericAS) {
+      Cast = Builder.CreatePointerBitCastOrAddrSpaceCast(&NewArg, OldTy);
+    } else {
+      auto *Int64Ty = Builder.getInt64Ty();
+      auto *PToI = Builder.CreatePtrToInt(&NewArg, Int64Ty);
+      Cast = Builder.CreateIntToPtr(PToI, OldTy);
+    }
+  } else if (OldTy->isPointerTy() && NewTy->isIntegerTy()) {
+    Cast = Builder.CreateIntToPtr(&NewArg, OldTy);
+  } else if (OldTy->isIntegerTy() && NewTy->isPointerTy()) {
+    Cast = Builder.CreatePtrToInt(&NewArg, OldTy);
+  } else {
+    auto *M = OldArg.getParent()->getParent();
+    auto *ConvFn = GenXIntrinsic::getGenXDeclaration(
+        M, GenXIntrinsic::genx_address_convert, {OldTy, NewTy});
+    ConvFn->addFnAttr(VCFunctionMD::VCFunction);
+    Cast = Builder.CreateCall(ConvFn, {&NewArg});
+  }
+
+  if (Cast)
+    OldArg.replaceAllUsesWith(Cast);
 }
 
 // Parse argument desc.
@@ -247,11 +356,11 @@ static SPIRVArgDesc parseArgDesc(StringRef Desc) {
   Desc.split(Tokens, /*Separator=*/' ', /*MaxSplit=*/-1, /*KeepEmpty=*/false);
 
   // Scan tokens until end or required info is found.
-  Optional<AccessType> AccTy;
-  Optional<SPIRVType> Ty;
+  VCINTR::Optional<AccessType> AccTy;
+  VCINTR::Optional<SPIRVType> Ty;
   for (StringRef Tok : Tokens) {
     if (!Ty) {
-      Ty = StringSwitch<Optional<SPIRVType>>(Tok)
+      Ty = StringSwitch<VCINTR::Optional<SPIRVType>>(Tok)
                .Case(ArgDesc::Buffer, SPIRVType::Buffer)
                .Case(ArgDesc::Image1d, SPIRVType::Image1d)
                .Case(ArgDesc::Image1dArray, SPIRVType::Image1dArray)
@@ -262,15 +371,15 @@ static SPIRVArgDesc parseArgDesc(StringRef Desc) {
                .Case(ArgDesc::Image3d, SPIRVType::Image3d)
                .Case(ArgDesc::SVM, SPIRVType::Pointer)
                .Case(ArgDesc::Sampler, SPIRVType::Sampler)
-               .Default(None);
+               .Default({});
     }
 
     if (!AccTy) {
-      AccTy = StringSwitch<Optional<AccessType>>(Tok)
+      AccTy = StringSwitch<VCINTR::Optional<AccessType>>(Tok)
                   .Case(ArgDesc::ReadOnly, AccessType::ReadOnly)
                   .Case(ArgDesc::WriteOnly, AccessType::WriteOnly)
                   .Case(ArgDesc::ReadWrite, AccessType::ReadWrite)
-                  .Default(None);
+                  .Default({});
     }
 
     if (Ty && AccTy)
@@ -285,7 +394,7 @@ static SPIRVArgDesc parseArgDesc(StringRef Desc) {
   if (!AccTy)
     AccTy = AccessType::ReadWrite;
 
-  return {Ty.getValue(), AccTy.getValue()};
+  return {VCINTR::getValue(Ty), VCINTR::getValue(AccTy)};
 }
 
 // General arguments can be either pointers or any other types.
@@ -357,11 +466,11 @@ static SPIRVArgDesc analyzeArgumentAttributes(ArgKind Kind, StringRef Desc) {
 // value can be out of listed in ArgKind enum.
 // Such values are not processed later.
 // Return None if there is no such attribute.
-static Optional<ArgKind> extractArgumentKind(const Argument &Arg) {
+static VCINTR::Optional<ArgKind> extractArgumentKind(const Argument &Arg) {
   const Function *F = Arg.getParent();
   const AttributeList Attrs = F->getAttributes();
   if (!Attrs.hasParamAttr(Arg.getArgNo(), VCFunctionMD::VCArgumentKind))
-    return None;
+    return {};
 
   const Attribute Attr =
       Attrs.getParamAttr(Arg.getArgNo(), VCFunctionMD::VCArgumentKind);
@@ -386,7 +495,7 @@ static StringRef extractArgumentDesc(const Argument &Arg) {
 static SPIRVArgDesc analyzeKernelArg(const Argument &Arg) {
   if (auto Kind = extractArgumentKind(Arg)) {
     const StringRef Desc = extractArgumentDesc(Arg);
-    return analyzeArgumentAttributes(Kind.getValue(), Desc);
+    return analyzeArgumentAttributes(VCINTR::getValue(Kind), Desc);
   }
 
   return {SPIRVType::None};
@@ -407,7 +516,7 @@ static std::vector<SPIRVArgDesc> analyzeKernelArguments(const Function &F) {
 //  }
 // will be changed to
 //  define spir_kernel @foo(%opencl.image2d_rw_t addrspace(1)* %im) {
-//    %conv = call @llvm.genx.address.convert(%im)
+//    %conv = ptrtoint %opencl.image2d_rw_t addrspace(1)* %im to i32
 //   ...
 //  }
 // Parameters that are not part of public interface (implicit arguments)
@@ -423,16 +532,21 @@ static void rewriteKernelArguments(Function &F) {
 
   Function *NewF = transformKernelSignature(F, ArgDescs);
   F.getParent()->getFunctionList().insert(F.getIterator(), NewF);
+#if VC_INTR_LLVM_VERSION_MAJOR > 15
+  NewF->splice(NewF->begin(), &F);
+#else
   NewF->getBasicBlockList().splice(NewF->begin(), F.getBasicBlockList());
+#endif
 
   Instruction *InsPt = &NewF->getEntryBlock().front();
-  for (auto ArgPair : llvm::zip(F.args(), NewF->args())) {
-    Instruction *Convert =
-        rewriteArgumentUses(std::get<0>(ArgPair), std::get<1>(ArgPair));
-    if (Convert)
-      Convert->insertBefore(InsPt);
-  }
+  for (auto &&ArgPair : llvm::zip(F.args(), NewF->args()))
+    rewriteArgumentUses(InsPt, std::get<0>(ArgPair), std::get<1>(ArgPair));
 
+#if VC_INTR_LLVM_VERSION_MAJOR >= 17
+  // There might be module level named metadata referencing old function, so replace those usages with new function.
+  // This can be done safely (will not cause type mismatch) when only opaque pointers are used (since LLVM 17).
+  F.replaceAllUsesWith(NewF);
+#endif
   F.eraseFromParent();
 }
 
@@ -447,6 +561,20 @@ static void rewriteKernelsTypes(Module &M) {
       rewriteKernelArguments(*F);
 }
 
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
+static inline void FixAttributes(Function &F, Attribute::AttrKind Attr,
+                                 MemoryEffects MemEf) {
+  if (F.getFnAttribute(Attr).isValid()) {
+    for (auto &U : F.uses()) {
+      if (auto *Call = dyn_cast<CallInst>(&*U)) {
+        Call->setMemoryEffects(MemEf);
+      }
+    }
+    F.removeFnAttr(Attr);
+  }
+}
+#endif
+
 bool GenXSPIRVWriterAdaptorImpl::run(Module &M) {
   auto TargetTriple = StringRef(M.getTargetTriple());
   if (TargetTriple.startswith("genx")) {
@@ -456,7 +584,7 @@ bool GenXSPIRVWriterAdaptorImpl::run(Module &M) {
       M.setTargetTriple("spir64");
   }
 
-  for (auto &&GV : M.getGlobalList()) {
+  for (auto &&GV : M.globals()) {
     GV.addAttribute(VCModuleMD::VCGlobalVariable);
     if (GV.hasAttribute(FunctionMD::GenXVolatile))
       GV.addAttribute(VCModuleMD::VCVolatile);
@@ -467,9 +595,8 @@ bool GenXSPIRVWriterAdaptorImpl::run(Module &M) {
     }
   }
 
-
   for (auto &&F : M)
-      runOnFunction(F);
+    runOnFunction(F);
 
   // Old metadata is not needed anymore at this point.
   if (auto *MD = M.getNamedMetadata(FunctionMD::GenXKernels))
@@ -480,6 +607,18 @@ bool GenXSPIRVWriterAdaptorImpl::run(Module &M) {
 
   if (RewriteSingleElementVectors)
     rewriteSingleElementVectors(M);
+
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
+  // ReadNone and ReadOnly is no more supported for intrinsics:
+  // https://reviews.llvm.org/D135780
+  for (auto &&F : M) {
+    FixAttributes(F, llvm::Attribute::ReadNone, llvm::MemoryEffects::none());
+    FixAttributes(F, llvm::Attribute::ReadOnly,
+                  llvm::MemoryEffects::readOnly());
+    FixAttributes(F, llvm::Attribute::WriteOnly,
+                  llvm::MemoryEffects::writeOnly());
+  }
+#endif
 
   return true;
 }

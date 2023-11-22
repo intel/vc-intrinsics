@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2015-2021 Intel Corporation
+Copyright (C) 2015-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -155,6 +155,7 @@ SPDX-License-Identifier: MIT
 #include "llvm/GenXIntrinsics/GenXIntrOpts.h"
 #include "llvm/GenXIntrinsics/GenXIntrinsics.h"
 #include "llvm/GenXIntrinsics/GenXMetadata.h"
+#include "llvm/InitializePasses.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DiagnosticInfo.h"
@@ -169,10 +170,14 @@ SPDX-License-Identifier: MIT
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
+#include "llvm/Support/ModRef.h"
+#endif
 #include <algorithm>
 #include <set>
 
 #include "llvmVCWrapper/IR/DerivedTypes.h"
+#include "llvmVCWrapper/IR/Type.h"
 
 #define DEBUG_TYPE "cmsimdcflowering"
 
@@ -259,30 +264,24 @@ public:
 };
 
 // The CM SIMD CF lowering pass (a function pass)
-class CMSimdCFLowering : public FunctionPass {
+class CMSimdCFLoweringImpl final {
+  using GListType = std::vector<llvm::GlobalVariable*>;
+  std::map<const Function *, DominatorTree *> DTs;
+  GListType VolList;
 public:
-  static char ID;
-
-  CMSimdCFLowering() : FunctionPass(ID) {
-    initializeCMSimdCFLoweringPass(*PassRegistry::getPassRegistry());
+  CMSimdCFLoweringImpl() {
+    initializeCMSimdCFLoweringLegacyPass(*PassRegistry::getPassRegistry());
   }
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    FunctionPass::getAnalysisUsage(AU);
-  }
+  bool run(Module &M);
 
-  virtual bool doInitialization(Module &M) override;
-  virtual bool runOnFunction(Function &F) override { return false; }
 private:
+  DominatorTree *getDomTree(Function *F);
+  bool isGlobalInterseptVol(GlobalVariable &G, const GListType& VolList);
+  void initializeVolatileGlobals(Module &M);
   void calculateVisitOrder(Module *M, std::vector<Function *> *VisitOrder);
 };
 
 } // namespace
-
-char CMSimdCFLowering::ID = 0;
-INITIALIZE_PASS_BEGIN(CMSimdCFLowering, "cmsimdcflowering", "Lower CM SIMD control flow", false, false)
-INITIALIZE_PASS_END(CMSimdCFLowering, "cmsimdcflowering", "Lower CM SIMD control flow", false, false)
-
-Pass *llvm::createCMSimdCFLoweringPass() { return new CMSimdCFLowering(); }
 
 char ISPCSimdCFLowering::ID = 0;
 namespace llvm {
@@ -292,38 +291,208 @@ INITIALIZE_PASS_BEGIN(ISPCSimdCFLowering, "ispcsimdcflowering", "Lower ISPC SIMD
 INITIALIZE_PASS_END(ISPCSimdCFLowering, "ispcsimdcflowering", "Lower ISPC SIMD control flow", false, false)
 
 Pass *llvm::createISPCSimdCFLoweringPass() {
-    initializeISPCSimdCFLoweringPass(*PassRegistry::getPassRegistry());
-    return new ISPCSimdCFLowering();
+  initializeISPCSimdCFLoweringPass(*PassRegistry::getPassRegistry());
+  return new ISPCSimdCFLowering();
 }
 
 bool ISPCSimdCFLowering::runOnModule(Module &M) {
-    return CMSimdCFLowering().doInitialization(M);
+  return CMSimdCFLoweringImpl().run(M);
 }
 
+DominatorTree *CMSimdCFLoweringImpl::getDomTree(Function *F) {
+  if (!DTs[F]) {
+    auto DT = new DominatorTree;
+    DT->recalculate(*F);
+    DTs[F] = DT;
+  }
+  return DTs[F];
+}
+
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
+static inline void updateFnAttr(Function *Fn) {
+    // Modify ReadNone attribute to support llvm16
+        if (Fn->getFnAttribute(llvm::Attribute::ReadNone).isValid()) {
+          Fn->removeFnAttr(llvm::Attribute::ReadNone);
+          for(auto ui = Fn->use_begin(), ue = Fn->use_end(); ui != ue; ++ui) {
+            if (auto I = dyn_cast<CallInst>(ui->getUser()))
+              I->setMemoryEffects(llvm::MemoryEffects::none());
+          }
+        }
+   }
+#else
+static inline void updateFnAttr(Function *) {}
+#endif
+
 /***********************************************************************
- * doInitialization : per-module initialization for CM simd CF lowering
- *
- * Really we want a module pass for CM simd CF lowering. But, without modifying
- * llvm's PassManagerBuilder, the earliest place to insert a pass is
- * EP_EarlyAsPossible, which must be a function pass. So, we do our
- * per-module processing here in doInitialization.
+ * isGlobalInterseptVol : Check interseption between global var and
+ * a list of global volatile variables
  */
-bool CMSimdCFLowering::doInitialization(Module &M)
-{
-#if 0
-  for (auto &F : M.getFunctionList()) {
-    if (F.hasFnAttribute("CMGenxSIMT")) {
-      if (F.hasFnAttribute(Attribute::AlwaysInline)) {
-        F.removeFnAttr(Attribute::AlwaysInline);
-        F.removeFnAttr(Attribute::InlineHint);
-        F.addFnAttr("CMGenxInline");
-        F.addFnAttr(Attribute::NoInline);
+bool CMSimdCFLoweringImpl::isGlobalInterseptVol(GlobalVariable &G,
+                                                const GListType &VolList) {
+  for (auto UI = G.user_begin(), UE = G.user_end(); UI != UE; UI++) {
+    llvm::Instruction *U = dyn_cast<Instruction>(*UI);
+    if (!U)
+      continue;
+    auto *F = U->getParent()->getParent();
+    auto *DT = getDomTree(F);
+    for(auto &VG : VolList) {
+      for(auto SUI = VG->user_begin(), SUIE = VG->user_end(); SUI != SUIE;SUI++) {
+        auto *I = dyn_cast<Instruction>(*SUI);
+        if (I && DT->dominates(I,&*U)) {
+          return true;
+        }
       }
     }
   }
-#endif
+  return false;
+}
 
-  for (auto &G : M.getGlobalList()) {
+//-----------------------------------------------------------------------------
+// New PM support
+//-----------------------------------------------------------------------------
+PreservedAnalyses llvm::CMSimdCFLowering::run(Module &M,
+                                              ModuleAnalysisManager &) {
+  CMSimdCFLoweringImpl Impl;
+
+  if (!Impl.run(M))
+    return PreservedAnalyses::all();
+
+  return PreservedAnalyses::none();
+}
+
+//-----------------------------------------------------------------------------
+// Legacy PM support
+//-----------------------------------------------------------------------------
+namespace {
+class CMSimdCFLoweringLegacy : public FunctionPass {
+public:
+  static char ID;
+
+  CMSimdCFLoweringLegacy() : FunctionPass(ID) {}
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    FunctionPass::getAnalysisUsage(AU);
+  }
+
+  /***********************************************************************
+   * doInitialization : per-module initialization for CM simd CF lowering
+   *
+   * Really we want a module pass for CM simd CF lowering. But, without
+   * modifying llvm's PassManagerBuilder, the earliest place to insert a pass is
+   * EP_EarlyAsPossible, which must be a function pass. So, we do our
+   * per-module processing here in doInitialization.
+   */
+  bool doInitialization(Module &M) override {
+    CMSimdCFLoweringImpl Impl;
+    return Impl.run(M);
+  }
+  bool runOnFunction(Function &F) override { return false; }
+};
+} // namespace
+
+char CMSimdCFLoweringLegacy::ID = 0;
+INITIALIZE_PASS_BEGIN(CMSimdCFLoweringLegacy, CMSimdCFLowering::getArgString(),
+                      "Lower CM SIMD control flow", false, false)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass);
+INITIALIZE_PASS_END(CMSimdCFLoweringLegacy, CMSimdCFLowering::getArgString(),
+                    "Lower CM SIMD control flow", false, false)
+
+Pass *llvm::createCMSimdCFLoweringPass() {
+  return new CMSimdCFLoweringLegacy();
+}
+
+bool CMSimdCFLoweringImpl::run(Module &M) {
+
+  VolList.clear();
+  DTs.clear();
+
+  initializeVolatileGlobals(M);
+
+  // See if simd CF is used anywhere in this module.
+  // We have to try each overload of llvm.genx.simdcf.any separately.
+  bool HasSimdCF = false;
+  for (unsigned Width = 2; Width <= CMSimdCFLower::MAX_SIMD_CF_WIDTH;
+       Width <<= 1) {
+    auto VT = VCINTR::getVectorType(Type::getInt1Ty(M.getContext()), Width);
+    Function *SimdCFAny = GenXIntrinsic::getGenXDeclaration(
+        &M, GenXIntrinsic::genx_simdcf_any, VT);
+    if (!SimdCFAny->use_empty()) {
+      updateFnAttr(SimdCFAny);
+      HasSimdCF = true;
+      break;
+    }
+  }
+
+  if (HasSimdCF) {
+    // Create the global variable for the execution mask.
+    auto EMTy = VCINTR::getVectorType(Type::getInt1Ty(M.getContext()),
+                                      CMSimdCFLower::MAX_SIMD_CF_WIDTH);
+    auto EMVar = new GlobalVariable(M, EMTy, false /*isConstant*/,
+                                    GlobalValue::InternalLinkage,
+                                    Constant::getAllOnesValue(EMTy), "EM");
+    // Derive an order to process functions such that a function is visited
+    // after anything that calls it.
+    std::vector<Function *> VisitOrder;
+    calculateVisitOrder(&M, &VisitOrder);
+    // Process functions in that order.
+    CMSimdCFLower CFL(EMVar);
+    for (auto i = VisitOrder.begin(), e = VisitOrder.end(); i != e; ++i) {
+      Function *Fn = *i;
+      if (Fn->hasFnAttribute("CMGenxNoSIMDPred"))
+        continue;
+      CFL.processFunction(Fn);
+    }
+  }
+
+  // Any predication calls which remain are not in SIMD CF regions,
+  // so can be deleted.
+  for (auto mi = M.begin(), me = M.end(); mi != me; ++mi) {
+    Function *F = &*mi;
+    if (GenXIntrinsic::getGenXIntrinsicID(F) !=
+        GenXIntrinsic::genx_simdcf_predicate)
+      continue;
+    while (!F->use_empty()) {
+      auto CI = cast<CallInst>(F->use_begin()->getUser());
+      auto EnabledValues = CI->getArgOperand(0);
+      CI->replaceAllUsesWith(EnabledValues);
+      CI->eraseFromParent();
+    }
+  }
+  return HasSimdCF;
+}
+
+/***********************************************************************
+ * initializeVolatileGlobals : Check and modify global variables for vc
+ *
+ * Special case for volatile globals, because there is agreement - they
+ * will be put to hw-register (this agreement give a lot of perfomance).
+ * That's why we need save load and store instruction until the end of
+ * vc-pipeline. And for reach the goal - they will be replaced by
+ * genx.vload/vstore instructions.
+ * But if volatile global overlap other non-volatile global variable
+ * it generate issue in register allocator - because it will be put to
+ * same register. It is special case in coalescing, that's why here
+ * we mark them as volatile too.
+ */
+void CMSimdCFLoweringImpl::initializeVolatileGlobals(Module &M) {
+  // Analise interseption between globals
+  for (auto &G : M.globals()) {
+    if (G.hasAttribute(genx::FunctionMD::GenXVolatile)) {
+      VolList.push_back(&G);
+    }
+  }
+  // If non-volatile global vector intercepts with a volatile global mark it
+  // volatile as well.
+  for (auto &G : M.globals()) {
+    // For non-vectors will be not generated vstores - ignore them
+    if (G.getValueType()->isVectorTy() &&
+        !G.hasAttribute(genx::FunctionMD::GenXVolatile) &&
+        isGlobalInterseptVol(G, VolList)) {
+      G.addAttribute(genx::FunctionMD::GenXVolatile);
+    }
+  }
+
+  // Replace instructions to save them untill the end of vc
+  for (auto &G : M.globals()) {
     if (!G.hasAttribute(genx::FunctionMD::GenXVolatile))
       continue;
     // Transform all load store on volatile globals to vload/vstore to disable
@@ -362,7 +531,7 @@ bool CMSimdCFLowering::doInitialization(Module &M)
         auto AS1 = LI->getPointerAddressSpace();
         if (AS1 != AS0) {
           auto PtrTy = cast<PointerType>(Ptr->getType());
-          PtrTy = PointerType::get(PtrTy->getPointerElementType(), AS0);
+          PtrTy = PointerType::get(VCINTR::Type::getNonOpaquePtrEltTy(PtrTy), AS0);
           Ptr = Builder.CreateAddrSpaceCast(Ptr, PtrTy);
         }
         Type* Tys[] = { LI->getType(), Ptr->getType() };
@@ -370,6 +539,7 @@ bool CMSimdCFLowering::doInitialization(Module &M)
         Value* VLoad = Builder.CreateCall(Fn, Ptr, "gload");
         LI->replaceAllUsesWith(VLoad);
         LI->eraseFromParent();
+        updateFnAttr(Fn);
       }
       else if (auto SI = dyn_cast<StoreInst>(Inst)) {
         if (!SI->getValueOperand()->getType()->isVectorTy())
@@ -379,7 +549,7 @@ bool CMSimdCFLowering::doInitialization(Module &M)
         auto AS1 = SI->getPointerAddressSpace();
         if (AS1 != AS0) {
           auto PtrTy = cast<PointerType>(Ptr->getType());
-          PtrTy = PointerType::get(PtrTy->getPointerElementType(), AS0);
+          PtrTy = PointerType::get(VCINTR::Type::getNonOpaquePtrEltTy(PtrTy), AS0);
           Ptr = Builder.CreateAddrSpaceCast(Ptr, PtrTy);
         }
         Type* Tys[] = { SI->getValueOperand()->getType(), Ptr->getType() };
@@ -387,67 +557,18 @@ bool CMSimdCFLowering::doInitialization(Module &M)
         Function* Fn = GenXIntrinsic::getGenXDeclaration(&M, GenXIntrinsic::genx_vstore, Tys);
         Builder.CreateCall(Fn, Args);
         SI->eraseFromParent();
+        updateFnAttr(Fn);
       }
     }
   }
-
-  // See if simd CF is used anywhere in this module.
-  // We have to try each overload of llvm.genx.simdcf.any separately.
-  bool HasSimdCF = false;
-  for (unsigned Width = 2; Width <= CMSimdCFLower::MAX_SIMD_CF_WIDTH; Width <<= 1) {
-    auto VT = VCINTR::getVectorType(Type::getInt1Ty(M.getContext()), Width);
-    Function *SimdCFAny = GenXIntrinsic::getGenXDeclaration(
-        &M, GenXIntrinsic::genx_simdcf_any, VT);
-    if (!SimdCFAny->use_empty()) {
-      HasSimdCF = true;
-      break;
-    }
-  }
-
-  if (HasSimdCF) {
-    // Create the global variable for the execution mask.
-    auto EMTy = VCINTR::getVectorType(Type::getInt1Ty(M.getContext()),
-      CMSimdCFLower::MAX_SIMD_CF_WIDTH);
-    auto EMVar = new GlobalVariable(M, EMTy, false/*isConstant*/,
-        GlobalValue::InternalLinkage, Constant::getAllOnesValue(EMTy), "EM");
-    // Derive an order to process functions such that a function is visited
-    // after anything that calls it.
-    std::vector<Function *> VisitOrder;
-    calculateVisitOrder(&M, &VisitOrder);
-    // Process functions in that order.
-    CMSimdCFLower CFL(EMVar);
-    for (auto i = VisitOrder.begin(), e = VisitOrder.end(); i != e; ++i) {
-      Function *Fn = *i;
-      if (Fn->hasFnAttribute("CMGenxNoSIMDPred"))
-        continue;
-      CFL.processFunction(Fn);
-    }
-  }
-
-  // Any predication calls which remain are not in SIMD CF regions,
-  // so can be deleted.
-  for (auto mi = M.begin(), me = M.end(); mi != me; ++ mi) {
-    Function *F = &*mi;
-    if (GenXIntrinsic::getGenXIntrinsicID(F) !=
-        GenXIntrinsic::genx_simdcf_predicate)
-      continue;
-    while (!F->use_empty()) {
-      auto CI = cast<CallInst>(F->use_begin()->getUser());
-      auto EnabledValues = CI->getArgOperand(0);
-      CI->replaceAllUsesWith(EnabledValues);
-      CI->eraseFromParent();
-    }
-  }
-  return HasSimdCF;
 }
 
 /***********************************************************************
  * calculateVisitOrder : calculate the order we want to visit functions,
  *    such that a function is not visited until all its callers have been
  */
-void CMSimdCFLowering::calculateVisitOrder(Module *M,
-    std::vector<Function *> *VisitOrder)
-{
+void CMSimdCFLoweringImpl::calculateVisitOrder(
+    Module *M, std::vector<Function *> *VisitOrder) {
   // First build the call graph.
   // We roll our own call graph here, because it is simpler than the general
   // case supported by LLVM's call graph analysis (CM does not support
@@ -509,7 +630,8 @@ void CMSimdCFLowering::calculateVisitOrder(Module *M,
 void CMSimdCFLower::processFunction(Function *ArgF)
 {
   F = ArgF;
-  LLVM_DEBUG(dbgs() << "CMSimdCFLowering::processFunction:\n" << *F << "\n");
+  LLVM_DEBUG(dbgs() << "CMSimdCFLoweringImpl::processFunction:\n"
+                    << *F << "\n");
   LLVM_DEBUG(F->print(dbgs()));
   unsigned CMWidth = PredicatedSubroutines[F];
   // Find the simd branches.
@@ -612,7 +734,7 @@ void CMSimdCFLower::determinePredicatedBlocks()
       // Get BlockL, the closest common postdominator.
       auto BlockL = PDT.findNearestCommonDominator(BlockM, BlockN);
       if (BlockL == BlockM) {
-        // need to include BlockM into the chain 
+        // need to include BlockM into the chain
         // if the branch is the do-while back-edge
         if (auto ParentNode = PDT.getNode(BlockM))
           if (auto IDom = ParentNode->getIDom())
@@ -1012,6 +1134,7 @@ static CallInst *createWrRegion(ArrayRef<Value *> Args, const Twine &Name,
       OverloadedTypes);
   auto WrRegion = CallInst::Create(Decl, Args, Name, InsertBefore);
   WrRegion->setDebugLoc(InsertBefore->getDebugLoc());
+  updateFnAttr(Decl);
   return WrRegion;
 }
 
@@ -1075,7 +1198,7 @@ void CMSimdCFLower::predicateInst(Instruction *Inst, unsigned SimdWidth) {
     // An IntrNoMem intrinsic is an ALU intrinsic and can be ignored.
     if (Callee->doesNotAccessMemory() || CI->arg_size() == 0)
       return;
-    // no predication for intrinsic marked as ISPC uniform, 
+    // no predication for intrinsic marked as ISPC uniform,
 	// for example, atomic and oword_store used in printf
     if (CI->getMetadata("ISPC-Uniform") != nullptr)
       return;
@@ -1246,11 +1369,11 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
   auto StoreVT = dyn_cast<VectorType>(V->getType());
   // Scalar store not predicated
   if (!StoreVT || VCINTR::VectorType::getNumElements(StoreVT) == 1)
-    return; 
+    return;
   // no predication for ISPC uniform store
   if (SI->getMetadata("ISPC-Uniform") != nullptr)
     return;
-  // local-variable store that is only used within the same basic block 
+  // local-variable store that is only used within the same basic block
   // do not need predicate
   if (isSingleBlockLocalStore(SI))
     return;
@@ -1361,17 +1484,18 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
   Instruction *Load = nullptr;
   if (auto SInst = dyn_cast<StoreInst>(SI)) {
     auto *PtrOp = SInst->getPointerOperand();
-    Load = new LoadInst(PtrOp->getType()->getPointerElementType(), PtrOp,
+    Load = new LoadInst(VCINTR::Type::getNonOpaquePtrEltTy(PtrOp->getType()), PtrOp,
                         PtrOp->getName() + ".simdcfpred.load",
                         false /* isVolatile */, SI);
   }
   else {
     auto ID = GenXIntrinsic::genx_vload;
     Value *Addr = SI->getOperand(1);
-    Type *Tys[] = {Addr->getType()->getPointerElementType(), Addr->getType()};
+    Type *Tys[] = {VCINTR::Type::getNonOpaquePtrEltTy(Addr->getType()), Addr->getType()};
     auto Fn = GenXIntrinsic::getGenXDeclaration(
         SI->getParent()->getParent()->getParent(), ID, Tys);
     Load = CallInst::Create(Fn, Addr, ".simdcfpred.vload", SI);
+    updateFnAttr(Fn);
   }
   Load->setDebugLoc(SI->getDebugLoc());
   Value *EM = loadExecutionMask(SI, SimdWidth);
@@ -1463,6 +1587,7 @@ void CMSimdCFLower::predicateSend(CallInst *CI, unsigned IntrinsicID,
   eraseInstruction(CI);
   // Now we can predicate the new send instruction.
   predicateScatterGather(NewCI, SimdWidth, PredOperandNum);
+  updateFnAttr(Decl);
 }
 
 /***********************************************************************
@@ -1582,7 +1707,7 @@ void CMSimdCFLower::lowerSimdCF()
     }
     Value *Cond = Br->getCondition();
     Use *CondUse = getSimdConditionUse(Cond);
-    DebugLoc DL = Br->getDebugLoc();
+    const auto &DL = Br->getDebugLoc();
     if (CondUse)
       Cond = *CondUse;
     else {
@@ -1614,11 +1739,11 @@ void CMSimdCFLower::lowerSimdCF()
         Br);
     Value *RMAddr = getRMAddr(UIP, SimdWidth);
     Instruction *OldEM =
-        new LoadInst(EMVar->getType()->getPointerElementType(), EMVar,
+        new LoadInst(VCINTR::Type::getNonOpaquePtrEltTy(EMVar->getType()), EMVar,
                      EMVar->getName(), false /* isVolatile */, Br);
     OldEM->setDebugLoc(DL);
     auto OldRM =
-        new LoadInst(RMAddr->getType()->getPointerElementType(), RMAddr,
+        new LoadInst(VCINTR::Type::getNonOpaquePtrEltTy(RMAddr->getType()), RMAddr,
                      RMAddr->getName(), false /* isVolatile */, Br);
     OldRM->setDebugLoc(DL);
     Type *Tys[] = { OldEM->getType(), OldRM->getType() };
@@ -1641,6 +1766,7 @@ void CMSimdCFLower::lowerSimdCF()
     // Erase the old llvm.genx.simdcf.any.
     if (OldCond && OldCond->use_empty())
       eraseInstruction(OldCond);
+    updateFnAttr(GotoFunc);
   }
   // Then lower the join points.
   for (auto jpi = JoinPoints.begin(), jpe = JoinPoints.end();
@@ -1653,11 +1779,11 @@ void CMSimdCFLower::lowerSimdCF()
     // Insert {NewEM,BranchCond} = llvm.genx.simdcf.join(OldEM,RM)
     Value *RMAddr = getRMAddr(JP, SimdWidth);
     Instruction *OldEM =
-        new LoadInst(EMVar->getType()->getPointerElementType(), EMVar,
+        new LoadInst(VCINTR::Type::getNonOpaquePtrEltTy(EMVar->getType()), EMVar,
                      EMVar->getName(), false /* isVolatile */, InsertBefore);
     OldEM->setDebugLoc(DL);
     auto RM =
-        new LoadInst(RMAddr->getType()->getPointerElementType(), RMAddr,
+        new LoadInst(VCINTR::Type::getNonOpaquePtrEltTy(RMAddr->getType()), RMAddr,
                      RMAddr->getName(), false /* isVolatile */, InsertBefore);
     RM->setDebugLoc(DL);
     Type *Tys[] = { OldEM->getType(), RM->getType() };
@@ -1699,6 +1825,7 @@ void CMSimdCFLower::lowerSimdCF()
       getRMAddr(JIP, VCINTR::VectorType::getNumElements(
                          cast<VectorType>(RM->getType())));
     }
+    updateFnAttr(JoinFunc);
   }
 }
 
@@ -1736,9 +1863,9 @@ void CMSimdCFLower::lowerUnmaskOps() {
           MaskBegins.push_back(CIB);
           MaskEnds.push_back(CIE);
           // put in genx_simdcf_savemask and genx_simdcf_remask
-          auto DL = CIB->getDebugLoc();
+          const auto &DL = CIB->getDebugLoc();
           Instruction *OldEM =
-              new LoadInst(EMVar->getType()->getPointerElementType(), EMVar,
+              new LoadInst(VCINTR::Type::getNonOpaquePtrEltTy(EMVar->getType()), EMVar,
                            EMVar->getName(), false /* isVolatile */, CIB);
           OldEM->setDebugLoc(DL);
           Type *Tys[] = {OldEM->getType()};
@@ -1749,7 +1876,7 @@ void CMSimdCFLower::lowerUnmaskOps() {
           auto Savemask = CallInst::Create(SavemaskFunc, Args, "savemask", CIB);
           Savemask->setDebugLoc(DL);
           // the use should be the store for savemask
-          CIB->replaceAllUsesWith(Savemask); 
+          CIB->replaceAllUsesWith(Savemask);
           Type *Ty1s[] = {OldEM->getType()};
           auto UnmaskFunc = GenXIntrinsic::getGenXDeclaration(
               BB->getParent()->getParent(), GenXIntrinsic::genx_simdcf_unmask,
@@ -1760,19 +1887,22 @@ void CMSimdCFLower::lowerUnmaskOps() {
           (new StoreInst(Unmask, EMVar, false /* isVolatile */, CIB))
               ->setDebugLoc(DL);
           // put in genx_simdcf_remask
-          DL = CIE->getDebugLoc();
-          OldEM = new LoadInst(EMVar->getType()->getPointerElementType(), EMVar,
+          const auto &DLCIE = CIE->getDebugLoc();
+          OldEM = new LoadInst(VCINTR::Type::getNonOpaquePtrEltTy(EMVar->getType()), EMVar,
                                EMVar->getName(), false /* isVolatile */, CIE);
-          OldEM->setDebugLoc(DL);
+          OldEM->setDebugLoc(DLCIE);
           Type *Ty2s[] = {OldEM->getType()};
           auto RemaskFunc = GenXIntrinsic::getGenXDeclaration(
                               BB->getParent()->getParent(),
                               GenXIntrinsic::genx_simdcf_remask, Ty2s);
           Value *Arg2s[] = {OldEM, LoadV};
           auto Remask = CallInst::Create(RemaskFunc, Arg2s, "remask", CIE);
-          Remask->setDebugLoc(DL);
+          Remask->setDebugLoc(DLCIE);
           (new StoreInst(Remask, EMVar, false /* isVolatile */, CIE))
-              ->setDebugLoc(DL);
+              ->setDebugLoc(DLCIE);
+          updateFnAttr(SavemaskFunc);
+          updateFnAttr(UnmaskFunc);
+          updateFnAttr(RemaskFunc);
         }
       }
     }
@@ -1838,7 +1968,7 @@ Value *CMSimdCFLower::replicateMask(Value *EM, Instruction *InsertBefore,
 Instruction *CMSimdCFLower::loadExecutionMask(Instruction *InsertBefore,
                                               unsigned SimdWidth) {
   Instruction *EM =
-      new LoadInst(EMVar->getType()->getPointerElementType(), EMVar,
+      new LoadInst(VCINTR::Type::getNonOpaquePtrEltTy(EMVar->getType()), EMVar,
                    EMVar->getName(), false /* isVolatile */, InsertBefore);
 
   // If the simd width is not MAX_SIMD_CF_WIDTH, extract the part of EM we want.
@@ -1882,7 +2012,7 @@ Value *CMSimdCFLower::getRMAddr(BasicBlock *JP, unsigned SimdWidth)
   }
   assert(!SimdWidth ||
          VCINTR::VectorType::getNumElements(cast<VectorType>(
-             (*RMAddr)->getType()->getPointerElementType())) == SimdWidth);
+             VCINTR::Type::getNonOpaquePtrEltTy((*RMAddr)->getType()))) == SimdWidth);
   return *RMAddr;
 }
 

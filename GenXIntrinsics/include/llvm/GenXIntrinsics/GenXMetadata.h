@@ -57,6 +57,7 @@ static constexpr const char VCArgumentKind[] = "VCArgumentKind";
 static constexpr const char VCArgumentDesc[] = "VCArgumentDesc";
 static constexpr const char VCSIMTCall[] = "VCSIMTCall";
 static constexpr const char VCNamedBarrierCount[] = "VCNamedBarrierCount";
+static constexpr const char VCMediaBlockIO[] = "VCMediaBlockIO";
 } // namespace VCFunctionMD
 
 enum KernelMDOp {

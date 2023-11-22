@@ -2,7 +2,7 @@
 
 # ========================== begin_copyright_notice ============================
 #
-# Copyright (C) 2019-2021 Intel Corporation
+# Copyright (C) 2019-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -79,26 +79,15 @@ attribute_map = {
 # order does really matter.
 # It is used to define ordering between the respected platforms
 platform_list = [
-    "HSW",
-    "BDW",
-    "CHV",
-    "SKL",
-    "BXT",
-    "KBL",
-    "GLK",
-    "CNL",
-    "ICL",
-    "ICLLP",
-    "TGLLP",
-    "RKL",
-    "DG1",
-    "ADLP",
-    "ADLS",
-    "XEHP",
-    "DG2",
-    "PVC",
-    "PVCXT_A0",
-    "PVCXT",
+    "Gen8",
+    "Gen9",
+    "Gen9LP",
+    "Gen11",
+    "XeLP",
+    "XeHP",
+    "XeHPG",
+    "XeLPG",
+    "XeHPC",
 ]
 
 def getAttributeList(Attrs):
@@ -551,7 +540,7 @@ def createAttributeTable():
       }}\n""".format(num=i+1, attrs=','.join(Attrs)))
     f.write("    }\n"
             "  }\n"
-            "  return AttributeList::get(C, makeArrayRef(AS, NumAttrs));\n"
+            "  return AttributeList::get(C, ArrayRef<AttributeList>(AS, NumAttrs));\n"
             "}\n"
             "#endif // GET_INTRINSIC_ATTRIBUTES\n\n")
     f.close()

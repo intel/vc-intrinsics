@@ -1,6 +1,6 @@
 # ========================== begin_copyright_notice ============================
 #
-# Copyright (C) 2019-2021 Intel Corporation
+# Copyright (C) 2019-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -38,12 +38,12 @@
 # CPU can be any from "platforms" in Intrinsics.py or "ALL"
 # when field is absent - ALL by default
 # additional commands :
-# "CPU" = "-SKL" - unsupported since SKL
-# "CPU" = "KBL+" - supported from KBL
-# "CPU" = "~ICLLP" - unsupported on ICLLP
+# "CPU" = "-Gen9" - unsupported since Gen9
+# "CPU" = "Gen11+" - supported from Gen11
+# "CPU" = "~XeLP" - unsupported on XeLP
 # CPU can be list:
-# ["CNL+", "KBL"] - supported on KBL and all started from CNL
-# ["ALL", "~TGLLP"] - supported everyvere except TGLLP
+# ["XeLP+", "Gen9"] - supported on Gen9 and all started from XeLP
+# ["ALL", "~XeLP"] - supported everyvere except XeLP
 
 Imported_Intrinsics = \
 {
@@ -1989,6 +1989,112 @@ Imported_Intrinsics = \
                             "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","int"],
                             "attributes" : "ReadMem"
                           },
+
+### ``llvm.genx.lsc.load.merge.*.<return type if not void>.<any type>.<any type>`` : lsc_load merge instructions
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * ``llvm.genx.lsc.load.merge.slm`` :
+### * ``llvm.genx.lsc.load.merge.bti`` :
+### * ``llvm.genx.lsc.load.merge.stateless`` :
+###
+### * Exec_size ignored unless operation is transposed (DataOrder == Tranpose)
+### * arg0: {1,32}Xi1 predicate (overloaded)
+### * arg1: i8 Subopcode, [MBZ]
+### * arg2: i8 Caching behavior for L1, [MBC]
+### * arg3: i8 Caching behavior for L3, [MBC]
+### * arg4: i16 Address scale, [MBC]
+### * arg5: i32 Immediate offset added to each address, [MBC]
+### * arg6: i8 The dataum size, [MBC]
+### * arg7: i8 Number of elements to load per address (vector size), [MBC]
+### * arg8: i8 Indicates if the data is transposed during the transfer, [MBC]
+### * arg9: i8 Channel mask for quad versions, [MBC]
+### * arg10: {1,32}Xi{16,32,64} The vector register holding offsets (overloaded)
+###          for flat version Base Address + Offset[i] goes here
+### * arg11: i32 surface to use for this operation. This can be an immediate or a register
+###          for flat and bindless version pass zero here
+### * arg12: The data to merge disable channels
+###
+### * Return value: the value read merged witg arg12 by predicate
+###
+### Cache mappings are:
+###
+###   - 0 -> .df (default)
+###   - 1 -> .uc (uncached)
+###   - 2 -> .ca (cached)
+###   - 3 -> .wb (writeback)
+###   - 4 -> .wt (writethrough)
+###   - 5 -> .st (streaming)
+###   - 6 -> .ri (read-invalidate)
+###
+### Only certain combinations of CachingL1 with CachingL3 are valid on hardware.
+###
+### +---------+-----+-----------------------------------------------------------------------+
+### |  L1     |  L3 | Notes                                                                 |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .df     | .df | default behavior on both L1 and L3 (L3 uses MOCS settings)            |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .uc     | .uc | uncached (bypass) both L1 and L3                                      |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .st     | .uc | streaming L1 / bypass L3                                              |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .uc     | .ca | bypass L1 / cache in L3                                               |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .ca     | .uc | cache in L1 / bypass L3                                               |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .ca     | .ca | cache in both L1 and L3                                               |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .st     | .ca | streaming L1 / cache in L3                                            |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .ri     | .ca | read-invalidate (e.g. last-use) on L1 loads / cache in L3             |
+### +---------+-----+-----------------------------------------------------------------------+
+###
+### Immediate offset. The compiler may be able to fuse this add into the message, otherwise
+### additional instructions are generated to honor the semantics.
+### Alternative variant for predicated variant of loads - merge destination for disabled
+### lanes with values from additional input(arg12)
+###
+### Dataum size mapping is
+###
+###   - 1 = :u8
+###   - 2 = :u16
+###   - 3 = :u32
+###   - 4 = :u64
+###   - 5 = :u8u32 (load 8b, zero extend to 32b; store the opposite),
+###   - 6 = :u16u32 (load 8b, zero extend to 32b; store the opposite),
+###   - 7 = :u16u32h (load 16b into high 16 of each 32b; store the high 16)
+###
+    "lsc_load_merge_slm" : { "result" : "anyvector",
+                             "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","int",0],
+                             "attributes" : "ReadMem"
+                           },
+    "lsc_load_merge_stateless" : { "result" : "anyvector",
+                                   "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","int",0],
+                                    "attributes" : "ReadMem"
+                                 },
+    "lsc_load_merge_bindless" : { "result" : "anyvector",
+                                  "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","int",0],
+                                  "attributes" : "ReadMem"
+                                },
+    "lsc_load_merge_bti" : { "result" : "anyvector",
+                             "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","int",0],
+                             "attributes" : "ReadMem"
+                           },
+    "lsc_load_merge_quad_slm" : { "result" : "anyvector",
+                                  "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","int",0],
+                                  "attributes" : "ReadMem"
+                                },
+    "lsc_load_merge_quad_stateless" : { "result" : "anyvector",
+                                        "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","int",0],
+                                        "attributes" : "ReadMem"
+                                      },
+    "lsc_load_merge_quad_bindless" : { "result" : "anyvector",
+                                       "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","int",0],
+                                       "attributes" : "ReadMem"
+                                     },
+    "lsc_load_merge_quad_bti" : { "result" : "anyvector",
+                                  "arguments" : ["any","char","char","char","short","int","char","char","char","char","any","int",0],
+                                  "attributes" : "ReadMem"
+                                },
 
 ### ``llvm.genx.lsc.store.*.<any type>.<any type>.<any vector>`` : lsc_store instructions
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
