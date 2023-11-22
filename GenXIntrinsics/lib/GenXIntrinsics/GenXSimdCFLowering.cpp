@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2015-2022 Intel Corporation
+Copyright (C) 2015-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -1840,7 +1840,7 @@ void CMSimdCFLower::lowerUnmaskOps() {
     for (auto bi = BB->begin(), be = BB->end(); bi != be; ++bi) {
       Instruction *Inst = &*bi;
       // doing the work
-      if (auto CIE = dyn_cast_or_null<CallInst>(Inst)) {
+      if (auto *CIE = dyn_cast<CallInst>(Inst)) {
         if (GenXIntrinsic::getGenXIntrinsicID(CIE) ==
             GenXIntrinsic::genx_unmask_end) {
           auto LoadV = dyn_cast<LoadInst>(CIE->getArgOperand(0));

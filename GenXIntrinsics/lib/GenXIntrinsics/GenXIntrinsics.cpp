@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2019-2021 Intel Corporation
+Copyright (C) 2019-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -426,6 +426,8 @@ void GenXIntrinsic::getIntrinsicInfoTableEntries(
 /// parse ffXX as f(fXX) or f(fX)X.  (X is a placeholder for any other type.)
 static std::string getMangledTypeStr(Type *Ty) {
   std::string Result;
+  if (!Ty)
+    return Result;
   if (PointerType *PTyp = dyn_cast<PointerType>(Ty)) {
     Result += "p" + llvm::utostr(PTyp->getAddressSpace());
 #if VC_INTR_LLVM_VERSION_MAJOR >= 13
@@ -463,7 +465,7 @@ static std::string getMangledTypeStr(Type *Ty) {
     for (auto I : TargetTy->int_params())
       Result += "_" + llvm::utostr(I);
 #endif // VC_INTR_LLVM_VERSION_MAJOR >= 16
-  } else if (Ty) {
+  } else {
     Result += EVT::getEVT(Ty).getEVTString();
   }
 

@@ -204,7 +204,8 @@ static Type *getTypeWithSingleElementVector(Type *T, size_t InnerPointers = 0) {
     return T;
   } else if (auto *StructTy = dyn_cast<StructType>(T)) {
     auto It = SEVRichStructMap.find(StructTy);
-    assert(It != SEVRichStructMap.end());
+    if (It == SEVRichStructMap.end())
+      llvm_unreachable("Unexpected SEV StructType");
     return It->second;
   }
   auto NPtrs = getPointerNesting(T);
