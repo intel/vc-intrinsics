@@ -614,7 +614,11 @@ static void rewriteSingleElementVectorSignature(Function &F,
   NewF.copyAttributesFrom(&F);
   NewF.takeName(&F);
   NewF.copyMetadata(&F, 0);
+#if VC_INTR_LLVM_VERSION_MAJOR >= 18
+  NewF.updateAfterNameChange();
+#else // VC_INTR_LLVM_VERSION_MAJOR >= 18
   NewF.recalculateIntrinsicID();
+#endif // VC_INTR_LLVM_VERSION_MAJOR >= 18
   F.getParent()->getFunctionList().insert(F.getIterator(), &NewF);
 #if VC_INTR_LLVM_VERSION_MAJOR > 15
   NewF.splice(NewF.begin(), &F);
