@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2019-2021 Intel Corporation
+Copyright (C) 2019-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -27,5 +27,19 @@ TEST(GenXIntrinsics, OverloadedTypes) {
             true);
   EXPECT_EQ(GenXIntrinsic::isOverloadedArg(GenXIntrinsic::genx_simdcf_any, 0),
             true);
+  EXPECT_EQ(GenXIntrinsic::isOverloadedArg(GenXIntrinsic::genx_ssdp4a, 0), true);
+  EXPECT_EQ(GenXIntrinsic::isOverloadedArg(GenXIntrinsic::genx_ssdp4a, 1), true);
+  EXPECT_EQ(GenXIntrinsic::isOverloadedArg(GenXIntrinsic::genx_ssdp4a, 2), true);
+  EXPECT_EQ(GenXIntrinsic::isOverloadedArg(GenXIntrinsic::genx_dpasw_nosrc0, 2),
+            false);
+  EXPECT_EQ(
+      GenXIntrinsic::isOverloadedArg(GenXIntrinsic::genx_lsc_store_slm, 10),
+      true);
+  EXPECT_EQ(
+      GenXIntrinsic::isOverloadedArg(GenXIntrinsic::genx_lsc_store_slm, 11),
+      true);
+  EXPECT_EQ(
+      GenXIntrinsic::isOverloadedArg(GenXIntrinsic::genx_lsc_store_slm, 12),
+      false);
 }
 } // namespace

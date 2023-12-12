@@ -2,7 +2,7 @@
 
 # ========================== begin_copyright_notice ============================
 #
-# Copyright (C) 2019-2022 Intel Corporation
+# Copyright (C) 2019-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -87,7 +87,9 @@ platform_list = [
     "XeHP",
     "XeHPG",
     "XeLPG",
+    "XeLPGPlus",
     "XeHPC",
+    "Xe2",
 ]
 
 def getAttributeList(Attrs):
