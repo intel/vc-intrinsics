@@ -89,6 +89,7 @@ platform_list = [
     "XeLPG",
     "XeLPGPlus",
     "XeHPC",
+    "XeHPCVG",
     "Xe2",
 ]
 
@@ -572,7 +573,7 @@ def platformExprProcess(curr_line,platf_expr,platforms):
         platf_id = platforms.get(platf_expr[1:])
         if platf_id is None:
             raise NameError("Error in platf in " + str(Intrinsics[ID_array[i]]))
-        curr_line[j] = 0;
+        curr_line[platf_id] = 0;
     elif platf_expr == "ALL":
         curr_line = [1]*len(platforms)
     else:

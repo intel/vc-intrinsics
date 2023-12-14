@@ -1584,7 +1584,8 @@ Imported_Intrinsics = \
 ###
     "dpas" : { "result" : "anyvector",
                "arguments" : [0,"anyvector","anyvector","int"],
-               "attributes" : "NoMem"
+               "attributes" : "NoMem",
+               "platforms" : [ "XeHP+", "~XeLPG", "~XeHPCVG" ],
              },
 
 ### ``llvm.genx.dpas2.<return type>.<vector type>.<vector type>.<vector type>`` : dpas instruction (Dot Product Accumulate Systolic)
@@ -1604,7 +1605,8 @@ Imported_Intrinsics = \
 ###
     "dpas2" : { "result" : "anyvector",
                 "arguments" : ["anyvector","anyvector","anyvector","int","int", "int", "int", "int", "int"],
-                "attributes" : "NoMem"
+                "attributes" : "NoMem",
+                "platforms" : [ "XeHP+", "~XeLPG", "~XeHPCVG" ],
               },
 
 ### ``llvm.genx.dpas.nosrc0.<return type>.<vector type>.<vector type>`` : dpas instruction (Dot Product Accumulate Systolic) with no src0
@@ -1618,7 +1620,8 @@ Imported_Intrinsics = \
 ###
     "dpas_nosrc0" : { "result" : "anyvector",
                       "arguments" : ["anyvector","anyvector","int"],
-                      "attributes" : "NoMem"
+                      "attributes" : "NoMem",
+                      "platforms" : [ "XeHP+", "~XeLPG", "~XeHPCVG" ],
                     },
 
 ### ``llvm.genx.dpasw.<return type>.<vector type>.<vector type>`` : dpasw instruction (Dot Product Accumulate Systolic)
@@ -1633,7 +1636,9 @@ Imported_Intrinsics = \
 ###
     "dpasw" : { "result" : "anyvector",
                 "arguments" : [0,"anyvector","anyvector","int"],
-                "attributes" : "NoMem"
+                "attributes" : "NoMem",
+                "platforms" : [
+                    "XeHP", "XeHPG", "XeLPGPlus" ],
               },
 
 ### ``llvm.genx.dpasw.nosrc0.<return type>.<vector type>.<vector type>`` : dpasw instruction (Dot Product Accumulate Systolic) with no src0
@@ -1647,7 +1652,9 @@ Imported_Intrinsics = \
 ###
     "dpasw_nosrc0" : { "result" : "anyvector",
                        "arguments" : ["anyvector","anyvector","int"],
-                       "attributes" : "NoMem"
+                       "attributes" : "NoMem",
+                       "platforms" : [
+                           "XeHP", "XeHPG", "XeLPGPlus" ],
                      },
 
 ### ``llvm.genx.*dp4a*.<return type>.<vector type>.<vector type>.<vector type>`` : dp4a instruction (Dot Product 4 Accumulate)
