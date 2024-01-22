@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2020-2024 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -578,7 +578,7 @@ bool GenXSPIRVReaderAdaptorImpl::run(Module &M) {
   }
 
   rewriteKernelsTypes(M);
-  restoreSingleElementVectors(M);
+  SEVUtil(M).restoreSEVs();
 
   for (auto &&F : M)
     runOnFunction(F);

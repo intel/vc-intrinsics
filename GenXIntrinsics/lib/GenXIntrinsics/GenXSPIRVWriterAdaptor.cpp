@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2023 Intel Corporation
+Copyright (C) 2020-2024 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -606,7 +606,7 @@ bool GenXSPIRVWriterAdaptorImpl::run(Module &M) {
     rewriteKernelsTypes(M);
 
   if (RewriteSingleElementVectors)
-    rewriteSingleElementVectors(M);
+    SEVUtil(M).rewriteSEVs();
 
 #if VC_INTR_LLVM_VERSION_MAJOR >= 16
   // ReadNone and ReadOnly is no more supported for intrinsics:
