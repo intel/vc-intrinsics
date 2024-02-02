@@ -513,7 +513,7 @@ void SEVUtil::manageSEVAttributes(Function &OldF, Function &NewF) {
   for (Function::arg_iterator ArgIt = NewF.arg_begin(), E = NewF.arg_end();
        ArgIt != E; ++ArgIt) {
     auto ArgNo = ArgIt->getArgNo();
-    auto *OldTy = (OldF.arg_begin() + ArgNo)->getType();
+    auto *OldTy = VCINTR::Function::getArg(OldF, ArgNo)->getType();
     auto *NewTy = ArgIt->getType();
     manageSEVAttribute(NewF, OldTy, NewTy, ArgNo + 1);
   }
