@@ -1,6 +1,6 @@
 # ========================== begin_copyright_notice ============================
 #
-# Copyright (C) 2019-2023 Intel Corporation
+# Copyright (C) 2019-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -4281,8 +4281,27 @@ Imported_Intrinsics = \
 ###
     "nbarrier" : { "result" : "void",
                    "arguments" : ["char","char","char"],
-                   "attributes" : "Convergent"
-                 },
+                   "attributes" : "SideEffects",
+                   "platforms" : "XeHPC+", },
+
+### ``llvm.genx.nbarrier.arrive`` : Named barrier arrive operation
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0: i8 barrier id
+### * arg1: i8 thread role
+### * arg2: i8 number of producers
+### * arg3: i8 number of consumers
+###
+### Thread roles are the following:
+###  - 0: the thread is a barrier producer and consumer
+###  - 1: the thread is only a barrier producer
+###  - 2: the thread is only a barrier consumer
+###  - other values are invalid
+###
+    "nbarrier_arrive" : { "result" : "void",
+                          "arguments" : ["char", "char", "char", "char"],
+                          "attributes" : "SideEffects",
+                          "platforms" : "XeHPC+", },
 
 ### ``llvm.genx.cache.flush`` : vISA CACHE_FLUSH instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
