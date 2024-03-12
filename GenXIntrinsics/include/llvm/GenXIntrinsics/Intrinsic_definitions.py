@@ -4372,7 +4372,8 @@ Imported_Intrinsics = \
 ###
     "raw_send" : { "result" : "anyvector",
                    "arguments" : ["int","anyint","int","int","anyvector",0],
-                   "attributes" : "None"
+                   "platforms": "-Xe2",
+                   "attributes" : "SideEffects"
                  },
 
 ### ``llvm.genx.raw.send.noresult.<any int>.<vector type>`` : vISA RAW_SEND instruction with no result
@@ -4397,7 +4398,8 @@ Imported_Intrinsics = \
 ###
     "raw_send_noresult" : { "result" : "void",
                             "arguments" : ["int","anyint","int","int","anyvector"],
-                            "attributes" : "None"
+                            "platforms": "-Xe2",
+                            "attributes" : "SideEffects"
                           },
 
 ### ``llvm.genx.raw.sends.<return type>.<any int>.<vector type>.<vector type>`` : vISA RAW_SENDS instruction
