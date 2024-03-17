@@ -4372,7 +4372,6 @@ Imported_Intrinsics = \
 ###
     "raw_send" : { "result" : "anyvector",
                    "arguments" : ["int","anyint","int","int","anyvector",0],
-                   "platforms": "-Xe2",
                    "attributes" : "SideEffects"
                  },
 
@@ -4398,7 +4397,6 @@ Imported_Intrinsics = \
 ###
     "raw_send_noresult" : { "result" : "void",
                             "arguments" : ["int","anyint","int","int","anyvector"],
-                            "platforms": "-Xe2",
                             "attributes" : "SideEffects"
                           },
 
