@@ -73,6 +73,7 @@ static Type *getGlobalPtrType(LLVMContext &Ctx) {
   return PointerType::get(Type::getInt8Ty(Ctx), SPIRVParams::SPIRVGlobalAS);
 }
 
+#if VC_INTR_LLVM_VERSION_MAJOR <= 16
 // Get some opaque structure pointer to global address space. This is
 // how OCL/SPIRV types are implemented in clang/SPIRV Translator.
 static Type *getOpaquePtrType(Module *M, StringRef Name,
@@ -192,6 +193,7 @@ static Type *getArgTypeFromDesc(SPIRVArgDesc Desc, Argument &Arg) {
     return getOpaqueType(Desc, Arg.getParent()->getParent());
   }
 }
+#endif // VC_INTR_LLVM_VERSION_MAJOR <= 16
 
 #if VC_INTR_LLVM_VERSION_MAJOR >= 16
 static Type *getImageTargetType(SPIRVArgDesc Desc, Argument &Arg) {
@@ -254,19 +256,24 @@ static Function *
 transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
   SmallVector<Type *, 8> NewParams;
 
-  auto GetArgType =
-#if VC_INTR_LLVM_VERSION_MAJOR >= 16
-      [UseTargetTypes = !F.getContext().supportsTypedPointers()](
-          SPIRVArgDesc Desc, Argument &Arg) {
-        if (UseTargetTypes)
-          return getArgTargetTypeFromDesc(Desc, Arg);
-        return getArgTypeFromDesc(Desc, Arg);
-      };
-#else  // VC_INTR_LLVM_VERSION_MAJOR >= 16
-      [](SPIRVArgDesc Desc, Argument &Arg) {
-        return getArgTypeFromDesc(Desc, Arg);
-      };
-#endif // VC_INTR_LLVM_VERSION_MAJOR >= 16
+  // Before LLVM 16, we don't want to use target types. After LLVM 16, typed
+  // pointers are always disabled, so we must use target types.
+#if VC_INTR_LLVM_VERSION_MAJOR == 16
+  bool UseTargetTypes = !F.getContext().supportsTypedPointers();
+#elif VC_INTR_LLVM_VERSION_MAJOR > 16
+  constexpr bool UseTargetTypes = true;
+#endif
+  auto GetArgType = [&](SPIRVArgDesc Desc, Argument &Arg) {
+#if VC_INTR_LLVM_VERSION_MAJOR > 16
+    return getArgTargetTypeFromDesc(Desc, Arg);
+#else
+#if VC_INTR_LLVM_VERSION_MAJOR == 16
+    if (UseTargetTypes)
+      return getArgTargetTypeFromDesc(Desc, Arg);
+#endif // VC_INTR_LLVM_VERSION_MAJOR == 16
+    return getArgTypeFromDesc(Desc, Arg);
+#endif
+  };
 
   std::transform(Descs.begin(), Descs.end(), F.arg_begin(),
                  std::back_inserter(NewParams), GetArgType);
@@ -284,8 +291,7 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
     if (Descs[i].Ty == SPIRVType::None)
       continue;
 #if VC_INTR_LLVM_VERSION_MAJOR >= 16
-    if (!F.getContext().supportsTypedPointers() &&
-        Descs[i].Ty == SPIRVType::Image2dMediaBlock) {
+    if (UseTargetTypes && Descs[i].Ty == SPIRVType::Image2dMediaBlock) {
       AttrBuilder AttrBuilder(NewF->getContext());
       AttrBuilder.addAttribute(VCFunctionMD::VCMediaBlockIO);
       NewF->addParamAttrs(i, AttrBuilder);
