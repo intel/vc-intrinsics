@@ -28,6 +28,7 @@ SPDX-License-Identifier: MIT
 #include "llvm/Pass.h"
 #include "llvm/Support/Process.h"
 
+#include "llvmVCWrapper/ADT/StringRef.h"
 #include "llvmVCWrapper/IR/Attributes.h"
 #include "llvmVCWrapper/IR/DerivedTypes.h"
 #include "llvmVCWrapper/IR/Function.h"
@@ -577,8 +578,8 @@ static inline void FixAttributes(Function &F, Attribute::AttrKind Attr,
 
 bool GenXSPIRVWriterAdaptorImpl::run(Module &M) {
   auto TargetTriple = StringRef(M.getTargetTriple());
-  if (TargetTriple.startswith("genx")) {
-    if (TargetTriple.startswith("genx32"))
+  if (VCINTR::StringRef::starts_with(TargetTriple, "genx")) {
+    if (VCINTR::StringRef::starts_with(TargetTriple, "genx32"))
       M.setTargetTriple("spir");
     else
       M.setTargetTriple("spir64");

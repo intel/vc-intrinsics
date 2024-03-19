@@ -31,6 +31,7 @@ See LICENSE.TXT for details.
 #include <llvm/ADT/StringMap.h>
 #include <llvm/CodeGen/ValueTypes.h>
 
+#include "llvmVCWrapper/ADT/StringRef.h"
 #include "llvmVCWrapper/IR/DerivedTypes.h"
 #include "llvmVCWrapper/IR/Intrinsics.h"
 #include "llvmVCWrapper/IR/Type.h"
@@ -536,7 +537,7 @@ bool GenXIntrinsic::isOverloadedRet(unsigned IntrinID) {
 ///
 /// Returns the relevant slice of \c IntrinsicNameTable
 static ArrayRef<const char *> findTargetSubtable(StringRef Name) {
-  assert(Name.startswith("llvm.genx."));
+  assert(VCINTR::StringRef::starts_with(Name, "llvm.genx."));
 
   ArrayRef<IntrinsicTargetInfo> Targets(TargetInfos);
   // Drop "llvm." and take the first dotted component. That will be the target
@@ -554,7 +555,7 @@ static ArrayRef<const char *> findTargetSubtable(StringRef Name) {
 GenXIntrinsic::ID GenXIntrinsic::getGenXIntrinsicID(const Function *F) {
   assert(F);
   llvm::StringRef Name = F->getName();
-  if (!Name.startswith(getGenXIntrinsicPrefix()))
+  if (!VCINTR::StringRef::starts_with(Name, getGenXIntrinsicPrefix()))
     return GenXIntrinsic::not_genx_intrinsic;
 
   // Check metadata cache.
@@ -568,7 +569,7 @@ GenXIntrinsic::ID GenXIntrinsic::getGenXIntrinsicID(const Function *F) {
     if (isGenXIntrinsic(Id)) {
       const char *NamePrefix =
           GenXIntrinsicNameTable[Id - GenXIntrinsic::not_genx_intrinsic];
-      if (Name.startswith(NamePrefix))
+      if (VCINTR::StringRef::starts_with(Name, NamePrefix))
         return Id;
     }
   }
