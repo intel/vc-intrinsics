@@ -432,9 +432,9 @@ static std::string getMangledTypeStr(Type *Ty) {
   if (PointerType *PTyp = dyn_cast<PointerType>(Ty)) {
     Result += "p" + llvm::utostr(PTyp->getAddressSpace());
 #if VC_INTR_LLVM_VERSION_MAJOR >= 13
-#if VC_INTR_LLVM_VERSION_MAJOR < 18
+#if VC_INTR_LLVM_VERSION_MAJOR < 17
     if (PTyp->isOpaque())
-#endif // VC_INTR_LLVM_VERSION_MAJOR < 18
+#endif // VC_INTR_LLVM_VERSION_MAJOR < 17
       return Result;
 #endif // VC_INTR_LLVM_VERSION_MAJOR >= 13
     Result += getMangledTypeStr(VCINTR::Type::getNonOpaquePtrEltTy(PTyp));
