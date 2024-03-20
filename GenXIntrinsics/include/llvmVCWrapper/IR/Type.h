@@ -17,9 +17,11 @@ namespace Type {
 inline llvm::Type *getNonOpaquePtrEltTy(const llvm::Type *PTy) {
 #if VC_INTR_LLVM_VERSION_MAJOR < 14
   return PTy->getPointerElementType();
-#else  // VC_INTR_LLVM_VERSION_MAJOR < 14
+#elif VC_INTR_LLVM_VERSION_MAJOR < 17
   return PTy->getNonOpaquePointerElementType();
-#endif // VC_INTR_LLVM_VERSION_MAJOR < 14
+#else
+  llvm_unreachable("Pointers no longer have element types");
+#endif
 }
 
 } // namespace Type

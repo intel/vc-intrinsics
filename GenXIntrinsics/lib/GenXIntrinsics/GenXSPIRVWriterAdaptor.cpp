@@ -28,6 +28,7 @@ SPDX-License-Identifier: MIT
 #include "llvm/Pass.h"
 #include "llvm/Support/Process.h"
 
+#include "llvmVCWrapper/ADT/StringRef.h"
 #include "llvmVCWrapper/IR/Attributes.h"
 #include "llvmVCWrapper/IR/DerivedTypes.h"
 #include "llvmVCWrapper/IR/Function.h"
@@ -253,19 +254,22 @@ static Function *
 transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
   SmallVector<Type *, 8> NewParams;
 
-  auto GetArgType =
-#if VC_INTR_LLVM_VERSION_MAJOR >= 16
-      [UseTargetTypes = !F.getContext().supportsTypedPointers()](
-          SPIRVArgDesc Desc, Argument &Arg) {
-        if (UseTargetTypes)
-          return getArgTargetTypeFromDesc(Desc, Arg);
-        return getArgTypeFromDesc(Desc, Arg);
-      };
-#else  // VC_INTR_LLVM_VERSION_MAJOR >= 16
-      [](SPIRVArgDesc Desc, Argument &Arg) {
-        return getArgTypeFromDesc(Desc, Arg);
-      };
-#endif // VC_INTR_LLVM_VERSION_MAJOR >= 16
+  // Before LLVM 16, we don't want to use target types. After LLVM 16, typed
+  // pointers are always disabled, so we must use target types.
+#if VC_INTR_LLVM_VERSION_MAJOR == 16
+  bool UseTargetTypes = !F.getContext().supportsTypedPointers();
+#elif VC_INTR_LLVM_VERSION_MAJOR > 16
+  constexpr bool UseTargetTypes = true;
+#endif
+  auto GetArgType = [&](SPIRVArgDesc Desc, Argument &Arg) {
+#if VC_INTR_LLVM_VERSION_MAJOR == 16
+    if (UseTargetTypes)
+      return getArgTargetTypeFromDesc(Desc, Arg);
+#elif VC_INTR_LLVM_VERSION_MAJOR > 16
+    return getArgTargetTypeFromDesc(Desc, Arg);
+#endif
+    return getArgTypeFromDesc(Desc, Arg);
+  };
 
   std::transform(Descs.begin(), Descs.end(), F.arg_begin(),
                  std::back_inserter(NewParams), GetArgType);
@@ -283,8 +287,7 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
     if (Descs[i].Ty == SPIRVType::None)
       continue;
 #if VC_INTR_LLVM_VERSION_MAJOR >= 16
-    if (!F.getContext().supportsTypedPointers() &&
-        Descs[i].Ty == SPIRVType::Image2dMediaBlock) {
+    if (UseTargetTypes && Descs[i].Ty == SPIRVType::Image2dMediaBlock) {
       AttrBuilder AttrBuilder(NewF->getContext());
       AttrBuilder.addAttribute(VCFunctionMD::VCMediaBlockIO);
       NewF->addParamAttrs(i, AttrBuilder);
@@ -577,8 +580,8 @@ static inline void FixAttributes(Function &F, Attribute::AttrKind Attr,
 
 bool GenXSPIRVWriterAdaptorImpl::run(Module &M) {
   auto TargetTriple = StringRef(M.getTargetTriple());
-  if (TargetTriple.startswith("genx")) {
-    if (TargetTriple.startswith("genx32"))
+  if (VCINTR::StringRef::starts_with(TargetTriple, "genx")) {
+    if (VCINTR::StringRef::starts_with(TargetTriple, "genx32"))
       M.setTargetTriple("spir");
     else
       M.setTargetTriple("spir64");
