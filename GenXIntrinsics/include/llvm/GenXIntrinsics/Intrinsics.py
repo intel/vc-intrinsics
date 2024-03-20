@@ -451,8 +451,8 @@ def createTypeTable():
         source_result = encodeTypeString(source_list,type_string,anyArgs_array)
         type_string = source_result[0]
 
-        array_of_longs = re.findall("(?<=\<)(.*?)(?=\>)",type_string) #Search for my long values <>
-        type_string = re.sub("(<)(.*?)(>)",".",type_string) #Replace long_nums for now with .
+        array_of_longs = re.findall(r"(?<=\<)(.*?)(?=\>)",type_string) #Search for my long values <>
+        type_string = re.sub(r"(<)(.*?)(>)",".",type_string) #Replace long_nums for now with .
         IIT_Basic.append(["0x"+type_string[::-1],array_of_longs]) #Reverse the string before appending and add array of longs
 
 
