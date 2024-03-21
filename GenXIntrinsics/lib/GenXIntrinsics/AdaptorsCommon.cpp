@@ -40,9 +40,9 @@ void legalizeParamAttributes(Function *F) {
       continue;
 
 #if VC_INTR_LLVM_VERSION_MAJOR >= 13
-#if VC_INTR_LLVM_VERSION_MAJOR < 18
+#if VC_INTR_LLVM_VERSION_MAJOR < 17
     if (PTy->isOpaque())
-#endif // VC_INTR_LLVM_VERSION_MAJOR < 18
+#endif // VC_INTR_LLVM_VERSION_MAJOR < 17
       continue;
 #endif // VC_INTR_LLVM_VERSION_MAJOR >= 13
 

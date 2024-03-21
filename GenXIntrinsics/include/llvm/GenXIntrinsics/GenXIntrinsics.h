@@ -24,6 +24,8 @@ SPDX-License-Identifier: MIT
 #include "llvm/IR/Instructions.h"
 #include "llvm/GenXIntrinsics/GenXVersion.h"
 
+#include "llvmVCWrapper/ADT/StringRef.h"
+
 namespace llvm {
 
 namespace GenXIntrinsic {
@@ -139,7 +141,8 @@ inline bool isGenXIntrinsic(unsigned ID) {
 /// It's possible for this function to return true while getGenXIntrinsicID()
 /// returns GenXIntrinsic::not_genx_intrinsic!
 inline bool isGenXIntrinsic(const Function *CF) {
-  return CF->getName().startswith(getGenXIntrinsicPrefix());
+  return VCINTR::StringRef::starts_with(CF->getName(),
+                                        getGenXIntrinsicPrefix());
 }
 
 /// GenXIntrinsic::isGenXIntrinsic(V) - Returns true if
