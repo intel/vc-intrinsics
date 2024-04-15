@@ -33,8 +33,6 @@ SPDX-License-Identifier: MIT
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 
-#include "llvmVCWrapper/ADT/StringRef.h"
-
 namespace llvm {
 /// IntrinsicInst - A useful wrapper class for inspecting calls to intrinsic
 /// functions.  This allows the standard isa/dyncast/cast functionality to
@@ -52,13 +50,8 @@ public:
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static bool classof(const CallInst *I) {
-    if (const Function *CF = I->getCalledFunction()) {
-      return VCINTR::StringRef::starts_with(
-          CF->getName(), GenXIntrinsic::getGenXIntrinsicPrefix());
-    }
-    return false;
-  }
+  static bool classof(const CallInst *I);
+
   static bool classof(const Value *V) {
     return isa<CallInst>(V) && classof(cast<CallInst>(V));
   }

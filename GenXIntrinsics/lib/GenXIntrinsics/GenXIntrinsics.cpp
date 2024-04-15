@@ -19,6 +19,7 @@ See LICENSE.TXT for details.
 // Implementation of methods declared in llvm/GenXIntrinsics/GenXIntrinsics.h
 
 #include "llvm/GenXIntrinsics/GenXIntrinsics.h"
+#include "llvm/GenXIntrinsics/GenXIntrinsicInst.h"
 
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
@@ -757,4 +758,17 @@ unsigned GenXIntrinsic::getLSCWidth(const Instruction *I) {
   if (auto VT = dyn_cast<VectorType>(I->getOperand(WidthIdx)->getType()))
     return VCINTR::VectorType::getNumElements(VT);
   return 1;
+}
+
+bool GenXIntrinsic::isGenXIntrinsic(const Function *CF) {
+  return VCINTR::StringRef::starts_with(CF->getName(),
+                                        getGenXIntrinsicPrefix());
+}
+
+bool GenXIntrinsicInst::classof(const CallInst *I) {
+  if (const Function *CF = I->getCalledFunction()) {
+    return VCINTR::StringRef::starts_with(
+        CF->getName(), GenXIntrinsic::getGenXIntrinsicPrefix());
+  }
+  return false;
 }
