@@ -141,9 +141,7 @@ static SPIRVType evaluateImageTypeFromSPVIR(SPIRVIRTypes::Dim Dim,
       break;
     case SPIRVIRTypes::DimBuffer:
       ResultType = SPIRVType::Image1dBuffer;
-      break;
-    default:
-      llvm_unreachable("Bad Image Type");
+      break; 
     }
   } else {
     switch (Dim) {
