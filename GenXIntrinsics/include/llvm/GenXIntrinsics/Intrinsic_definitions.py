@@ -1589,19 +1589,36 @@ Imported_Intrinsics = \
              },
 
 ### ``llvm.genx.dpas2.<return type>.<vector type>.<vector type>.<vector type>`` : dpas instruction (Dot Product Accumulate Systolic)
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: accumulator first input value, vector integer/float type
 ### * arg1: src1 input value, vector integer/float type
 ### * arg2: src2 fourth input value, integer type
 ### * arg3: int information of src1 PresisionType
 ### * arg4: int information of src2 PresisionType
-### * arg5: int SystolicDepth
-### * arg6: int RepeatCount
+### * arg5: int SystolicDepth, must be a constant, the only supported value is 8
+### * arg6: int RepeatCount, must be a constant in range [1, 8]
 ### * arg7: int sign dst( 0 - unsigned, 1 sign)
 ### * arg8: int sign src0
 ###
 ### * Return value: result
+###
+### The src1 and src2 PrecisionType arguments should be enum values defined as follows:
+###
+### +---------------+-------+-------------------------------------------------+
+### | PrecisionType | Value | Description                                     |
+### +---------------+-------+-------------------------------------------------+
+### | S2            |    3  | 2-bit signed integer                            |
+### | U2            |    4  | 2-bit unsigned integer                          |
+### | S4            |    5  | 4-bit signed integer                            |
+### | U4            |    6  | 4-bit unsigned integer                          |
+### | S8            |    7  | 8-bit signed integer                            |
+### | U8            |    8  | 8-bit unsigned integer                          |
+### | BF16          |    9  | bfloat16 (S1E8M7) floating point                |
+### | HF16          |   10  | half-precision (S1E5M10) floating point         |
+### | TF32          |   12  | tensorfloat32 (S1E8M10) floating point          |
+### +---------------+-------+-------------------------------------------------+
+###
 ###
     "dpas2" : { "result" : "anyvector",
                 "arguments" : ["anyvector","anyvector","anyvector","int","int", "int", "int", "int", "int"],
