@@ -299,7 +299,8 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
   switch (D.Kind) {
   case IITDescriptor::Void: return Type::getVoidTy(Context);
   case IITDescriptor::VarArg: return Type::getVoidTy(Context);
-  case IITDescriptor::MMX: return Type::getX86_MMXTy(Context);
+  case IITDescriptor::MMX:
+    llvm::FixedVectorType::get(llvm::IntegerType::get(Context, 64), 1);
   case IITDescriptor::Token: return Type::getTokenTy(Context);
   case IITDescriptor::Metadata: return Type::getMetadataTy(Context);
   case IITDescriptor::Half: return Type::getHalfTy(Context);
