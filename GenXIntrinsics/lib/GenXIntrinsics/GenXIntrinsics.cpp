@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2019-2021 Intel Corporation
+Copyright (C) 2019-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -19,6 +19,7 @@ See LICENSE.TXT for details.
 // Implementation of methods declared in llvm/GenXIntrinsics/GenXIntrinsics.h
 
 #include "llvm/GenXIntrinsics/GenXIntrinsics.h"
+#include "llvm/GenXIntrinsics/GenXIntrinsicInst.h"
 
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
@@ -31,6 +32,7 @@ See LICENSE.TXT for details.
 #include <llvm/ADT/StringMap.h>
 #include <llvm/CodeGen/ValueTypes.h>
 
+#include "llvmVCWrapper/ADT/StringRef.h"
 #include "llvmVCWrapper/IR/DerivedTypes.h"
 #include "llvmVCWrapper/IR/Intrinsics.h"
 #include "llvmVCWrapper/IR/Type.h"
@@ -427,10 +429,14 @@ void GenXIntrinsic::getIntrinsicInfoTableEntries(
 /// parse ffXX as f(fXX) or f(fX)X.  (X is a placeholder for any other type.)
 static std::string getMangledTypeStr(Type *Ty) {
   std::string Result;
+  if (!Ty)
+    return Result;
   if (PointerType *PTyp = dyn_cast<PointerType>(Ty)) {
     Result += "p" + llvm::utostr(PTyp->getAddressSpace());
 #if VC_INTR_LLVM_VERSION_MAJOR >= 13
+#if VC_INTR_LLVM_VERSION_MAJOR < 17
     if (PTyp->isOpaque())
+#endif // VC_INTR_LLVM_VERSION_MAJOR < 18
       return Result;
 #endif // VC_INTR_LLVM_VERSION_MAJOR >= 13
     Result += getMangledTypeStr(VCINTR::Type::getNonOpaquePtrEltTy(PTyp));
@@ -464,7 +470,7 @@ static std::string getMangledTypeStr(Type *Ty) {
     for (auto I : TargetTy->int_params())
       Result += "_" + llvm::utostr(I);
 #endif // VC_INTR_LLVM_VERSION_MAJOR >= 16
-  } else if (Ty) {
+  } else {
     Result += EVT::getEVT(Ty).getEVTString();
   }
 
@@ -533,7 +539,7 @@ bool GenXIntrinsic::isOverloadedRet(unsigned IntrinID) {
 ///
 /// Returns the relevant slice of \c IntrinsicNameTable
 static ArrayRef<const char *> findTargetSubtable(StringRef Name) {
-  assert(Name.startswith("llvm.genx."));
+  assert(VCINTR::StringRef::starts_with(Name, "llvm.genx."));
 
   ArrayRef<IntrinsicTargetInfo> Targets(TargetInfos);
   // Drop "llvm." and take the first dotted component. That will be the target
@@ -551,7 +557,7 @@ static ArrayRef<const char *> findTargetSubtable(StringRef Name) {
 GenXIntrinsic::ID GenXIntrinsic::getGenXIntrinsicID(const Function *F) {
   assert(F);
   llvm::StringRef Name = F->getName();
-  if (!Name.startswith(getGenXIntrinsicPrefix()))
+  if (!VCINTR::StringRef::starts_with(Name, getGenXIntrinsicPrefix()))
     return GenXIntrinsic::not_genx_intrinsic;
 
   // Check metadata cache.
@@ -565,7 +571,7 @@ GenXIntrinsic::ID GenXIntrinsic::getGenXIntrinsicID(const Function *F) {
     if (isGenXIntrinsic(Id)) {
       const char *NamePrefix =
           GenXIntrinsicNameTable[Id - GenXIntrinsic::not_genx_intrinsic];
-      if (Name.startswith(NamePrefix))
+      if (VCINTR::StringRef::starts_with(Name, NamePrefix))
         return Id;
     }
   }
@@ -753,4 +759,17 @@ unsigned GenXIntrinsic::getLSCWidth(const Instruction *I) {
   if (auto VT = dyn_cast<VectorType>(I->getOperand(WidthIdx)->getType()))
     return VCINTR::VectorType::getNumElements(VT);
   return 1;
+}
+
+bool GenXIntrinsic::isGenXIntrinsic(const Function *CF) {
+  return VCINTR::StringRef::starts_with(CF->getName(),
+                                        getGenXIntrinsicPrefix());
+}
+
+bool GenXIntrinsicInst::classof(const CallInst *I) {
+  if (const Function *CF = I->getCalledFunction()) {
+    return VCINTR::StringRef::starts_with(
+        CF->getName(), GenXIntrinsic::getGenXIntrinsicPrefix());
+  }
+  return false;
 }

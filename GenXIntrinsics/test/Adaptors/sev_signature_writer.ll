@@ -20,15 +20,6 @@
 ; CHECK: @global_var_2 = external global i32**
 @global_var_2 = external global <1 x i32**> #0
 
-; CHECK: @global_var_0 = internal global i32 undef, align 4
-@global_var_0 = internal global <1 x i32> undef, align 4 #0
-
-; CHECK: @global_var_1 = internal global i32** undef, align 4
-@global_var_1 = internal global <1 x i32**> undef, align 4 #0
-
-; CHECK: @global_var_2 = external global i32**
-@global_var_2 = external global <1 x i32**> #0
-
 ; CHECK: "VCSingleElementVector"="0" i32 @some.func.1(i32 "VCSingleElementVector"="0" %a, i32 "VCSingleElementVector"="0" %b)
 define dso_local <1 x i32> @some.func.1(<1 x i32> %a, <1 x i32> %b) local_unnamed_addr {
   entry:

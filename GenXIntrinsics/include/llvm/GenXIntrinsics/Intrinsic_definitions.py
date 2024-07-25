@@ -1,6 +1,6 @@
 # ========================== begin_copyright_notice ============================
 #
-# Copyright (C) 2019-2022 Intel Corporation
+# Copyright (C) 2019-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -1584,27 +1584,46 @@ Imported_Intrinsics = \
 ###
     "dpas" : { "result" : "anyvector",
                "arguments" : [0,"anyvector","anyvector","int"],
-               "attributes" : "NoMem"
+               "attributes" : "NoMem",
+               "platforms" : [ "XeHP+", "~XeLPG", "~XeHPCVG" ],
              },
 
 ### ``llvm.genx.dpas2.<return type>.<vector type>.<vector type>.<vector type>`` : dpas instruction (Dot Product Accumulate Systolic)
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: accumulator first input value, vector integer/float type
 ### * arg1: src1 input value, vector integer/float type
 ### * arg2: src2 fourth input value, integer type
 ### * arg3: int information of src1 PresisionType
 ### * arg4: int information of src2 PresisionType
-### * arg5: int SystolicDepth
-### * arg6: int RepeatCount
+### * arg5: int SystolicDepth, must be a constant, the only supported value is 8
+### * arg6: int RepeatCount, must be a constant in range [1, 8]
 ### * arg7: int sign dst( 0 - unsigned, 1 sign)
 ### * arg8: int sign src0
 ###
 ### * Return value: result
 ###
+### The src1 and src2 PrecisionType arguments should be enum values defined as follows:
+###
+### +---------------+-------+-------------------------------------------------+
+### | PrecisionType | Value | Description                                     |
+### +---------------+-------+-------------------------------------------------+
+### | S2            |    3  | 2-bit signed integer                            |
+### | U2            |    4  | 2-bit unsigned integer                          |
+### | S4            |    5  | 4-bit signed integer                            |
+### | U4            |    6  | 4-bit unsigned integer                          |
+### | S8            |    7  | 8-bit signed integer                            |
+### | U8            |    8  | 8-bit unsigned integer                          |
+### | BF16          |    9  | bfloat16 (S1E8M7) floating point                |
+### | HF16          |   10  | half-precision (S1E5M10) floating point         |
+### | TF32          |   12  | tensorfloat32 (S1E8M10) floating point          |
+### +---------------+-------+-------------------------------------------------+
+###
+###
     "dpas2" : { "result" : "anyvector",
                 "arguments" : ["anyvector","anyvector","anyvector","int","int", "int", "int", "int", "int"],
-                "attributes" : "NoMem"
+                "attributes" : "NoMem",
+                "platforms" : [ "XeHP+", "~XeLPG", "~XeHPCVG" ],
               },
 
 ### ``llvm.genx.dpas.nosrc0.<return type>.<vector type>.<vector type>`` : dpas instruction (Dot Product Accumulate Systolic) with no src0
@@ -1618,7 +1637,8 @@ Imported_Intrinsics = \
 ###
     "dpas_nosrc0" : { "result" : "anyvector",
                       "arguments" : ["anyvector","anyvector","int"],
-                      "attributes" : "NoMem"
+                      "attributes" : "NoMem",
+                      "platforms" : [ "XeHP+", "~XeLPG", "~XeHPCVG" ],
                     },
 
 ### ``llvm.genx.dpasw.<return type>.<vector type>.<vector type>`` : dpasw instruction (Dot Product Accumulate Systolic)
@@ -1633,7 +1653,9 @@ Imported_Intrinsics = \
 ###
     "dpasw" : { "result" : "anyvector",
                 "arguments" : [0,"anyvector","anyvector","int"],
-                "attributes" : "NoMem"
+                "attributes" : "NoMem",
+                "platforms" : [
+                    "XeHP", "XeHPG", "XeLPGPlus" ],
               },
 
 ### ``llvm.genx.dpasw.nosrc0.<return type>.<vector type>.<vector type>`` : dpasw instruction (Dot Product Accumulate Systolic) with no src0
@@ -1647,7 +1669,9 @@ Imported_Intrinsics = \
 ###
     "dpasw_nosrc0" : { "result" : "anyvector",
                        "arguments" : ["anyvector","anyvector","int"],
-                       "attributes" : "NoMem"
+                       "attributes" : "NoMem",
+                       "platforms" : [
+                           "XeHP", "XeHPG", "XeLPGPlus" ],
                      },
 
 ### ``llvm.genx.*dp4a*.<return type>.<vector type>.<vector type>.<vector type>`` : dp4a instruction (Dot Product 4 Accumulate)
@@ -1905,6 +1929,7 @@ Imported_Intrinsics = \
 ###   - 4 -> .wt (writethrough)
 ###   - 5 -> .st (streaming)
 ###   - 6 -> .ri (read-invalidate)
+###   - 7 -> .cc (const-cached)
 ###
 ### Only certain combinations of CachingL1 with CachingL3 are valid on hardware.
 ###
@@ -1926,6 +1951,32 @@ Imported_Intrinsics = \
 ### | .st     | .ca | streaming L1 / cache in L3                                            |
 ### +---------+-----+-----------------------------------------------------------------------+
 ### | .ri     | .ca | read-invalidate (e.g. last-use) on L1 loads / cache in L3             |
+### +---------+-----+-----------------------------------------------------------------------+
+###
+### Xe2 caching combinations
+###
+### +---------+-----+-----------------------------------------------------------------------+
+### |  L1     |  L3 | Notes                                                                 |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .df     | .df | default behavior on both L1 and L3 (L3 uses MOCS settings)            |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .uc     | .uc | uncached (bypass) both L1 and L3                                      |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .st     | .uc | streaming L1 / bypass L3                                              |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .uc     | .ca | bypass L1 / cache in L3                                               |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .ca     | .uc | cache in L1 / bypass L3                                               |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .ca     | .ca | cache in both L1 and L3                                               |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .st     | .ca | streaming L1 / cache in L3                                            |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .ca     | .cc | cache in L1 / L3 cached as constant                                   |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .uc     | .cc | bypass L1 / L3 cached as constant                                     |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .ri     | .ri | read-invalidate both L1 and L3                                        |
 ### +---------+-----+-----------------------------------------------------------------------+
 ###
 ### Immediate offset. The compiler may be able to fuse this add into the message, otherwise
@@ -2025,6 +2076,7 @@ Imported_Intrinsics = \
 ###   - 4 -> .wt (writethrough)
 ###   - 5 -> .st (streaming)
 ###   - 6 -> .ri (read-invalidate)
+###   - 7 -> .cc (const-cached)
 ###
 ### Only certain combinations of CachingL1 with CachingL3 are valid on hardware.
 ###
@@ -2046,6 +2098,16 @@ Imported_Intrinsics = \
 ### | .st     | .ca | streaming L1 / cache in L3                                            |
 ### +---------+-----+-----------------------------------------------------------------------+
 ### | .ri     | .ca | read-invalidate (e.g. last-use) on L1 loads / cache in L3             |
+### +---------+-----+-----------------------------------------------------------------------+
+###
+### Xe2 caching combinations - same as above w/o(".ri.ca") plus next variants:
+###
+### +---------+-----+-----------------------------------------------------------------------+
+### | .ca     | .cc | cache in L1 / L3 cached as constant                                   |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .uc     | .cc | bypass L1 / L3 cached as constant                                     |
+### +---------+-----+-----------------------------------------------------------------------+
+### | .ri     | .ri | read-invalidate both L1 and L3                                        |
 ### +---------+-----+-----------------------------------------------------------------------+
 ###
 ### Immediate offset. The compiler may be able to fuse this add into the message, otherwise
@@ -2249,6 +2311,166 @@ Imported_Intrinsics = \
                                 "attributes" : "None"
                               },
 
+### ``llvm.genx.lsc.*.2d.ugm.desc.*`` : 2d block load/store/prefetch instructions
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0: i1, Predicate
+### * arg1: vNi8, Cache controls, where N is the number of supported cache levels [MBC]
+### * arg2: i8, Number of blocks [MBC]
+### * arg3: i8, Block width (in elements) [MBC]
+### * arg4: i8, Block height [MBC]
+### * arg5: v16i32 Matrix descriptor [MBC]
+### * arg6: i32, Memory block X immediate offset (in elements) [MBC]
+### * arg7: i32, Memory block Y immediate offset [MBC]
+### * arg8: value to passthru when predicate is false on load,
+###         or value to write on store,
+###         or dummy value for prefetch to deduce the matrix element type
+###
+### * Return value: the value read or void
+###
+### The matrix descriptor is a 16-element vector that describes the 2D block layout in memory.
+### The descriptor layout is as follows:
+### desc[0]: low 32 bits of the base address
+### desc[1]: high 32 bits of the base address
+### desc[2]: matrix width in bytes, minus 1
+### desc[3]: matrix height, minus 1
+### desc[4]: matrix pitch in bytes, minus 1
+### desc[5]: block start X in elements, signed
+### desc[6]: block start Y in rows, signed
+### desc[7]: block size encoded as follows:
+###          (block_width - 1) | ((block_height - 1) << 8) | ((number_of_blocks - 1) << 16)
+### desc[8-15]: reserved
+###
+    "lsc_load_2d_ugm_desc" : { "result" : "anyvector",
+                               "arguments" : [
+                                   "bool",      # i1, predicate
+                                   "anyvector", # cache controls
+                                   "char",      # number of blocks
+                                   "short",     # block width
+                                   "short",     # block height
+                                   "int16",     # matrix descriptor
+                                   "int",       # X offset
+                                   "int",       # Y offset
+                                   0,           # value to passthru when predicate is false
+                                ],
+                                "attributes" : "ReadMem",
+                                "platforms" : "XeHPC+",
+                             },
+    "lsc_load_2d_ugm_desc_transpose" : { "result" : "anyvector",
+                                         "arguments" : [
+                                             "bool",      # i1, predicate
+                                             "anyvector", # cache controls
+                                             "char",      # number of blocks
+                                             "short",     # block width
+                                             "short",     # block height
+                                             "int16",     # matrix descriptor
+                                             "int",       # X offset
+                                             "int",       # Y offset
+                                             0,           # value to passthru when predicate is false
+                                          ],
+                                          "attributes" : "ReadMem",
+                                          "platforms" : "XeHPC+",
+                                       },
+    "lsc_load_2d_ugm_desc_vnni" : { "result" : "anyvector",
+                                    "arguments" : [
+                                        "bool",      # i1, predicate
+                                        "anyvector", # cache controls
+                                        "char",      # number of blocks
+                                        "short",     # block width
+                                        "short",     # block height
+                                        "int16",     # matrix descriptor
+                                        "int",       # X offset
+                                        "int",       # Y offset
+                                        0,           # value to passthru when predicate is false
+                                     ],
+                                     "attributes" : "ReadMem",
+                                     "platforms" : "XeHPC+",
+                                  },
+    "lsc_prefetch_2d_ugm_desc" : { "result" : "void",
+                                   "arguments" : [
+                                       "bool",      # i1, predicate
+                                       "anyvector", # cache controls
+                                       "char",      # number of blocks
+                                       "short",     # block width
+                                       "short",     # block height
+                                       "int16",     # matrix descriptor
+                                       "int",       # X offset
+                                       "int",       # Y offset
+                                       "anyvector", # dummy value, only element type is used
+                                    ],
+                                    "attributes" : "SideEffects",
+                                    "platforms" : "XeHPC+",
+                                 },
+    "lsc_store_2d_ugm_desc" : { "result" : "void",
+                                "arguments" : [
+                                    "bool",      # i1, predicate
+                                    "anyvector", # cache controls
+                                    "char",      # number of blocks
+                                    "short",     # block width
+                                    "short",     # block height
+                                    "int16",     # matrix descriptor
+                                    "int",       # X offset
+                                    "int",       # Y offset
+                                    "anyvector", # value to store
+                                 ],
+                                 "attributes" : "WriteMem",
+                                 "platforms" : "XeHPC+",
+                              },
+
+### ``llvm.genx.lsc.*.quad.typed.bti.<return type>.<predicate type>.<address type>``: LSC typed load/store/prefetch
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0: vXi1 predicate (overloaded)
+### * arg1: i8 Caching behavior for L1, [MBC]
+### * arg2: i8 Caching behavior for L3, [MBC]
+### * arg3: i8 Channel mask for quad versions, [MBC]
+### * arg4: i32 Surface index (BTI)
+### * arg5: vxi32 U pixel address (overloaded)
+### * arg6: vxi32 V pixel address
+### * arg7: vxi32 R pixel address
+### * arg8: vxi32 LOD pixel address
+### * arg9: vXi32 or vXf32 old value of the data read (load) or data to write (store)
+###
+### * Return value: the value read or void
+###
+    "lsc_load_merge_quad_typed_bti": { "result": "anyvector",
+                                       "arguments": ["anyvector", "char", "char", "char", "int", "anyvector", 2, 2, 2, 0],
+                                       "attributes": "ReadMem",
+                                       "platforms" : "Xe2+", },
+    "lsc_store_quad_typed_bti": { "result": "void",
+                                  "arguments": ["anyvector", "char", "char", "char", "int", "anyvector", 1, 1, 1, "anyvector"],
+                                  "attributes": "WriteMem",
+                                  "platforms" : "Xe2+", },
+    "lsc_prefetch_quad_typed_bti": { "result": "void",
+                                     "arguments": ["anyvector", "char", "char", "char", "int", "anyvector", 1, 1, 1],
+                                     "attributes": "None",
+                                     "platforms" : "Xe2+", },
+
+### ``llvm.genx.lsc.*2d.typed.bti.[return type/vector type]`` : LSC typed 2d block load/store/prefetch
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * arg0: i8 Caching behavior for L1
+### * arg1: i8 Caching behavior for L3
+### * arg2: i32 Surface
+### * arg3: i32 BlockHeight
+### * arg4: i32 BlockWidth
+### * arg5: i32 XOff
+### * arg6: i32 YOff
+### * arg7: data to write (store only)
+###
+### * Return value: the value read or void
+###
+    "lsc_load2d_typed_bti":{ "result" : "anyvector",
+                             "arguments" : ["char", "char", "int", "int", "int", "int", "int"],
+                             "attributes" : "ReadMem",
+                             "platforms" : "Xe2+", },
+    "lsc_store2d_typed_bti":{ "result" : "void",
+                              "arguments" : ["char", "char", "int", "int", "int", "int", "int", "anyvector"],
+                              "attributes" : "WriteMem",
+                              "platforms" : "Xe2+", },
+    "lsc_prefetch2d_typed_bti":{ "result" : "void",
+                                 "arguments" : ["char", "char", "int", "int", "int", "int", "int"],
+                                 "attributes" : "ReadMem",
+                                 "platforms" : "Xe2+", },
 
 ### ``llvm.genx.lsc.atomic.*.<return type>.<any type>.<any vector>`` : lsc_atomic instructions
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2606,42 +2828,52 @@ Imported_Intrinsics = \
     "dword_atomic_add" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int","anyint",0,0],
                            "attributes" : "None",
+                           "platforms" : "-Xe2",
                          },
     "dword_atomic_sub" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int","anyint",0,0],
                            "attributes" : "None",
+                           "platforms" : "-Xe2",
                          },
     "dword_atomic_min" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int","anyint",0,0],
                            "attributes" : "None",
+                           "platforms" : "-Xe2",
                          },
     "dword_atomic_max" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int","anyint",0,0],
                            "attributes" : "None",
+                           "platforms" : "-Xe2",
                          },
     "dword_atomic_xchg" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0,0],
                             "attributes" : "None",
+                            "platforms" : "-Xe2",
                           },
     "dword_atomic_and" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int","anyint",0,0],
                            "attributes" : "None",
+                           "platforms" : "-Xe2",
                          },
     "dword_atomic_or" : { "result" : "anyvector",
                           "arguments" : ["anyvector","int","anyint",0,0],
                           "attributes" : "None",
+                          "platforms" : "-Xe2",
                         },
     "dword_atomic_xor" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int","anyint",0,0],
                            "attributes" : "None",
+                           "platforms" : "-Xe2",
                          },
     "dword_atomic_imin" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0,0],
                             "attributes" : "None",
+                            "platforms" : "-Xe2",
                           },
     "dword_atomic_imax" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0,0],
                             "attributes" : "None",
+                            "platforms" : "-Xe2",
                           },
 
 ### ``llvm.genx.dword.atomic2.*.<return type>.<vector type.<any int>`` : dword atomic with binary operator (variant with no oldval)
@@ -2671,42 +2903,52 @@ Imported_Intrinsics = \
     "dword_atomic2_add" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0],
                             "attributes" : "None",
+                            "platforms" : "-Xe2",
                           },
     "dword_atomic2_sub" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0],
                             "attributes" : "None",
+                            "platforms" : "-Xe2",
                           },
     "dword_atomic2_min" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0],
                             "attributes" : "None",
+                            "platforms" : "-Xe2",
                           },
     "dword_atomic2_max" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0],
                             "attributes" : "None",
+                            "platforms" : "-Xe2",
                           },
     "dword_atomic2_xchg" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","anyint",0],
                              "attributes" : "None",
+                             "platforms" : "-Xe2",
                            },
     "dword_atomic2_and" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0],
                             "attributes" : "None",
+                            "platforms" : "-Xe2",
                           },
     "dword_atomic2_or" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int","anyint",0],
                            "attributes" : "None",
+                           "platforms" : "-Xe2",
                          },
     "dword_atomic2_xor" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0],
                             "attributes" : "None",
+                            "platforms" : "-Xe2",
                           },
     "dword_atomic2_imin" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","anyint",0],
                              "attributes" : "None",
+                             "platforms" : "-Xe2",
                            },
     "dword_atomic2_imax" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","anyint",0],
                              "attributes" : "None",
+                             "platforms" : "-Xe2",
                            },
 
 ### ``llvm.genx.dword.atomic.*.<return type>.<vector type>.<any int>`` : dword atomic with fmin/fmax operation
@@ -2729,18 +2971,22 @@ Imported_Intrinsics = \
     "dword_atomic_fmin" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0,0],
                             "attributes" : "None",
+                            "platforms" : "-Xe2",
                           },
     "dword_atomic_fmax" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0,0],
                             "attributes" : "None",
+                            "platforms" : "-Xe2",
                           },
     "dword_atomic_fadd" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0,0],
                             "attributes" : "None",
+                            "platforms" : "-Xe2",
                           },
     "dword_atomic_fsub" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0,0],
                             "attributes" : "None",
+                            "platforms" : "-Xe2",
                           },
 
 ### ``llvm.genx.dword.atomic2.*.<return type>.<vector type>.<any int>`` : dword atomic with fmin/fmax operation (variant with no oldval)
@@ -2762,18 +3008,22 @@ Imported_Intrinsics = \
     "dword_atomic2_fmin" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","anyint",0],
                              "attributes" : "None",
+                             "platforms" : "-Xe2",
                            },
     "dword_atomic2_fmax" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","anyint",0],
                              "attributes" : "None",
+                             "platforms" : "-Xe2",
                            },
     "dword_atomic2_fadd" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","anyint",0],
                              "attributes" : "None",
+                             "platforms" : "-Xe2",
                            },
     "dword_atomic2_fsub" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","anyint",0],
                              "attributes" : "None",
+                             "platforms" : "-Xe2",
                            },
 
 
@@ -2796,10 +3046,12 @@ Imported_Intrinsics = \
     "dword_atomic_inc" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int",0,0],
                            "attributes" : "None",
+                           "platforms" : "-Xe2",
                          },
     "dword_atomic_dec" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int",0,0],
                            "attributes" : "None",
+                           "platforms" : "-Xe2",
                          },
 
 ### ``llvm.genx.dword.atomic2.*.<return type>.<any vector>`` : dword atomic with inc/dec operation (variant with no oldval)
@@ -2820,10 +3072,12 @@ Imported_Intrinsics = \
     "dword_atomic2_inc" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int",0],
                             "attributes" : "None",
+                            "platforms" : "-Xe2",
                           },
     "dword_atomic2_dec" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int",0],
                             "attributes" : "None",
+                            "platforms" : "-Xe2",
                           },
 
 ### ``llvm.genx.dword.atomic.cmpxchg.<return type>.<vector type>`` : vISA DWORD_ATOMIC CMPXCHG instruction
@@ -2845,6 +3099,7 @@ Imported_Intrinsics = \
     "dword_atomic_cmpxchg" : { "result" : "anyvector",
                                "arguments" : ["anyvector","int",0,0,0,0],
                                "attributes" : "None",
+                               "platforms" : "-Xe2",
                              },
 
 ### ``llvm.genx.dword.atomic2.cmpxchg.<return type>.<vector type>`` : vISA DWORD_ATOMIC CMPXCHG instruction (variant with no oldval)
@@ -2865,6 +3120,7 @@ Imported_Intrinsics = \
     "dword_atomic2_cmpxchg" : { "result" : "anyvector",
                                 "arguments" : ["anyvector","int",0,0,0],
                                 "attributes" : "None",
+                                "platforms" : "-Xe2",
                               },
 
 ### ``llvm.genx.dword.atomic.fcmpwr.<return type>.<vector type>.<any int>`` : vISA DWORD_ATOMIC FCMPWR instruction
@@ -2886,6 +3142,7 @@ Imported_Intrinsics = \
     "dword_atomic_fcmpwr" : { "result" : "anyvector",
                               "arguments" : ["anyvector","int","anyint",0,0,0],
                               "attributes" : "None",
+                              "platforms" : "-Xe2",
                             },
 
 ### ``llvm.genx.dword.atomic2.fcmpwr.<return type>.<vector type>.<any int>`` : vISA DWORD_ATOMIC FCMPWR instruction (variant with no oldval)
@@ -2906,6 +3163,7 @@ Imported_Intrinsics = \
     "dword_atomic2_fcmpwr" : { "result" : "anyvector",
                                "arguments" : ["anyvector","int","anyint",0,0],
                                "attributes" : "None",
+                               "platforms" : "-Xe2",
                              },
 
 ### ``llvm.genx.typed.atomic.*.<return type>.<vector type>.<any int>`` : atomic typed with binary operator
@@ -2937,42 +3195,52 @@ Imported_Intrinsics = \
 ###
     "typed_atomic_add" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int",0,"anyint",2,2,2],
+                           "platforms" : "-Xe2",
                            "attributes" : "None"
                          },
     "typed_atomic_sub" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int",0,"anyint",2,2,2],
+                           "platforms" : "-Xe2",
                            "attributes" : "None"
                          },
     "typed_atomic_min" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int",0,"anyint",2,2,2],
+                           "platforms" : "-Xe2",
                            "attributes" : "None"
                          },
     "typed_atomic_max" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int",0,"anyint",2,2,2],
+                           "platforms" : "-Xe2",
                            "attributes" : "None"
                          },
     "typed_atomic_xchg" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int",0,"anyint",2,2,2],
+                            "platforms" : "-Xe2",
                             "attributes" : "None"
                           },
     "typed_atomic_and" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int",0,"anyint",2,2,2],
+                           "platforms" : "-Xe2",
                            "attributes" : "None"
                          },
     "typed_atomic_or" : { "result" : "anyvector",
                           "arguments" : ["anyvector","int",0,"anyint",2,2,2],
+                          "platforms" : "-Xe2",
                           "attributes" : "None"
                         },
     "typed_atomic_xor" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int",0,"anyint",2,2,2],
+                           "platforms" : "-Xe2",
                            "attributes" : "None"
                          },
     "typed_atomic_imin" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int",0,"anyint",2,2,2],
+                            "platforms" : "-Xe2",
                             "attributes" : "None"
                           },
     "typed_atomic_imax" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int",0,"anyint",2,2,2],
+                            "platforms" : "-Xe2",
                             "attributes" : "None"
                           },
 
@@ -2997,18 +3265,22 @@ Imported_Intrinsics = \
 ###
     "typed_atomic_fmin" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int",0,"anyint",2,2,2],
+                            "platforms" : "-Xe2",
                             "attributes" : "None"
                           },
     "typed_atomic_fmax" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int",0,"anyint",2,2,2],
+                            "platforms" : "-Xe2",
                             "attributes" : "None"
                           },
     "typed_atomic_fadd" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int",0,"anyint",2,2,2],
+                            "platforms" : "-Xe2",
                             "attributes" : "None"
                           },
     "typed_atomic_fsub" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int",0,"anyint",2,2,2],
+                            "platforms" : "-Xe2",
                             "attributes" : "None"
                           },
 
@@ -3032,10 +3304,12 @@ Imported_Intrinsics = \
 ###
     "typed_atomic_inc" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int","anyint",2,2,2],
+                           "platforms" : "-Xe2",
                            "attributes" : "None"
                          },
     "typed_atomic_dec" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int","anyint",2,2,2],
+                           "platforms" : "-Xe2",
                            "attributes" : "None"
                          },
 
@@ -3059,6 +3333,7 @@ Imported_Intrinsics = \
 ###
     "typed_atomic_cmpxchg" : { "result" : "anyvector",
                                "arguments" : ["anyvector","int",0,0,"anyint",2,2,2],
+                               "platforms" : "-Xe2",
                                "attributes" : "None"
                              },
 
@@ -3082,6 +3357,7 @@ Imported_Intrinsics = \
 ###
     "typed_atomic_fcmpwr" : { "result" : "anyvector",
                               "arguments" : ["anyvector","int",0,0,"anyint",2,2,2],
+                              "platforms" : "-Xe2",
                               "attributes" : "None"
                             },
 
@@ -3132,6 +3408,7 @@ Imported_Intrinsics = \
     "gather_scaled" : { "result" : "anyvector",
                         "arguments" : ["anyvector","int","short","int","int","anyint",0],
                         "attributes" : "ReadMem",
+                        "platforms" : "-Xe2",
                       },
 
 ### ``llvm.genx.gather.scaled2`` : vISA GATHER_SCALED instruction
@@ -3158,6 +3435,7 @@ Imported_Intrinsics = \
     "gather_scaled2" : { "result" : "anyvector",
                          "arguments" : ["int","short","int","int","anyint"],
                          "attributes" : "ReadMem",
+                         "platforms" : "-Xe2",
                        },
 
 ### ``llvm.genx.gather.masked.scaled2`` : vISA GATHER_SCALED instruction
@@ -3177,6 +3455,7 @@ Imported_Intrinsics = \
     "gather_masked_scaled2" : { "result" : "anyvector",
                                 "arguments" : ["int","short","int","int","anyint","anyvector"],
                                 "attributes" : "ReadMem",
+                                "platforms" : "-Xe2",
                               },
 
 
@@ -3208,6 +3487,7 @@ Imported_Intrinsics = \
     "gather4_scaled" : { "result" : "anyvector",
                          "arguments" : ["anyvector","int","short","int","int","anyint",0],
                          "attributes" : "ReadMem" ,
+                         "platforms" : "-Xe2",
                        },
 
 ### ``llvm.genx.gather4.scaled2`` : vISA GATHER4_SCALED instruction
@@ -3239,6 +3519,7 @@ Imported_Intrinsics = \
     "gather4_scaled2" : { "result" : "anyvector",
                           "arguments" : ["int","short","int","int","anyint"],
                           "attributes" : "ReadMem",
+                          "platforms" : "-Xe2",
                         },
 
 ### ``llvm.genx.gather4.masked.scaled2`` : vISA GATHER4_SCALED instruction
@@ -3257,6 +3538,7 @@ Imported_Intrinsics = \
     "gather4_masked_scaled2" : { "result" : "anyvector",
                                  "arguments" : ["int","short","int","int","anyint","anyvector"],
                                  "attributes" : "ReadMem",
+                                 "platforms" : "-Xe2",
                                },
 
 
@@ -3288,6 +3570,7 @@ Imported_Intrinsics = \
     "gather4_typed" : { "result" : "anyvector",
                         "arguments" : ["int","anyvector","int","anyvector",2,2,0],
                         "attributes" : "ReadMem",
+                        "platforms" : "-Xe2",
                       },
 
 ### ``llvm.genx.media.ld.<return type>`` : vISA MEDIA_LD instruction
@@ -3314,6 +3597,7 @@ Imported_Intrinsics = \
     "media_ld" : { "result" : "anyvector",
                    "arguments" : ["int","int","int","int","int","int"],
                    "attributes" : "ReadMem",
+                   "platforms" : "-Xe2",
                  },
 
 ### ``llvm.genx.media.st.<vector type>`` : vISA MEDIA_ST instruction
@@ -3339,6 +3623,7 @@ Imported_Intrinsics = \
     "media_st" : { "result" : "void",
                    "arguments" : ["int","int","int","int","int","int","anyvector"],
                    "attributes" : "None",
+                   "platforms" : "-Xe2",
                  },
 
 ### ``llvm.genx.oword.ld*.<return type>`` : oword load instruction
@@ -3358,10 +3643,12 @@ Imported_Intrinsics = \
     "oword_ld" : { "result" : "anyvector",
                    "arguments" : ["int","int","int"],
                    "attributes" : "ReadMem",
+                   "platforms" : "-Xe2",
                  },
     "oword_ld_unaligned" : { "result" : "anyvector",
                              "arguments" : ["int","int","int"],
                              "attributes" : "ReadMem",
+                             "platforms" : "-Xe2",
                            },
 
 ### ``llvm.genx.oword.st.<vector type>`` : vISA OWORD_ST instruction
@@ -3377,6 +3664,7 @@ Imported_Intrinsics = \
     "oword_st" : { "result" : "void",
                    "arguments" : ["int","int","anyvector"],
                    "attributes" : "None",
+                   "platforms" : "-Xe2",
                  },
 
 ### ``llvm.genx.scatter.private.<vector type>.<ptr type>.<any int>.<vector type>`` : CM internal, no VISA
@@ -3419,6 +3707,7 @@ Imported_Intrinsics = \
     "scatter_scaled" : { "result" : "void",
                          "arguments" : ["anyvector","int","short","int","int","anyint","anyvector"],
                          "attributes" : "None",
+                         "platforms" : "-Xe2",
                        },
 
 ### ``llvm.genx.scatter4.scaled.<vector type>.<any int>.<vector type>`` : vISA SCATTER4_SCALED instruction
@@ -3448,6 +3737,7 @@ Imported_Intrinsics = \
     "scatter4_scaled" : { "result" : "void",
                           "arguments" : ["anyvector","int","short","int","int","anyint","anyvector"],
                           "attributes" : "None",
+                          "platforms" : "-Xe2",
                         },
 
 ### ``llvm.genx.scatter4.typed.<vector type>.<vector type>.<vector type>`` : vISA SCATTER4_TYPED instruction
@@ -3476,6 +3766,7 @@ Imported_Intrinsics = \
     "scatter4_typed" : { "result" : "void",
                          "arguments" : ["int","anyvector","int","anyvector",1,1,"anyvector"],
                          "attributes" : "None",
+                         "platforms" : "-Xe2",
                        },
 
 ### ``llvm.genx.transpose.ld.<return type>`` : vISA TRANSPOSE_LD instruction
@@ -3496,6 +3787,7 @@ Imported_Intrinsics = \
 ###
     "transpose_ld" : { "result" : "anyvector",
                        "arguments" : ["int","int","int","int"],
+                       "platforms" : "-Xe2",
                        "attributes" : "ReadMem"
                      },
 
@@ -3526,42 +3818,52 @@ Imported_Intrinsics = \
 ###
     "untyped_atomic_add" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","int",0,0,0],
+                             "platforms" : "-Xe2",
                              "attributes" : "None"
                            },
     "untyped_atomic_sub" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","int",0,0,0],
+                             "platforms" : "-Xe2",
                              "attributes" : "None"
                            },
     "untyped_atomic_min" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","int",0,0,0],
+                             "platforms" : "-Xe2",
                              "attributes" : "None"
                            },
     "untyped_atomic_max" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","int",0,0,0],
+                             "platforms" : "-Xe2",
                              "attributes" : "None"
                            },
     "untyped_atomic_xchg" : { "result" : "anyvector",
                               "arguments" : ["anyvector","int","int",0,0,0],
+                              "platforms" : "-Xe2",
                               "attributes" : "None"
                             },
     "untyped_atomic_and" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","int",0,0,0],
+                             "platforms" : "-Xe2",
                              "attributes" : "None"
                            },
     "untyped_atomic_or" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","int",0,0,0],
+                            "platforms" : "-Xe2",
                             "attributes" : "None"
                           },
     "untyped_atomic_xor" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","int",0,0,0],
+                             "platforms" : "-Xe2",
                              "attributes" : "None"
                            },
     "untyped_atomic_imin" : { "result" : "anyvector",
                               "arguments" : ["anyvector","int","int",0,0,0],
+                              "platforms" : "-Xe2",
                               "attributes" : "None"
                             },
     "untyped_atomic_imax" : { "result" : "anyvector",
                               "arguments" : ["anyvector","int","int",0,0,0],
+                              "platforms" : "-Xe2",
                               "attributes" : "None"
                             },
 
@@ -3583,10 +3885,12 @@ Imported_Intrinsics = \
 ###
     "untyped_atomic_inc" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","int",0,0],
+                             "platforms" : "-Xe2",
                              "attributes" : "None"
                            },
     "untyped_atomic_dec" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","int",0,0],
+                             "platforms" : "-Xe2",
                              "attributes" : "None"
                            },
 
@@ -3608,6 +3912,7 @@ Imported_Intrinsics = \
 ###
     "untyped_atomic_cmpxchg" : { "result" : "anyvector",
                                  "arguments" : ["anyvector","int","int",0,0,0,0],
+                                 "platforms" : "-Xe2",
                                  "attributes" : "None"
                                },
 
@@ -3628,10 +3933,12 @@ Imported_Intrinsics = \
 ###
     "svm_block_ld" : { "result" : "anyvector",
                        "arguments" : ["anyint"],
+                       "platforms" : "-Xe2",
                        "attributes" : "ReadMem"
                      },
     "svm_block_ld_unaligned" : { "result" : "anyvector",
                                  "arguments" : ["anyint"],
+                                 "platforms" : "-Xe2",
                                  "attributes" : "ReadMem"
                                },
 
@@ -3647,6 +3954,7 @@ Imported_Intrinsics = \
 ###
     "svm_block_st" : { "result" : "void",
                        "arguments" : ["anyint","anyvector"],
+                       "platforms" : "-Xe2",
                        "attributes" : "None"
                      },
 
@@ -3669,6 +3977,7 @@ Imported_Intrinsics = \
 ###
     "svm_gather" : { "result" : "anyvector",
                      "arguments" : ["anyvector","int","anyint",0],
+                     "platforms" : "-Xe2",
                      "attributes" : "ReadMem"
                    },
 
@@ -3699,6 +4008,7 @@ Imported_Intrinsics = \
 ###
     "svm_gather4_scaled" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","short","long","anyint",0],
+                             "platforms" : "-Xe2",
                              "attributes" : "ReadMem"
                            },
 
@@ -3719,6 +4029,7 @@ Imported_Intrinsics = \
 ###
     "svm_scatter" : { "result" : "void",
                       "arguments" : ["anyvector","int","anyint","anyvector"],
+                      "platforms" : "-Xe2",
                       "attributes" : "None"
                     },
 
@@ -3747,6 +4058,7 @@ Imported_Intrinsics = \
 ###
     "svm_scatter4_scaled" : { "result" : "void",
                               "arguments" : ["anyvector","int","short","long","anyint","anyvector"],
+                              "platforms" : "-Xe2",
                               "attributes" : "None"
                             },
 
@@ -3775,42 +4087,52 @@ Imported_Intrinsics = \
 ###
     "svm_atomic_add" : { "result" : "anyvector",
                          "arguments" : ["anyvector","anyint",0,0],
+                         "platforms" : "-Xe2",
                          "attributes" : "None"
                        },
     "svm_atomic_sub" : { "result" : "anyvector",
                          "arguments" : ["anyvector","anyint",0,0],
+                         "platforms" : "-Xe2",
                          "attributes" : "None"
                        },
     "svm_atomic_min" : { "result" : "anyvector",
                          "arguments" : ["anyvector","anyint",0,0],
+                         "platforms" : "-Xe2",
                          "attributes" : "None"
                        },
     "svm_atomic_max" : { "result" : "anyvector",
                          "arguments" : ["anyvector","anyint",0,0],
+                         "platforms" : "-Xe2",
                          "attributes" : "None"
                        },
     "svm_atomic_xchg" : { "result" : "anyvector",
                           "arguments" : ["anyvector","anyint",0,0],
+                          "platforms" : "-Xe2",
                           "attributes" : "None"
                         },
     "svm_atomic_and" : { "result" : "anyvector",
                          "arguments" : ["anyvector","anyint",0,0],
+                         "platforms" : "-Xe2",
                          "attributes" : "None"
                        },
     "svm_atomic_or" : { "result" : "anyvector",
                         "arguments" : ["anyvector","anyint",0,0],
+                        "platforms" : "-Xe2",
                         "attributes" : "None"
                       },
     "svm_atomic_xor" : { "result" : "anyvector",
                          "arguments" : ["anyvector","anyint",0,0],
+                         "platforms" : "-Xe2",
                          "attributes" : "None"
                        },
     "svm_atomic_imin" : { "result" : "anyvector",
                           "arguments" : ["anyvector","anyint",0,0],
+                          "platforms" : "-Xe2",
                           "attributes" : "None"
                         },
     "svm_atomic_imax" : { "result" : "anyvector",
                           "arguments" : ["anyvector","anyint",0,0],
+                          "platforms" : "-Xe2",
                           "attributes" : "None"
                         },
 
@@ -3830,10 +4152,12 @@ Imported_Intrinsics = \
 ###
     "svm_atomic_inc" : { "result" : "anyvector",
                          "arguments" : ["anyvector","anyint",0],
+                         "platforms" : "-Xe2",
                          "attributes" : "None"
                        },
     "svm_atomic_dec" : { "result" : "anyvector",
                          "arguments" : ["anyvector","anyint",0],
+                         "platforms" : "-Xe2",
                          "attributes" : "None"
                        },
 
@@ -3853,6 +4177,7 @@ Imported_Intrinsics = \
 ###
     "svm_atomic_cmpxchg" : { "result" : "anyvector",
                              "arguments" : ["anyvector","anyint",0,0,0],
+                             "platforms" : "-Xe2",
                              "attributes" : "None"
                            },
 
@@ -3873,10 +4198,12 @@ Imported_Intrinsics = \
 ###
     "svm_atomic_fmin" : { "result" : "anyvector",
                           "arguments" : ["anyvector","anyint",0,0],
+                          "platforms" : "-Xe2",
                           "attributes" : "None"
                         },
     "svm_atomic_fmax" : { "result" : "anyvector",
                           "arguments" : ["anyvector","anyint",0,0],
+                          "platforms" : "-Xe2",
                           "attributes" : "None"
                         },
 
@@ -3896,6 +4223,7 @@ Imported_Intrinsics = \
 ###
     "svm_atomic_fcmpwr" : { "result" : "anyvector",
                             "arguments" : ["anyvector","anyint",0,0,0],
+                            "platforms" : "-Xe2",
                             "attributes" : "None"
                           },
 
@@ -4076,8 +4404,27 @@ Imported_Intrinsics = \
 ###
     "nbarrier" : { "result" : "void",
                    "arguments" : ["char","char","char"],
-                   "attributes" : "Convergent"
-                 },
+                   "attributes" : "SideEffects",
+                   "platforms" : "XeHPC+", },
+
+### ``llvm.genx.nbarrier.arrive`` : Named barrier arrive operation
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0: i8 barrier id
+### * arg1: i8 thread role
+### * arg2: i8 number of producers
+### * arg3: i8 number of consumers
+###
+### Thread roles are the following:
+###  - 0: the thread is a barrier producer and consumer
+###  - 1: the thread is only a barrier producer
+###  - 2: the thread is only a barrier consumer
+###  - other values are invalid
+###
+    "nbarrier_arrive" : { "result" : "void",
+                          "arguments" : ["char", "char", "char", "char"],
+                          "attributes" : "SideEffects",
+                          "platforms" : "XeHPC+", },
 
 ### ``llvm.genx.cache.flush`` : vISA CACHE_FLUSH instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -4148,7 +4495,7 @@ Imported_Intrinsics = \
 ###
     "raw_send" : { "result" : "anyvector",
                    "arguments" : ["int","anyint","int","int","anyvector",0],
-                   "attributes" : "None"
+                   "attributes" : "SideEffects"
                  },
 
 ### ``llvm.genx.raw.send.noresult.<any int>.<vector type>`` : vISA RAW_SEND instruction with no result
@@ -4173,7 +4520,7 @@ Imported_Intrinsics = \
 ###
     "raw_send_noresult" : { "result" : "void",
                             "arguments" : ["int","anyint","int","int","anyvector"],
-                            "attributes" : "None"
+                            "attributes" : "SideEffects"
                           },
 
 ### ``llvm.genx.raw.sends.<return type>.<any int>.<vector type>.<vector type>`` : vISA RAW_SENDS instruction
@@ -5234,42 +5581,52 @@ Imported_Intrinsics = \
     "dword_atomic2_add_predef_surface" : { "result" : "anyvector",
                                            "arguments" : ["anyvector","anyptr","anyint",0],
                                            "attributes" : "None",
+                                           "platforms" : "-Xe2",
                                          },
     "dword_atomic2_sub_predef_surface" : { "result" : "anyvector",
                                            "arguments" : ["anyvector","anyptr","anyint",0],
                                            "attributes" : "None",
+                                           "platforms" : "-Xe2",
                                          },
     "dword_atomic2_min_predef_surface" : { "result" : "anyvector",
                                            "arguments" : ["anyvector","anyptr","anyint",0],
                                            "attributes" : "None",
+                                           "platforms" : "-Xe2",
                                          },
     "dword_atomic2_max_predef_surface" : { "result" : "anyvector",
                                            "arguments" : ["anyvector","anyptr","anyint",0],
                                            "attributes" : "None",
+                                           "platforms" : "-Xe2",
                                          },
     "dword_atomic2_xchg_predef_surface" : { "result" : "anyvector",
                                             "arguments" : ["anyvector","anyptr","anyint",0],
                                             "attributes" : "None",
+                                            "platforms" : "-Xe2",
                                           },
     "dword_atomic2_and_predef_surface" : { "result" : "anyvector",
                                            "arguments" : ["anyvector","anyptr","anyint",0],
                                            "attributes" : "None",
+                                           "platforms" : "-Xe2",
                                          },
     "dword_atomic2_or_predef_surface" : { "result" : "anyvector",
                                           "arguments" : ["anyvector","anyptr","anyint",0],
                                           "attributes" : "None",
+                                          "platforms" : "-Xe2",
                                         },
     "dword_atomic2_xor_predef_surface" : { "result" : "anyvector",
                                            "arguments" : ["anyvector","anyptr","anyint",0],
                                            "attributes" : "None",
+                                           "platforms" : "-Xe2",
                                          },
     "dword_atomic2_imin_predef_surface" : { "result" : "anyvector",
                                             "arguments" : ["anyvector","anyptr","anyint",0],
                                             "attributes" : "None",
+                                            "platforms" : "-Xe2",
                                           },
     "dword_atomic2_imax_predef_surface" : { "result" : "anyvector",
                                             "arguments" : ["anyvector","anyptr","anyint",0],
                                             "attributes" : "None",
+                                            "platforms" : "-Xe2",
                                           },
 
 ## ``llvm.genx.dword.atomic2.*.predef.surface`` : dword atomic with fmin/fmax operation with predefined surface
@@ -5293,18 +5650,22 @@ Imported_Intrinsics = \
     "dword_atomic2_fmin_predef_surface" : { "result" : "anyvector",
                                             "arguments" : ["anyvector","anyptr","anyint",0],
                                             "attributes" : "None",
+                                            "platforms" : "-Xe2",
                                           },
     "dword_atomic2_fmax_predef_surface" : { "result" : "anyvector",
                                             "arguments" : ["anyvector","anyptr","anyint",0],
                                             "attributes" : "None",
+                                            "platforms" : "-Xe2",
                                           },
     "dword_atomic2_fadd_predef_surface" : { "result" : "anyvector",
                                             "arguments" : ["anyvector","anyptr","anyint",0],
                                             "attributes" : "None",
+                                            "platforms" : "-Xe2",
                                           },
     "dword_atomic2_fsub_predef_surface" : { "result" : "anyvector",
                                             "arguments" : ["anyvector","anyptr","anyint",0],
                                             "attributes" : "None",
+                                            "platforms" : "-Xe2",
                                           },
 
 ## ``llvm.genx.dword.atomic2.*.predef.surface`` : dword atomic with inc/dec operation with predefined surface
@@ -5325,10 +5686,12 @@ Imported_Intrinsics = \
     "dword_atomic2_inc_predef_surface" : { "result" : "anyvector",
                                            "arguments" : ["anyvector","anyptr","anyint"],
                                            "attributes" : "None",
+                                           "platforms" : "-Xe2",
                                          },
     "dword_atomic2_dec_predef_surface" : { "result" : "anyvector",
                                            "arguments" : ["anyvector","anyptr","anyint"],
                                            "attributes" : "None",
+                                           "platforms" : "-Xe2",
                                          },
 
 ## ``llvm.genx.dword.atomic2.cmpxchg.predef.surface`` : vISA DWORD_ATOMIC CMPXCHG instruction with predefined surface
@@ -5349,6 +5712,7 @@ Imported_Intrinsics = \
     "dword_atomic2_cmpxchg_predef_surface" : { "result" : "anyvector",
                                                "arguments" : ["anyvector","anyptr","anyint",0,0],
                                                "attributes" : "None",
+                                               "platforms" : "-Xe2",
                                              },
 
 ## ``llvm.genx.dword.atomic2.fcmpwr.predef.surface`` : vISA DWORD_ATOMIC FCMPWR instruction with predefined surface
@@ -5369,6 +5733,7 @@ Imported_Intrinsics = \
     "dword_atomic2_fcmpwr_predef_surface" : { "result" : "anyvector",
                                               "arguments" : ["anyvector","anyptr","anyint",0,0],
                                               "attributes" : "None",
+                                              "platforms" : "-Xe2",
                                             },
 
 ## ``llvm.genx.gather.masked.scaled2.predef.surface`` : vISA GATHER_SCALED instruction with predefined surface
@@ -5387,6 +5752,7 @@ Imported_Intrinsics = \
     "gather_masked_scaled2_predef_surface" : { "result" : "anyvector",
                                                "arguments" : ["int","short","anyptr","int","anyint","anyvector"],
                                                "attributes" : "ReadMem",
+                                               "platforms" : "-Xe2",
                                              },
 
 ## ``llvm.genx.gather4.masked.scaled2.predef.surface`` : vISA GATHER4_SCALED instruction with predefined surface
@@ -5405,6 +5771,7 @@ Imported_Intrinsics = \
     "gather4_masked_scaled2_predef_surface" : { "result" : "anyvector",
                                                 "arguments" : ["int","short","anyptr","int","anyint","anyvector"],
                                                 "attributes" : "ReadMem",
+                                                "platforms" : "-Xe2",
                                               },
 
 ## ``llvm.genx.scatter.scaled.predef.surface`` : vISA SCATTER_SCALED instruction with predefined surface
@@ -5430,6 +5797,7 @@ Imported_Intrinsics = \
     "scatter_scaled_predef_surface" : { "result" : "void",
                                         "arguments" : ["anyvector","int","short","anyptr","int","anyint","anyvector"],
                                         "attributes" : "None",
+                                        "platforms" : "-Xe2",
                                       },
 
 ## ``llvm.genx.scatter4.scaled.predef.surface`` : vISA SCATTER4_SCALED instruction with predefined surface
@@ -5459,6 +5827,7 @@ Imported_Intrinsics = \
     "scatter4_scaled_predef_surface" : { "result" : "void",
                                          "arguments" : ["anyvector","int","short","anyptr","int","anyint","anyvector"],
                                          "attributes" : "None",
+                                         "platforms" : "-Xe2",
                                        },
 
 ## ``llvm.genx.oword.ld*.predef.surface`` : oword load instruction with predefined surface
@@ -5478,11 +5847,13 @@ Imported_Intrinsics = \
     "oword_ld_predef_surface" : { "result" : "anyvector",
                                   "arguments" : ["int", "anyptr", "int"],
                                   "attributes": "ReadMem",
+                                  "platforms" : "-Xe2",
                                 },
 
     "oword_ld_unaligned_predef_surface" : { "result" : "anyvector",
                                             "arguments": ["int", "anyptr", "int"],
                                             "attributes" : "ReadMem",
+                                            "platforms" : "-Xe2",
                                           },
 
 ## ``llvm.genx.oword.st.predef.surface`` : vISA OWORD_ST instruction with predefined surface
@@ -5498,6 +5869,7 @@ Imported_Intrinsics = \
     "oword_st_predef_surface" : { "result" : "void",
                                   "arguments" : ["anyptr", "int", "anyvector"],
                                   "attributes" : "None",
+                                  "platforms" : "-Xe2",
                                 },
 
 

@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2019-2021 Intel Corporation
+Copyright (C) 2019-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -86,6 +86,8 @@ enum class LSCCategory : uint8_t {
   Prefetch2D,
   Store,
   Store2D,
+  Load2DTyped,
+  Store2DTyped,
   Fence,
   LegacyAtomic,
   Atomic,
@@ -136,9 +138,7 @@ inline bool isGenXIntrinsic(unsigned ID) {
 /// the function's name starts with "llvm.genx.".
 /// It's possible for this function to return true while getGenXIntrinsicID()
 /// returns GenXIntrinsic::not_genx_intrinsic!
-inline bool isGenXIntrinsic(const Function *CF) {
-  return CF->getName().startswith(getGenXIntrinsicPrefix());
-}
+bool isGenXIntrinsic(const Function *CF);
 
 /// GenXIntrinsic::isGenXIntrinsic(V) - Returns true if
 /// the function's name starts with "llvm.genx.".
@@ -475,6 +475,8 @@ inline LSCCategory getLSCCategory(unsigned IntrinID) {
       return LSCCategory::Load;
     case GenXIntrinsic::genx_lsc_load2d_stateless:
       return LSCCategory::Load2D;
+    case GenXIntrinsic::genx_lsc_load2d_typed_bti:
+      return LSCCategory::Load2DTyped;
     case GenXIntrinsic::genx_lsc_prefetch_bti:
     case GenXIntrinsic::genx_lsc_prefetch_stateless:
       return LSCCategory::Prefetch;
@@ -490,6 +492,8 @@ inline LSCCategory getLSCCategory(unsigned IntrinID) {
       return LSCCategory::Store;
     case GenXIntrinsic::genx_lsc_store2d_stateless:
       return LSCCategory::Store2D;
+    case GenXIntrinsic::genx_lsc_store2d_typed_bti:
+      return LSCCategory::Store2DTyped;
     case GenXIntrinsic::genx_lsc_fence:
       return LSCCategory::Fence;
     case GenXIntrinsic::genx_lsc_atomic_bti:
@@ -539,6 +543,17 @@ inline bool isLSCLoad2D(const Function *F) {
   return isLSCLoad2D(getGenXIntrinsicID(F));
 }
 
+inline bool isLSCLoad2DTyped(unsigned IntrinID) {
+  return getLSCCategory(IntrinID) == LSCCategory::Load2DTyped;
+}
+
+inline bool isLSCLoad2DTyped(const Value *V) {
+  return isLSCLoad2DTyped(getGenXIntrinsicID(V));
+}
+
+inline bool isLSCLoad2DTyped(const Function *F) {
+  return isLSCLoad2DTyped(getGenXIntrinsicID(F));
+}
 
 inline bool isLSCPrefetch(unsigned IntrinID) {
   return getLSCCategory(IntrinID) == LSCCategory::Prefetch;
@@ -588,6 +603,17 @@ inline bool isLSCStore2D(const Function *F) {
   return isLSCStore2D(getGenXIntrinsicID(F));
 }
 
+inline bool isLSCStore2DTyped(unsigned IntrinID) {
+  return getLSCCategory(IntrinID) == LSCCategory::Store2DTyped;
+}
+
+inline bool isLSCStore2DTyped(const Value *V) {
+  return isLSCStore2DTyped(getGenXIntrinsicID(V));
+}
+
+inline bool isLSCStore2DTyped(const Function *F) {
+  return isLSCStore2DTyped(getGenXIntrinsicID(F));
+}
 
 inline bool isLSCFence(unsigned IntrinID) {
   return getLSCCategory(IntrinID) == LSCCategory::Fence;
@@ -642,6 +668,8 @@ inline bool isLSC2D(unsigned IntrinID) {
     case LSCCategory::Load2D:
     case LSCCategory::Prefetch2D:
     case LSCCategory::Store2D:
+    case LSCCategory::Load2DTyped:
+    case LSCCategory::Store2DTyped:
       return true;
     case LSCCategory::Load:
     case LSCCategory::Prefetch:
@@ -663,6 +691,33 @@ inline bool isLSC2D(const Function *F) {
   return isLSC2D(getGenXIntrinsicID(F));
 }
 
+inline bool isLSCTyped(unsigned IntrinID) {
+  switch (getLSCCategory(IntrinID)) {
+    case LSCCategory::Load2DTyped:
+    case LSCCategory::Store2DTyped:
+      return true;
+    case LSCCategory::Store2D:
+    case LSCCategory::Load:
+    case LSCCategory::Load2D:
+    case LSCCategory::Prefetch:
+    case LSCCategory::Prefetch2D:
+    case LSCCategory::Store:
+    case LSCCategory::Fence:
+    case LSCCategory::LegacyAtomic:
+    case LSCCategory::Atomic:
+    case LSCCategory::NotLSC:
+      return false;
+  }
+  llvm_unreachable("Unknown LSC category");
+}
+
+inline bool isLSCTyped(const Value *V) {
+  return isLSCTyped(getGenXIntrinsicID(V));
+}
+
+inline bool isLSCTyped(const Function *F) {
+  return isLSCTyped(getGenXIntrinsicID(F));
+}
 
 // Dependency from visa_igc_common_header.
 // Converts vector size into LSC-appropriate code.
@@ -710,6 +765,8 @@ inline int getLSCVectorSize(LSCCategory Cat) {
   case LSCCategory::Prefetch2D:
   case LSCCategory::Load2D:
   case LSCCategory::Store2D:
+  case LSCCategory::Load2DTyped:
+  case LSCCategory::Store2DTyped:
   case LSCCategory::Fence:
   case LSCCategory::NotLSC:
     llvm_unreachable("no such argument");
@@ -736,6 +793,8 @@ inline int getLSCDataSize(LSCCategory Cat) {
   case LSCCategory::Store2D:
     return 3;
   case LSCCategory::Fence:
+  case LSCCategory::Load2DTyped:
+  case LSCCategory::Store2DTyped:
   case LSCCategory::NotLSC:
     llvm_unreachable("no such argument");
     return Invalid;
@@ -759,6 +818,8 @@ inline int getLSCImmOffset(LSCCategory Cat) {
   case LSCCategory::Prefetch2D:
   case LSCCategory::Load2D:
   case LSCCategory::Store2D:
+  case LSCCategory::Load2DTyped:
+  case LSCCategory::Store2DTyped:
   case LSCCategory::Fence:
   case LSCCategory::NotLSC:
     llvm_unreachable("no such argument");
@@ -786,6 +847,8 @@ inline int getLSCDataOrder(LSCCategory Cat) {
   case LSCCategory::Store2D:
     return 4;
   case LSCCategory::Fence:
+  case LSCCategory::Load2DTyped:
+  case LSCCategory::Store2DTyped:
   case LSCCategory::NotLSC:
     llvm_unreachable("no such argument");
     return Invalid;
@@ -809,6 +872,8 @@ inline int getLSCWidth(LSCCategory Cat) {
   case LSCCategory::Load2D:
   case LSCCategory::Prefetch2D:
   case LSCCategory::Store2D:
+  case LSCCategory::Load2DTyped:
+  case LSCCategory::Store2DTyped:
     return 0;
   case LSCCategory::NotLSC:
     llvm_unreachable("no such argument");

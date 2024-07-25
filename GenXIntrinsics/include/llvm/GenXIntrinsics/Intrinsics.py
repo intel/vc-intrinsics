@@ -2,7 +2,7 @@
 
 # ========================== begin_copyright_notice ============================
 #
-# Copyright (C) 2019-2022 Intel Corporation
+# Copyright (C) 2019-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -87,7 +87,10 @@ platform_list = [
     "XeHP",
     "XeHPG",
     "XeLPG",
+    "XeLPGPlus",
     "XeHPC",
+    "XeHPCVG",
+    "Xe2",
 ]
 
 def getAttributeList(Attrs):
@@ -448,8 +451,8 @@ def createTypeTable():
         source_result = encodeTypeString(source_list,type_string,anyArgs_array)
         type_string = source_result[0]
 
-        array_of_longs = re.findall("(?<=\<)(.*?)(?=\>)",type_string) #Search for my long values <>
-        type_string = re.sub("(<)(.*?)(>)",".",type_string) #Replace long_nums for now with .
+        array_of_longs = re.findall(r"(?<=\<)(.*?)(?=\>)",type_string) #Search for my long values <>
+        type_string = re.sub(r"(<)(.*?)(>)",".",type_string) #Replace long_nums for now with .
         IIT_Basic.append(["0x"+type_string[::-1],array_of_longs]) #Reverse the string before appending and add array of longs
 
 
@@ -570,7 +573,7 @@ def platformExprProcess(curr_line,platf_expr,platforms):
         platf_id = platforms.get(platf_expr[1:])
         if platf_id is None:
             raise NameError("Error in platf in " + str(Intrinsics[ID_array[i]]))
-        curr_line[j] = 0;
+        curr_line[platf_id] = 0;
     elif platf_expr == "ALL":
         curr_line = [1]*len(platforms)
     else:

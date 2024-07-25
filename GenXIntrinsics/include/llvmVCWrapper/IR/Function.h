@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2024 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -14,6 +14,22 @@ SPDX-License-Identifier: MIT
 namespace VCINTR {
 
 namespace Function {
+
+inline llvm::Argument *getArg(const llvm::Function &F, unsigned ArgNo) {
+  assert(F.arg_size() > ArgNo);
+  llvm::Argument *Arg = nullptr;
+
+#if LLVM_VERSION_MAJOR < 10
+  // similar to lvm::Function::getArg implementation
+  auto ArgIt = F.arg_begin();
+  std::advance(ArgIt, ArgNo);
+  Arg = const_cast<llvm::Argument *>(&*ArgIt);
+#else
+  Arg = F.getArg(ArgNo);
+#endif
+
+  return Arg;
+}
 
 inline void addAttributeAtIndex(llvm::Function &F, unsigned Index,
                                 llvm::Attribute Attr) {

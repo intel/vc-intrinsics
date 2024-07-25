@@ -25,18 +25,6 @@
 ; CHECK: @global_var_3 = internal global i32** undef, align 4
 @global_var_3 = internal global i32** undef, align 4
 
-; CHECK: @global_var_0 = internal global <1 x i32> undef, align 4
-@global_var_0 = internal global i32 undef, align 4 #2
-
-; CHECK: @global_var_1 = internal global <1 x i32**> undef, align 4
-@global_var_1 = internal global i32** undef, align 4 #3
-
-; CHECK: @global_var_2 = external global <1 x i32**>
-@global_var_2 = external global i32** #3
-
-; CHECK: @global_var_3 = internal global i32** undef, align 4
-@global_var_3 = internal global i32** undef, align 4
-
 ; CHECK: <1 x i32> @some.func.1(<1 x i32> %a, <1 x i32> %b)
 define internal "VCSingleElementVector" i32 @some.func.1(i32 "VCSingleElementVector" %a, i32 "VCSingleElementVector" %b) local_unnamed_addr #0 {
 entry:
