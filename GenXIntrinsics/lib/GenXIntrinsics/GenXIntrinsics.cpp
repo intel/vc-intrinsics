@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2019-2023 Intel Corporation
+Copyright (C) 2019-2024 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -301,7 +301,12 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
   switch (D.Kind) {
   case IITDescriptor::Void: return Type::getVoidTy(Context);
   case IITDescriptor::VarArg: return Type::getVoidTy(Context);
-  case IITDescriptor::MMX: return Type::getX86_MMXTy(Context);
+  case IITDescriptor::MMX:
+#if VC_INTR_LLVM_VERSION_MAJOR >= 20
+    return FixedVectorType::get(Type::getInt64Ty(Context), 1);
+#else  // VC_INTR_LLVM_VERSION_MAJOR >= 20
+    return Type::getX86_MMXTy(Context);
+#endif // VC_INTR_LLVM_VERSION_MAJOR >= 20
   case IITDescriptor::Token: return Type::getTokenTy(Context);
   case IITDescriptor::Metadata: return Type::getMetadataTy(Context);
   case IITDescriptor::Half: return Type::getHalfTy(Context);
