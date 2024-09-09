@@ -47,44 +47,36 @@ if(VC_INTR_ENABLE_LIT_TESTS)
   endif()
 endif()
 
-# this option is to switch on install when we are building not inside IGC
-if(INSTALL_REQUIRED)
-  install(DIRECTORY include/llvm
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    COMPONENT genx-intrinsics-headers
-    FILES_MATCHING
-    PATTERN "*.h"
-  )
+install(DIRECTORY include/llvm
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  COMPONENT genx-intrinsics-headers
+  FILES_MATCHING
+  PATTERN "*.h"
+)
 
-  # cmake creates too many subdirectories in build directory
-  # and then "install(DIRECTORY" installs them even if they are empty
-  # so generated file has to be installed separetely
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/llvm/GenXIntrinsics/${GENX_INTRINSICS_DESCRIPTION}
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/llvm/GenXIntrinsics
-    COMPONENT genx-intrinsics-headers
-  )
+# cmake creates too many subdirectories in build directory
+# and then "install(DIRECTORY" installs them even if they are empty
+# so generated file has to be installed separetely
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/llvm/GenXIntrinsics/${GENX_INTRINSICS_DESCRIPTION}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/llvm/GenXIntrinsics
+  COMPONENT genx-intrinsics-headers
+)
 
-  # for now not clear do we need to check deps on install,
-  # so config will only contain single file
-  # we need to limit it to external build
-  if(BUILD_EXTERNAL)
-    install(TARGETS LLVMGenXIntrinsics EXPORT LLVMGenXIntrinsicsTargets
-      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-      INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    )
+install(TARGETS LLVMGenXIntrinsics EXPORT LLVMGenXIntrinsicsTargets
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
 
-    # Legacy export. To remove when all clients switch to new name.
-    install(EXPORT LLVMGenXIntrinsicsTargets
-      FILE LLVMGenXIntrinsicsConfig.cmake
-      DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/LLVMGenXIntrinsics
-    )
+# Legacy export. To remove when all clients switch to new name.
+install(EXPORT LLVMGenXIntrinsicsTargets
+  FILE LLVMGenXIntrinsicsConfig.cmake
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/LLVMGenXIntrinsics
+)
 
-    set(PACKAGE_NAME VCIntrinsics${LLVM_VERSION_MAJOR})
-    install(EXPORT LLVMGenXIntrinsicsTargets
-      FILE ${PACKAGE_NAME}Config.cmake
-      DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PACKAGE_NAME}
-    )
-  endif() # BUILD_EXTERNAL
-endif() # INSTALL_REQUIRED
+set(PACKAGE_NAME VCIntrinsics${LLVM_VERSION_MAJOR})
+install(EXPORT LLVMGenXIntrinsicsTargets
+  FILE ${PACKAGE_NAME}Config.cmake
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PACKAGE_NAME}
+)
