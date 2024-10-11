@@ -298,7 +298,7 @@ inline Function *getAnyDeclaration(Module *M, unsigned id,
   if (isGenXIntrinsic(id)) {
     return getGenXDeclaration(M, (ID)id, Tys);
   } else {
-    return Intrinsic::getDeclaration(M, (Intrinsic::ID)id, Tys);
+    return Intrinsic::getOrInsertDeclaration(M, (Intrinsic::ID)id, Tys);
   }
 }
 
