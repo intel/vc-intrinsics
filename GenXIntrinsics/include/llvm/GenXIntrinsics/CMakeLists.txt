@@ -1,6 +1,6 @@
 #=========================== begin_copyright_notice ============================
 #
-# Copyright (C) 2019-2021 Intel Corporation
+# Copyright (C) 2019-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -29,7 +29,7 @@ else()
 endif()
 
 if(${LLVM_VERSION_MAJOR} LESS 9)
-  find_file(FOUND_VCS GetSVN.cmake PATHS ${LLVM_CMAKE_DIR} REQUIRED)
+  find_file(FOUND_VCS GetSVN.cmake PATHS ${LLVM_CMAKE_DIR} REQUIRED NO_CMAKE_FIND_ROOT_PATH)
   add_custom_command(
     OUTPUT "${version_inc}"
     COMMAND
@@ -38,7 +38,7 @@ if(${LLVM_VERSION_MAJOR} LESS 9)
                      "-DHEADER_FILE=${version_inc}"
                      -P "${FOUND_VCS}")
 else()
-  find_file(FOUND_VCS VersionFromVCS.cmake PATHS ${LLVM_CMAKE_DIR} REQUIRED)
+  find_file(FOUND_VCS VersionFromVCS.cmake PATHS ${LLVM_CMAKE_DIR} REQUIRED NO_CMAKE_FIND_ROOT_PATH)
   add_custom_command(
     OUTPUT "${version_inc}"
     COMMAND
@@ -59,3 +59,4 @@ add_custom_target(GenXIntrinsicDescriptionGen
 )
 add_custom_target(GenXIntrinsicsGen)
 add_dependencies(GenXIntrinsicsGen GenXIntrinsicDescriptionGen)
+

@@ -2319,7 +2319,7 @@ Imported_Intrinsics = \
 ### * arg2: i8, Number of blocks [MBC]
 ### * arg3: i8, Block width (in elements) [MBC]
 ### * arg4: i8, Block height [MBC]
-### * arg5: v16i32 Matrix descriptor [MBC]
+### * arg5: v16i32 Matrix descriptor
 ### * arg6: i32, Memory block X immediate offset (in elements) [MBC]
 ### * arg7: i32, Memory block Y immediate offset [MBC]
 ### * arg8: value to passthru when predicate is false on load,

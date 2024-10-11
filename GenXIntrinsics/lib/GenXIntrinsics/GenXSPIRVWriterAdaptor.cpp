@@ -623,18 +623,6 @@ bool GenXSPIRVWriterAdaptorImpl::run(Module &M) {
   }
 #endif
 
-#if VC_INTR_LLVM_VERSION_MAJOR >= 16
-  // ReadNone and ReadOnly is no more supported for intrinsics:
-  // https://reviews.llvm.org/D135780
-  for (auto &&F : M) {
-    FixAttributes(F, llvm::Attribute::ReadNone, llvm::MemoryEffects::none());
-    FixAttributes(F, llvm::Attribute::ReadOnly,
-                  llvm::MemoryEffects::readOnly());
-    FixAttributes(F, llvm::Attribute::WriteOnly,
-                  llvm::MemoryEffects::writeOnly());
-  }
-#endif
-
   return true;
 }
 
