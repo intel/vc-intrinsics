@@ -298,7 +298,11 @@ inline Function *getAnyDeclaration(Module *M, unsigned id,
   if (isGenXIntrinsic(id)) {
     return getGenXDeclaration(M, (ID)id, Tys);
   } else {
+#if VC_INTR_LLVM_VERSION_MAJOR < 20
     return Intrinsic::getDeclaration(M, (Intrinsic::ID)id, Tys);
+#else
+    return Intrinsic::getOrInsertDeclaration(M, (Intrinsic::ID)id, Tys);
+#endif
   }
 }
 
