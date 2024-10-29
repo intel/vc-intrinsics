@@ -292,19 +292,8 @@ bool isOverloadedRet(unsigned IntrinID);
 /// using iAny, fAny, vAny, or iPTRAny).  For a declaration of an overloaded
 /// intrinsic, Tys must provide exactly one type for each overloaded type in
 /// the intrinsic.
-inline Function *getAnyDeclaration(Module *M, unsigned id,
-                                   ArrayRef<Type *> Tys = {}) {
-  assert(isAnyNonTrivialIntrinsic(id));
-  if (isGenXIntrinsic(id)) {
-    return getGenXDeclaration(M, (ID)id, Tys);
-  } else {
-#if VC_INTR_LLVM_VERSION_MAJOR < 20
-    return Intrinsic::getDeclaration(M, (Intrinsic::ID)id, Tys);
-#else
-    return Intrinsic::getOrInsertDeclaration(M, (Intrinsic::ID)id, Tys);
-#endif
-  }
-}
+Function *getAnyDeclaration(Module *M, unsigned id,
+                                   ArrayRef<Type *> Tys = {});
 
 /// GenXIntrinsic::getGenXMulIID(S1, S2) - returns GenXIntrinsic::ID for
 /// the enx_XXmul opertation, where XX is is defined by the input arguments

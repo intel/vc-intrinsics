@@ -538,6 +538,20 @@ bool GenXIntrinsic::isOverloadedRet(unsigned IntrinID) {
 #undef GET_INTRINSIC_OVERLOAD_RET_TABLE
 }
 
+Function *GenXIntrinsic::getAnyDeclaration(Module *M, unsigned id,
+                                   ArrayRef<Type *> Tys) {
+  assert(isAnyNonTrivialIntrinsic(id));
+  if (isGenXIntrinsic(id)) {
+    return getGenXDeclaration(M, (ID)id, Tys);
+  } else {
+#if VC_INTR_LLVM_VERSION_MAJOR < 20
+    return Intrinsic::getDeclaration(M, (Intrinsic::ID)id, Tys);
+#else
+    return Intrinsic::getOrInsertDeclaration(M, (Intrinsic::ID)id, Tys);
+#endif
+  }
+}
+
 /// Find the segment of \c IntrinsicNameTable for intrinsics with the same
 /// target as \c Name, or the generic table if \c Name is not target specific.
 ///
