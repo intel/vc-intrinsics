@@ -23,6 +23,9 @@ SPDX-License-Identifier: MIT
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/GenXIntrinsics/GenXVersion.h"
+#if LLVM_VERSION_MAJOR >= 16
+#include "llvm/Support/ModRef.h"
+#endif
 
 namespace llvm {
 
