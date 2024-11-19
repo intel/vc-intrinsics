@@ -1890,8 +1890,26 @@ Imported_Intrinsics = \
 ###
     "qf_cvt" : { "result" : "anyvector",
                  "arguments" : ["anyvector"],
-                 "attributes" : "NoMem"
+                 "attributes" : "NoMem",
+                 "platforms" : "Xe3+"
                },
+
+### hf8_cvt
+### ^^^^^^
+###
+### ``llvm.genx.hf8.cvt.<return type>.<vector type>`` : hf8_cvt instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * ``llvm.genx.hf8.cvt`` : hf8<->half conversion
+###
+### * arg0: first input, any scalar/vector i8/half type (overloaded)
+###
+### * Return value: result, must be i8 if arg0 is half, or half if arg0 is i8.
+###
+    "hf8_cvt" : { "result" : "anyvector",
+                  "arguments" : ["anyvector"],
+                  "attributes" : "NoMem",
+                  "platforms" : "Xe3+"
+                },
 
 ### ``llvm.genx.lsc.load.*.<return type if not void>.<any type>.<any type>`` : lsc_load instructions
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
