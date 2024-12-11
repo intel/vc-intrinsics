@@ -2,7 +2,7 @@
 
 # ========================== begin_copyright_notice ============================
 #
-# Copyright (C) 2019-2023 Intel Corporation
+# Copyright (C) 2019-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -76,6 +76,12 @@ attribute_map = {
     "SideEffects":         set(["NoUnwind"]),
 }
 
+modref_map = {
+    "ReadNone":   "none",
+    "ReadOnly":   "readOnly",
+    "WriteOnly":  "writeOnly"
+}
+
 # order does really matter.
 # It is used to define ordering between the respected platforms
 platform_list = [
@@ -91,6 +97,7 @@ platform_list = [
     "XeHPC",
     "XeHPCVG",
     "Xe2",
+    "Xe3",
 ]
 
 def getAttributeList(Attrs):
@@ -100,6 +107,21 @@ def getAttributeList(Attrs):
     """
     s = reduce(lambda acc, v: attribute_map[v] | acc, Attrs, set())
     return ['Attribute::'+x for x in sorted(s)]
+
+
+def getAttributeListModRef(Attrs):
+    """
+    Takes a list of attribute names, calculates the union,
+    and returns a list of the the given attributes
+    """
+    s = reduce(lambda acc, v: attribute_map[v] | acc, Attrs, set())
+    attr = []
+    for x in sorted(s):
+      if x in modref_map:
+        attr += ['addMemoryAttr(MemoryEffects::' + modref_map[x] + '())']
+      else:
+        attr += ['addAttribute(Attribute::'+x+')']
+    return attr
 
 Intrinsics = dict()
 parse = sys.argv
@@ -535,12 +557,18 @@ def createAttributeTable():
 
     for i in range(len(attribute_Array)): #Building case statements
         Attrs = getAttributeList([x.strip() for x in attribute_Array[i].split(',')])
+        AttrModRef = getAttributeListModRef([x.strip() for x in attribute_Array[i].split(',')])
         f.write("""    case {num}: {{
+      #if LLVM_VERSION_MAJOR >= 16
+      AttrBuilder Atts(C);
+      Atts.{attrs_mod};
+      #else
       const Attribute::AttrKind Atts[] = {{{attrs}}};
+      #endif
       AS[0] = AttributeList::get(C, AttributeList::FunctionIndex, Atts);
       NumAttrs = 1;
       break;
-      }}\n""".format(num=i+1, attrs=','.join(Attrs)))
+      }}\n""".format(num=i+1, attrs_mod='.'.join(AttrModRef), attrs=','.join(Attrs)))
     f.write("    }\n"
             "  }\n"
             "  return AttributeList::get(C, ArrayRef<AttributeList>(AS, NumAttrs));\n"
