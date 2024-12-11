@@ -24,21 +24,17 @@ inline llvm::Type *getNonOpaquePtrEltTy(const llvm::Type *PTy) {
 #endif
 }
 
-} // namespace Type
-namespace PointerType {
-
-inline llvm::PointerType *getWithSamePointeeType(llvm::PointerType *PT,
-                                                 unsigned int AS) {
+inline bool isOpaquePointerTy(const llvm::Type *Ty) {
 #if VC_INTR_LLVM_VERSION_MAJOR < 14
-  return llvm::PointerType::get(PT->getElementType(), AS);
+  return false;
 #elif VC_INTR_LLVM_VERSION_MAJOR < 17
-  return llvm::PointerType::getWithSamePointeeType(PT, AS);
+  return Ty->isOpaquePointerTy();
 #else
-  return llvm::PointerType::get(PT->getContext(), AS);
+  return Ty->isPointerTy();
 #endif
 }
 
-} // namespace PointerType
+} // namespace Type
 } // namespace VCINTR
 
 #endif // VCINTR_IR_TYPE_H

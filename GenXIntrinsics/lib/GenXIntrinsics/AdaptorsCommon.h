@@ -98,8 +98,12 @@ namespace SPIRVIRTypes {
 static constexpr const char TypePrefix[] = "spirv.";
 
 enum Dim { Dim1D = 0, Dim2D = 1, Dim3D = 2, DimBuffer = 5 };
-static constexpr const char Image[] = "Image.";
+enum ImageIntParam { Dimension = 0, Arrayed = 2, Access = 6 };
+
+static constexpr const char Buffer[] = "BufferSurfaceINTEL";
+static constexpr const char Image[] = "Image";
 static constexpr const char Sampler[] = "Sampler";
+
 } // namespace SPIRVIRTypes
 
 // These are not really standardized names.

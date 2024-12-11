@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2020-2023 Intel Corporation
+; Copyright (C) 2020-2024 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -8,7 +8,7 @@
 
 ; Test simple signatures tranform
 
-; UNSUPPORTED: llvm17, llvm18
+; UNSUPPORTED: opaque-pointers
 ; LLVM16 error: symbol with local linkage cannot have a DLL storage class
 ; for test-function (internal dllexport)
 ; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s

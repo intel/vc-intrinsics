@@ -198,43 +198,47 @@ static Type *getImageTargetType(SPIRVArgDesc Desc, Argument &Arg) {
   auto &Ctx = Arg.getContext();
   auto *VoidTy = Type::getVoidTy(Ctx);
 
-  SmallVector<unsigned, 7> IntParams = {
-      0, 0, 0, 0, 0, 0, static_cast<unsigned>(Desc.Acc)};
+  SmallVector<unsigned, 7> IntParams(7, 0);
+  IntParams[SPIRVIRTypes::Access] = static_cast<unsigned>(Desc.Acc);
 
   switch (Desc.Ty) {
   case SPIRVType::Image1d:
+    IntParams[SPIRVIRTypes::Dimension] = SPIRVIRTypes::Dim1D;
     break;
   case SPIRVType::Image1dArray:
-    IntParams[2] = 1;
+    IntParams[SPIRVIRTypes::Dimension] = SPIRVIRTypes::Dim1D;
+    IntParams[SPIRVIRTypes::Arrayed] = 1;
     break;
   case SPIRVType::Image1dBuffer:
-    IntParams[0] = 5;
+    IntParams[SPIRVIRTypes::Dimension] = SPIRVIRTypes::DimBuffer;
     break;
   case SPIRVType::Image2d:
-    IntParams[0] = 1;
+    IntParams[SPIRVIRTypes::Dimension] = SPIRVIRTypes::Dim2D;
     break;
   case SPIRVType::Image2dArray:
-    IntParams[0] = 1;
-    IntParams[2] = 1;
+    IntParams[SPIRVIRTypes::Dimension] = SPIRVIRTypes::Dim2D;
+    IntParams[SPIRVIRTypes::Arrayed] = 1;
     break;
   case SPIRVType::Image3d:
-    IntParams[0] = 2;
+    IntParams[SPIRVIRTypes::Dimension] = SPIRVIRTypes::Dim3D;
     break;
   default:
     llvm_unreachable("Only images are supported here");
   }
 
-  return TargetExtType::get(Ctx, "spirv.Image", {VoidTy}, IntParams);
+  std::string NamePrefix = SPIRVIRTypes::TypePrefix;
+  return TargetExtType::get(Ctx, NamePrefix + SPIRVIRTypes::Image, {VoidTy}, IntParams);
 }
 
 static Type *getArgTargetTypeFromDesc(SPIRVArgDesc Desc, Argument &Arg) {
+  std::string NamePrefix = SPIRVIRTypes::TypePrefix;
   auto &Ctx = Arg.getContext();
   SmallVector<unsigned, 1> Acc = {static_cast<unsigned>(Desc.Acc)};
   switch (Desc.Ty) {
   default:
     return getImageTargetType(Desc, Arg);
   case SPIRVType::Sampler:
-    return TargetExtType::get(Ctx, "spirv.Sampler");
+    return TargetExtType::get(Ctx, NamePrefix + SPIRVIRTypes::Sampler);
   case SPIRVType::Pointer:
     if (!Arg.hasByValAttr())
       return getGlobalPtrType(Ctx);
@@ -243,7 +247,7 @@ static Type *getArgTargetTypeFromDesc(SPIRVArgDesc Desc, Argument &Arg) {
   case SPIRVType::None:
     return Arg.getType();
   case SPIRVType::Buffer:
-    return TargetExtType::get(Ctx, "spirv.BufferSurfaceINTEL", {}, Acc);
+    return TargetExtType::get(Ctx, NamePrefix + SPIRVIRTypes::Buffer, {}, Acc);
   case SPIRVType::Image2dMediaBlock:
     return getImageTargetType(SPIRVArgDesc(SPIRVType::Image2d, Desc.Acc), Arg);
   }

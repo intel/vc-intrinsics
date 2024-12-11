@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2020-2023 Intel Corporation
+; Copyright (C) 2020-2024 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -9,8 +9,8 @@
 ; Test combined writer translation: kernel has both annotated explicit
 ; arguments and impicit arguments. Implicit arguments would not show
 ; in normal flow, though they appear in old cmc.
-; XFAIL: llvm13, llvm14, llvm15
-; UNSUPPORTED: llvm17, llvm18
+; XFAIL: llvm13, llvm14
+; UNSUPPORTED: opaque-pointers
 ; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 ; RUN: opt %pass%GenXSPIRVWriterAdaptor %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 

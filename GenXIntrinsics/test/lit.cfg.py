@@ -1,6 +1,6 @@
 # ========================== begin_copyright_notice ============================
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -31,6 +31,8 @@ config.excludes = ['CMakeLists.txt', 'Plugin']
 
 used_llvm = "llvm{}".format(config.llvm_version_major)
 config.available_features = [used_llvm]
+if int(config.llvm_version_major) >= 16:
+  config.available_features.append('opaque-pointers')
 
 # test_source_root: The root path where tests are located.
 config.test_source_root = os.path.dirname(__file__)
@@ -64,8 +66,6 @@ else:
   config.substitutions.append(('%pass%', ' -passes='))
 
 print(f"llvm_version_major:{config.llvm_version_major}")
-if int(config.llvm_version_major) == 16:
-    opt_extra_args.insert(0, '-opaque-pointers=0')
 
 tools = [ToolSubst('opt', extra_args=opt_extra_args)]
 

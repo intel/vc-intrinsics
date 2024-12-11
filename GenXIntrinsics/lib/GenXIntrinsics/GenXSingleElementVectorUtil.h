@@ -89,7 +89,7 @@ private:
   Instruction *visitInsertElementInst(InsertElementInst &OldInst);
   Instruction *visitInstruction(Instruction &I);
   void manageSEVAttribute(GlobalVariable &GV, Type *OldTy, Type *NewTy);
-  GlobalVariable &createAndTakeFrom(GlobalVariable &GV, PointerType *NewTy,
+  GlobalVariable &createAndTakeFrom(GlobalVariable &GV, Type *NewTy,
                                     Constant *Initializer);
   void rewriteGlobalVariable(GlobalVariable &GV);
   void restoreGlobalVariable(GlobalVariable &GV);

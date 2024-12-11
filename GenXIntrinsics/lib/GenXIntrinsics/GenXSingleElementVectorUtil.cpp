@@ -86,9 +86,11 @@ int64_t SEVUtil::getConstantElement(ConstantInt *Const) {
 size_t SEVUtil::getPointerNesting(Type *Ty, Type **ReturnNested) {
   auto NPtrs = size_t{0};
   auto *NestedTy = Ty;
-  while (dyn_cast<PointerType>(NestedTy)) {
-    NestedTy = VCINTR::Type::getNonOpaquePtrEltTy(NestedTy);
-    ++NPtrs;
+  if (!VCINTR::Type::isOpaquePointerTy(Ty)) {
+    while (isa<PointerType>(NestedTy)) {
+      NestedTy = VCINTR::Type::getNonOpaquePtrEltTy(NestedTy);
+      ++NPtrs;
+    }
   }
   if (ReturnNested)
     *ReturnNested = NestedTy;
@@ -131,6 +133,8 @@ size_t SEVUtil::getInnerPointerVectorNesting(Type *Ty) {
 // Returns SEV-free analogue of Type Ty accordingly to the following scheme:
 // <1 x U>**...* ---> U**...*
 Type *SEVUtil::getTypeFreeFromSEV(Type *Ty) {
+  if (VCINTR::Type::isOpaquePointerTy(Ty))
+    return Ty;
   // Pointer types should be "undressed" first
   if (auto *Ptr = dyn_cast<PointerType>(Ty)) {
     auto UTy = getTypeFreeFromSEV(VCINTR::Type::getNonOpaquePtrEltTy(Ptr));
@@ -219,6 +223,12 @@ bool SEVUtil::hasSEV(Type *Ty) { return Ty != getTypeFreeFromSEV(Ty); }
 bool SEVUtil::hasSEV(Instruction *I) {
   if (hasSEV(I->getType()))
     return true;
+  if (auto *AI = dyn_cast<AllocaInst>(I))
+    if (hasSEV(AI->getAllocatedType()))
+      return true;
+  if (auto *GEPI = dyn_cast<GetElementPtrInst>(I))
+    if (hasSEV(GEPI->getSourceElementType()))
+      return true;
   return std::find_if(I->op_begin(), I->op_end(), [this](Use &Op) {
            return this->hasSEV(Op.get()->getType());
          }) != I->op_end();
@@ -395,7 +405,7 @@ void SEVUtil::replaceAllUsesWith(Instruction *OldInst, Instruction *NewInst) {
 // After new function was generated, this util finds all uses of old function
 // and replaces them with use of new one.
 void SEVUtil::replaceAllUsesWith(Function &OldF, Function &NewF) {
-  assert(OldF.getType() != NewF.getType());
+  assert(OldF.getFunctionType() != NewF.getFunctionType());
 
   auto Users = SmallVector<User *, 8>{};
   std::transform(OldF.user_begin(), OldF.user_end(), std::back_inserter(Users),
@@ -776,8 +786,7 @@ Instruction *SEVUtil::visitGetElementPtrInst(GetElementPtrInst &OldInst) {
   std::vector<Value *> IdxList;
   std::transform(NewVals.begin() + 1, NewVals.end(),
                  std::back_inserter(IdxList), [](Value *V) { return V; });
-  auto *PointeeTy = VCINTR::Type::getNonOpaquePtrEltTy(
-      cast<PointerType>(NewVals[0]->getType()->getScalarType()));
+  auto *PointeeTy = getTypeFreeFromSEV(OldInst.getSourceElementType());
   return GetElementPtrInst::Create(PointeeTy, NewVals[0], IdxList, "",
                                    &OldInst);
 }
@@ -817,13 +826,12 @@ void SEVUtil::manageSEVAttribute(GlobalVariable &GV, Type *OldTy, Type *NewTy) {
 }
 
 GlobalVariable &SEVUtil::createAndTakeFrom(GlobalVariable &GV,
-                                           PointerType *NewTy,
+                                           Type *NewTy,
                                            Constant *Initializer) {
   auto *NewGV = new GlobalVariable(
-      *GV.getParent(), VCINTR::Type::getNonOpaquePtrEltTy(NewTy),
-      GV.isConstant(), GV.getLinkage(), Initializer, "sev.global.", &GV,
-      GV.getThreadLocalMode(), GV.getAddressSpace(),
-      GV.isExternallyInitialized());
+      *GV.getParent(), NewTy, GV.isConstant(), GV.getLinkage(),
+      Initializer, "sev.global.", &GV, GV.getThreadLocalMode(),
+      GV.getAddressSpace(), GV.isExternallyInitialized());
   auto DebugInfoVec = SmallVector<DIGlobalVariableExpression *, 2>{};
   GV.getDebugInfo(DebugInfoVec);
   NewGV->takeName(&GV);
@@ -837,8 +845,8 @@ GlobalVariable &SEVUtil::createAndTakeFrom(GlobalVariable &GV,
 }
 
 void SEVUtil::rewriteGlobalVariable(GlobalVariable &GV) {
-  auto *Ty = cast<PointerType>(GV.getType());
-  auto *NewTy = cast<PointerType>(getTypeFreeFromSEV(Ty));
+  auto *Ty = GV.getValueType();
+  auto *NewTy = getTypeFreeFromSEV(Ty);
   if (NewTy == Ty)
     return;
   Constant *Initializer = nullptr;
@@ -846,38 +854,46 @@ void SEVUtil::rewriteGlobalVariable(GlobalVariable &GV) {
     Initializer = cast<Constant>(createVectorToScalarValue(
         GV.getInitializer(), static_cast<Instruction *>(nullptr)));
   auto &&NewGV = createAndTakeFrom(GV, NewTy, Initializer);
-  while (GV.use_begin() != GV.use_end()) {
-    auto &&Use = GV.use_begin();
-    auto *Inst = cast<Instruction>(Use->getUser());
-    auto *V = createScalarToVectorValue(&NewGV, Ty, Inst);
-    *Use = V;
+  if (VCINTR::Type::isOpaquePointerTy(GV.getType())) {
+    GV.replaceAllUsesWith(&NewGV);
+  } else {
+    while (GV.use_begin() != GV.use_end()) {
+      auto &&Use = GV.use_begin();
+      auto *Inst = cast<Instruction>(Use->getUser());
+      auto *V = createScalarToVectorValue(&NewGV, GV.getType(), Inst);
+      *Use = V;
+    }
   }
   manageSEVAttribute(NewGV, Ty, NewTy);
   GV.eraseFromParent();
 }
 
 void SEVUtil::restoreGlobalVariable(GlobalVariable &GV) {
-  auto *Ty = cast<PointerType>(GV.getType());
+  auto *Ty = GV.getValueType();
   if (!GV.hasAttribute(VCModuleMD::VCSingleElementVector))
     return;
   NeedCollapse = true;
   auto InnerPtrsStr =
       GV.getAttribute(VCModuleMD::VCSingleElementVector).getValueAsString();
   auto InnerPtrs = InnerPtrsStr.empty() ? 0 : std::stoull(InnerPtrsStr.str());
-  auto *NewTy = cast<PointerType>(getTypeWithSEV(Ty, InnerPtrs));
+  auto *NewTy = getTypeWithSEV(Ty, InnerPtrs);
   if (NewTy == Ty)
     return;
   Constant *Initializer = nullptr;
   if (GV.hasInitializer())
     Initializer = cast<Constant>(createScalarToVectorValue(
-        GV.getInitializer(), VCINTR::Type::getNonOpaquePtrEltTy(NewTy),
+        GV.getInitializer(), NewTy,
         static_cast<Instruction *>(nullptr)));
   auto &&NewGV = createAndTakeFrom(GV, NewTy, Initializer);
-  while (GV.use_begin() != GV.use_end()) {
-    auto &&Use = GV.use_begin();
-    auto *Inst = cast<Instruction>(Use->getUser());
-    auto *V = createVectorToScalarValue(&NewGV, Inst);
-    *Use = V;
+  if (VCINTR::Type::isOpaquePointerTy(GV.getType())) {
+    GV.replaceAllUsesWith(&NewGV);
+  } else {
+    while (GV.use_begin() != GV.use_end()) {
+      auto &&Use = GV.use_begin();
+      auto *Inst = cast<Instruction>(Use->getUser());
+      auto *V = createVectorToScalarValue(&NewGV, Inst);
+      *Use = V;
+    }
   }
   manageSEVAttribute(NewGV, Ty, NewTy);
   GV.eraseFromParent();
