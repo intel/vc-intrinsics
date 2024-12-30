@@ -116,11 +116,14 @@ def getAttributeListModRef(Attrs):
     """
     s = reduce(lambda acc, v: attribute_map[v] | acc, Attrs, set())
     attr = []
+    isReturn = True
     for x in sorted(s):
       if x in modref_map:
         attr += ['addMemoryAttr(MemoryEffects::' + modref_map[x] + '())']
       else:
         attr += ['addAttribute(Attribute::'+x+')']
+        if x == "NoReturn" : isReturn = False
+    if isReturn : attr += ['addAttribute(Attribute::WillReturn)']
     return attr
 
 Intrinsics = dict()
