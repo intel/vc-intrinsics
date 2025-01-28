@@ -1845,6 +1845,22 @@ Imported_Intrinsics = \
                "attributes" : "NoMem"
              },
 
+### ``llvm.genx.biased.rounding.bf8.*`` : biased rounding instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0: input, vNf16
+### * arg1: bias, vNi8
+###
+### * Return value: result, vNi8
+###
+###
+    "biased_rounding_bf8" : { "result" : "anyint",
+                              "arguments" : ["anyvector", 0],
+                              "attributes" : "NoMem",
+                              "platforms" : "Xe3+"
+                            },
+
+
 ### bf_cvt
 ### ^^^^^^
 ###
