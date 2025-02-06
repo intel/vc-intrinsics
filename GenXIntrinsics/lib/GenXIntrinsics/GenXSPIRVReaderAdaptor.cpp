@@ -101,7 +101,11 @@ static SPIRVArgDesc parseImageType(StringRef TyName) {
   std::tie(ImageType, TyName) = parseImageDim(TyName);
   AccessType AccType;
   std::tie(AccType, TyName) = parseAccessQualifier(TyName);
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
   assert(TyName.starts_with(CommonTypes::TypeSuffix) && "Bad image type");
+#else
+  assert(TyName.startswith(CommonTypes::TypeSuffix) && "Bad image type");
+#endif
   return {ImageType, AccType};
 }
 
@@ -210,7 +214,11 @@ static VCINTR::Optional<SPIRVArgDesc> parseIntelType(StringRef TyName) {
   std::tie(MainType, TyName) = parseIntelMainType(TyName);
   AccessType AccType;
   std::tie(AccType, TyName) = parseAccessQualifier(TyName);
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
   assert(TyName.starts_with(CommonTypes::TypeSuffix) && "Bad intel type");
+#else
+  assert(TyName.startswith(CommonTypes::TypeSuffix) && "Bad intel type");
+#endif
   return SPIRVArgDesc{MainType, AccType};
 }
 
@@ -220,7 +228,11 @@ static VCINTR::Optional<SPIRVArgDesc> parseOCLType(StringRef TyName) {
 
   // Sampler type.
   if (TyName.consume_front(OCLTypes::Sampler)) {
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
     assert(TyName.starts_with(CommonTypes::TypeSuffix) && "Bad sampler type");
+#else
+    assert(TyName.startswith(CommonTypes::TypeSuffix) && "Bad sampler type");
+#endif
     return {SPIRVType::Sampler};
   }
 
