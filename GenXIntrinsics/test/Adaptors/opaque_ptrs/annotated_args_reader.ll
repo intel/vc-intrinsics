@@ -31,7 +31,7 @@
 ; CHECK-SAME: [[IM3D:%[^,]+]],
 ; CHECK-SAME: i32
 ; CHECK-SAME: [[SAMP:%[^,]+]],
-; CHECK-SAME: i64
+; CHECK-SAME: ptr addrspace(1)
 ; CHECK-SAME: [[PTR:%[^,]+]],
 ; CHECK-SAME: <4 x i32>
 ; CHECK-SAME: [[GEN:%[^)]+]])
@@ -42,7 +42,7 @@ define spir_kernel void @test(target("spirv.BufferSurfaceINTEL", 2) %buf, target
 ; CHECK-NOT: [[IM2D]]
 ; CHECK-NOT: [[IM3D]]
 ; CHECK-NOT: [[SAMP]]
-; CHECK-NOT: [[PTR]]
+; CHECK: [[PTR]]
 ; CHECK-NOT: [[GEN]]
   %buf.conv = call i32 @llvm.genx.address.convert.i32.t_spirv.BufferSurfaceINTEL_2(target("spirv.BufferSurfaceINTEL", 2) %buf)
   %im1d.conv = call i32 @llvm.genx.address.convert.i32.t_spirv.Image_isVoid_0_0_0_0_0_0_2(target("spirv.Image", void, 0, 0, 0, 0, 0, 0, 2) %im1d)

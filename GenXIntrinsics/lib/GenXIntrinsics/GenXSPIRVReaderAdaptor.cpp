@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -145,7 +145,7 @@ static SPIRVType evaluateImageTypeFromSPVIR(SPIRVIRTypes::Dim Dim,
       break;
     case SPIRVIRTypes::DimBuffer:
       ResultType = SPIRVType::Image1dBuffer;
-      break; 
+      break;
     }
   } else {
     switch (Dim) {
@@ -370,8 +370,7 @@ static Value *getOriginalValue(Argument &Arg) {
   if (Arg.hasOneUse()) {
     User *U = Arg.user_back();
     if (isArgConvIntrinsic(U) || isa<BitCastInst>(U) ||
-        isa<AddrSpaceCastInst>(U) || isa<IntToPtrInst>(U) ||
-        isa<PtrToIntInst>(U))
+        isa<AddrSpaceCastInst>(U) || isa<IntToPtrInst>(U))
       return U;
   }
 
@@ -549,7 +548,7 @@ static void rewriteKernelArguments(Function &F) {
   // 2. Kernel is referenced in @llvm.global.annotations
   //    We have to replace the original function with the new one
   if (!F.use_empty()) {
-    Value *Ptr = &F; 
+    Value *Ptr = &F;
     assert(Ptr->hasOneUse());
     if (isa<BitCastOperator>(Ptr->user_back())) {
       Ptr = Ptr->user_back();
