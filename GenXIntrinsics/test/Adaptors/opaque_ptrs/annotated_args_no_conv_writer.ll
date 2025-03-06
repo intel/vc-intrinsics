@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2024 Intel Corporation
+; Copyright (C) 2024-2025 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -46,14 +46,7 @@
 ; CHECK-NOT: "VCArgumentKind"
 ; CHECK-SAME: [[GEN:%[^)]+]])
 define spir_kernel void @test(target("spirv.BufferSurfaceINTEL", 2) %buf, target("spirv.Image", void, 0, 0, 0, 0, 0, 0, 2) %im1d, target("spirv.Image", void, 5, 0, 0, 0, 0, 0, 2) %im1db, target("spirv.Image", void, 1, 0, 0, 0, 0, 0, 2) %im2d, target("spirv.Image", void, 2, 0, 0, 0, 0, 0, 2) %im3d, target("spirv.Sampler") %samp, ptr addrspace(1) %ptr, <4 x i32> %gen) {
-; CHECK-NOT: [[BUF]]
-; CHECK-NOT: [[IM1D]]
-; CHECK-NOT: [[IM1DB]]
-; CHECK-NOT: [[IM2D]]
-; CHECK-NOT: [[IM3D]]
-; CHECK-NOT: [[SAMP]]
-; CHECK-NOT: [[PTR]]
-; CHECK-NOT: [[GEN]]
+; CHECK-NEXT: ret void
   ret void
 }
 

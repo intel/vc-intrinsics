@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2024 Intel Corporation
+; Copyright (C) 2024-2025 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -14,21 +14,20 @@
 ; RUN: opt -passes=GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
 ; CHECK: define dllexport spir_kernel void @test(
-; CHECK-SAME: i32
+; CHECK-SAME: ptr addrspace(1)
 ; CHECK-SAME: [[SURF:%[^,]+]],
-; CHECK-SAME: i32
+; CHECK-SAME: ptr addrspace(2)
 ; CHECK-SAME: [[SAMP:%[^,]+]],
 ; CHECK-SAME: i64
 ; CHECK-SAME: [[PTR:%[^,]+]],
 ; CHECK-SAME: i32
 ; CHECK-SAME: [[GEN:%[^)]+]])
 define spir_kernel void @test(target("spirv.BufferSurfaceINTEL", 2) %surf, target("spirv.Sampler") %samp, i64 %ptr, i32 %gen) #0 {
-; CHECK-NOT: [[SURF]]
-; CHECK-NOT: [[SAMP]]
-; CHECK-NOT: [[PTR]]
-; CHECK-NOT: [[GEN]]
+; CHECK-NEXT: ptrtoint ptr addrspace(1) [[SURF]] to i32
   %surf.conv = call i32 @llvm.genx.address.convert.i32.t_spirv.BufferSurfaceINTEL_2(target("spirv.BufferSurfaceINTEL", 2) %surf)
+; CHECK-NEXT: ptrtoint ptr addrspace(2) [[SAMP]] to i32
   %samp.conv = call i32 @llvm.genx.address.convert.i32.t_spirv.Sampler(target("spirv.Sampler") %samp)
+; CHECK-NEXT: ret void
   ret void
 }
 

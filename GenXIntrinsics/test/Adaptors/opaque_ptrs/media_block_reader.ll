@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2024 Intel Corporation
+; Copyright (C) 2024-2025 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -12,11 +12,12 @@
 ; RUN: opt -passes=GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
 ; CHECK: define dllexport spir_kernel void @test(
-; CHECK-SAME: i32
+; CHECK-SAME: ptr addrspace(1)
 ; CHECK-SAME: [[IMAGE:%[^)]+]])
 define spir_kernel void @test(target("spirv.Image", void, 1, 0, 0, 0, 0, 0, 0) "VCMediaBlockIO" %image) #0 {
-; CHECK-NOT: [[IMAGE]]
+; CHECK-NEXT: ptrtoint ptr addrspace(1) [[IMAGE]] to i32
   %image.conv = call i32 @llvm.genx.address.convert.i32.t_spirv.Image_isVoid_1_0_0_0_0_0_0(target("spirv.Image", void, 1, 0, 0, 0, 0, 0, 0) %image)
+; CHECK-NEXT: ret void
   ret void
 }
 

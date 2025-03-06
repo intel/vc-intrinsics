@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2024 Intel Corporation
+; Copyright (C) 2024-2025 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -12,15 +12,16 @@
 ; RUN: opt -passes=GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
 ; CHECK: define dllexport spir_kernel void @test(
-; CHECK-SAME: i32
+; CHECK-SAME: ptr addrspace(1)
 ; CHECK-SAME: [[IM1DARR:%[^,]+]],
-; CHECK-SAME: i32
+; CHECK-SAME: ptr addrspace(1)
 ; CHECK-SAME: [[IM2DARR:%[^,]+]])
 define spir_kernel void @test(target("spirv.Image", void, 0, 0, 1, 0, 0, 0, 0) %im1darr, target("spirv.Image", void, 1, 0, 1, 0, 0, 0, 1) %im2darr) #0 {
-; CHECK-NOT: [[IM1DARR]]
-; CHECK-NOT: [[IM2DARR]]
+; CHECK-NEXT: ptrtoint ptr addrspace(1) [[IM1DARR]] to i32
   %im1darr.conv = call i32 @llvm.genx.address.convert.i32.t_spirv.Image_isVoid_0_0_1_0_0_0_0(target("spirv.Image", void, 0, 0, 1, 0, 0, 0, 0) %im1darr)
+; CHECK-NEXT: ptrtoint ptr addrspace(1) [[IM2DARR]] to i32
   %im2darr.conv = call i32 @llvm.genx.address.convert.i32.t_spirv.Image_isVoid_1_0_1_0_0_0_1(target("spirv.Image", void, 1, 0, 1, 0, 0, 0, 1) %im2darr)
+; CHECK-NEXT: ret void
   ret void
 }
 

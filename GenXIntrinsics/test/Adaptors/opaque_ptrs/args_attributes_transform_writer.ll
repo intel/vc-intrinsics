@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2024 Intel Corporation
+; Copyright (C) 2024-2025 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -19,7 +19,7 @@
 ; CHECK-NOT: "VCArgumentKind"
 ; CHECK-SAME: [[ARG:%[^)]+]])
 define spir_kernel void @test(ptr addrspace(1) byval(%foo) %arg) {
-; CHECK-NOT: [[ARG]]
+; CHECK-NEXT: ret void
   ret void
 }
 

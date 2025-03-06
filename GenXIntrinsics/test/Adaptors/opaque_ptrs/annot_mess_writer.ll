@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2024 Intel Corporation
+; Copyright (C) 2024-2025 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -30,10 +30,10 @@
 ; CHECK-NOT: "VCArgumentKind"
 ; CHECK-SAME: [[GEN:%[^)]+]])
 define spir_kernel void @test(i32 %im2d, i32 %samp, i64 %ptr, i32 %gen) {
-; CHECK: call i32 @llvm.genx.address.convert.i32.t_spirv.Image_isVoid_1_0_0_0_0_0_0(target("spirv.Image", void, 1, 0, 0, 0, 0, 0, 0) [[IM2D]])
-; CHECK: call i32 @llvm.genx.address.convert.i32.t_spirv.Sampler(target("spirv.Sampler") [[SAMP]])
-; CHECK: ptrtoint ptr addrspace(1) [[PTR]] to i64
-; CHECK-NOT: [[GEN]]
+; CHECK-NEXT: call i32 @llvm.genx.address.convert.i32.t_spirv.Image_isVoid_1_0_0_0_0_0_0(target("spirv.Image", void, 1, 0, 0, 0, 0, 0, 0) [[IM2D]])
+; CHECK-NEXT: call i32 @llvm.genx.address.convert.i32.t_spirv.Sampler(target("spirv.Sampler") [[SAMP]])
+; CHECK-NEXT: ptrtoint ptr addrspace(1) [[PTR]] to i64
+; CHECK-NEXT: ret void
   ret void
 }
 

@@ -477,13 +477,31 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
   // Collect new kernel argument types.
   std::vector<Type *> NewTypes;
   std::transform(F.arg_begin(), F.arg_end(), std::back_inserter(NewTypes),
-                 [](Argument &Arg) {
-                   auto *Ty = getOriginalValue(Arg)->getType();
+                 [Descs](Argument &Arg) -> llvm::Type * {
+                   auto *Orig = getOriginalValue(Arg);
+                   auto *OrigTy = Orig->getType();
                    auto *ArgTy = Arg.getType();
-                   if (Ty->isPointerTy() && ArgTy->isPointerTy())
-                     Ty = getKernelArgPointerType(cast<PointerType>(Ty),
-                                                  cast<PointerType>(ArgTy));
-                   return Ty;
+                   if (isArgConvIntrinsic(Orig)) {
+                     if (ArgTy->isPointerTy() && OrigTy->isIntegerTy(64))
+                       return ArgTy;
+#if VC_INTR_LLVM_VERSION_MAJOR > 15
+                     if (ArgTy->isTargetExtTy()) {
+                       auto &Ctx = Arg.getContext();
+#if VC_INTR_LLVM_VERSION_MAJOR == 16
+                       assert(!Ctx.supportsTypedPointers() &&
+                              "Target extension types should be used only with "
+                              "opaque pointers");
+#endif
+                       unsigned AddrSpace =
+                           getOpaqueTypeAddressSpace(Descs[Arg.getArgNo()].Ty);
+                       return PointerType::get(Ctx, AddrSpace);
+                     }
+#endif
+                   }
+                   if (OrigTy->isPointerTy() && ArgTy->isPointerTy())
+                     return getKernelArgPointerType(cast<PointerType>(OrigTy),
+                                                    cast<PointerType>(ArgTy));
+                   return OrigTy;
                  });
 
   auto *NewFTy = FunctionType::get(F.getReturnType(), NewTypes, false);
@@ -584,7 +602,10 @@ static void rewriteKernelArguments(Function &F) {
 
     if (isa<Instruction>(Orig) && OrigTy != NewTy) {
       IRBuilder<> Builder(cast<Instruction>(Orig));
-      NewVal = Builder.CreatePointerBitCastOrAddrSpaceCast(NewVal, OrigTy);
+      if (OrigTy->isIntegerTy())
+        NewVal = Builder.CreatePtrToInt(NewVal, OrigTy);
+      else
+        NewVal = Builder.CreatePointerBitCastOrAddrSpaceCast(NewVal, OrigTy);
     }
 
     Orig->replaceAllUsesWith(NewVal);

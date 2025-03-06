@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2020-2024 Intel Corporation
+; Copyright (C) 2020-2025 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -40,13 +40,14 @@ define spir_kernel void @test(%intel.buffer_rw_t addrspace(1)* %buf, %opencl.ima
 ; CHECK: %opencl.sampler_t addrspace(2)*
 ; CHECK: [[SAMP:%[^,]+]],
 
-; CHECK: i64
+; CHECK: i8 addrspace(1)*
 ; CHECK: [[PTR:%[^,]+]],
 
 ; CHECK: <4 x i32>
 ; CHECK: [[GEN:%[^)]+]])
 
 ; CHECK-NEXT:  entry:
+; CHECK-NEXT:    ptrtoint i8 addrspace(1)* [[PTR]] to i64
 ; CHECK-NEXT:    ret void
 ;
 entry:
@@ -68,6 +69,6 @@ declare i64 @llvm.genx.address.convert.i64.p1i8(i8 addrspace(1)*)
 attributes #0 = { "VCFunction" }
 
 ; CHECK: !genx.kernels = !{[[KERNEL:![0-9]+]]}
-; CHECK: [[KERNEL]] = !{void (i32, %opencl.image1d_rw_t addrspace(1)*, i32, %opencl.image2d_rw_t addrspace(1)*, i32, %opencl.sampler_t addrspace(2)*, i64, <4 x i32>)* @test, !"test", ![[KINDS:[0-9]+]], i32 0, i32 0, !{{[0-9]+}}, ![[DESCS:[0-9]+]], i32 0}
+; CHECK: [[KERNEL]] = !{void (i32, %opencl.image1d_rw_t addrspace(1)*, i32, %opencl.image2d_rw_t addrspace(1)*, i32, %opencl.sampler_t addrspace(2)*, i8 addrspace(1)*, <4 x i32>)* @test, !"test", ![[KINDS:[0-9]+]], i32 0, i32 0, !{{[0-9]+}}, ![[DESCS:[0-9]+]], i32 0}
 ; CHECK-DAG: ![[KINDS]] = !{i32 2, i32 2, i32 2, i32 2, i32 2, i32 1, i32 0, i32 0}
 ; CHECK-DAG: ![[DESCS]] = !{!"buffer_t read_write", !"image1d_t read_write", !"image1d_buffer_t read_write", !"image2d_t read_write", !"image3d_t read_write", !"sampler_t", !"svmptr_t", !""}

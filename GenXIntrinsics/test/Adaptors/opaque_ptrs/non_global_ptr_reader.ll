@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2024 Intel Corporation
+; Copyright (C) 2024-2025 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -15,7 +15,7 @@
 ; CHECK: define dllexport spir_kernel void @test(
 ; CHECK-SAME: ptr [[PTR:%[^)]+]])
 define spir_kernel void @test(ptr %ptr) #0 {
-; CHECK-NOT: [[PTR]]
+; CHECK-NEXT: ret void
   ret void
 }
 
