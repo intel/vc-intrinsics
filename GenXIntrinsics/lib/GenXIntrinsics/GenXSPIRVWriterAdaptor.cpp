@@ -583,6 +583,15 @@ static inline void FixAttributes(Function &F, Attribute::AttrKind Attr,
 #endif
 
 bool GenXSPIRVWriterAdaptorImpl::run(Module &M) {
+#if VC_INTR_LLVM_VERSION_MAJOR >= 21
+  auto TargetTriple = StringRef(M.getTargetTriple().str());
+  if (VCINTR::StringRef::starts_with(TargetTriple, "genx")) {
+    if (VCINTR::StringRef::starts_with(TargetTriple, "genx32"))
+      M.setTargetTriple(Triple("spir"));
+    else
+      M.setTargetTriple(Triple("spir64"));
+  }
+#else
   auto TargetTriple = StringRef(M.getTargetTriple());
   if (VCINTR::StringRef::starts_with(TargetTriple, "genx")) {
     if (VCINTR::StringRef::starts_with(TargetTriple, "genx32"))
@@ -590,6 +599,7 @@ bool GenXSPIRVWriterAdaptorImpl::run(Module &M) {
     else
       M.setTargetTriple("spir64");
   }
+#endif
 
   for (auto &&GV : M.globals()) {
     GV.addAttribute(VCModuleMD::VCGlobalVariable);

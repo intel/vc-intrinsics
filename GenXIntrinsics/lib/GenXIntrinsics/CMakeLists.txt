@@ -13,6 +13,10 @@ set(LLVM_COMPONENTS
   Analysis
   )
 
+if(${LLVM_VERSION_MAJOR} VERSION_GREATER_EQUAL 21)
+  list(APPEND LLVM_COMPONENTS TargetParser)
+endif()
+
 set(SRC_LIST
   GenXIntrinsics.cpp
   GenXRestoreIntrAttr.cpp
