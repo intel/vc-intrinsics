@@ -113,9 +113,6 @@ static std::pair<SPIRVType, StringRef> parseIntelMainType(StringRef TyName) {
   if (TyName.consume_front(IntelTypes::Buffer))
     return {SPIRVType::Buffer, TyName};
 
-  if (TyName.consume_front(IntelTypes::MediaBlockImage))
-    return {SPIRVType::Image2dMediaBlock, TyName};
-
   llvm_unreachable("Unexpected intel extension type");
 }
 
@@ -290,10 +287,6 @@ static SPIRVArgDesc analyzeTargetExtTypeArg(const Argument &Arg,
       auto Acc =
           static_cast<AccessType>(TET->getIntParameter(SPIRVIRTypes::Access));
       auto SpvTy = evaluateImageTypeFromSPVIR(Dim, Arr);
-      if (SpvTy == SPIRVType::Image2d &&
-          Arg.getParent()->getAttributes().hasParamAttr(
-              Arg.getArgNo(), VCFunctionMD::VCMediaBlockIO))
-        SpvTy = SPIRVType::Image2dMediaBlock;
       return SPIRVArgDesc(SpvTy, Acc);
     }
     llvm_unreachable("Unexpected spirv target extension type");
@@ -387,7 +380,6 @@ static ArgKind mapSPIRVTypeToArgKind(SPIRVType Ty) {
   case SPIRVType::Image1dBuffer:
   case SPIRVType::Image2d:
   case SPIRVType::Image2dArray:
-  case SPIRVType::Image2dMediaBlock:
   case SPIRVType::Image3d:
     return ArgKind::Surface;
   case SPIRVType::Sampler:
@@ -401,7 +393,7 @@ static ArgKind mapSPIRVTypeToArgKind(SPIRVType Ty) {
   llvm_unreachable("Unexpected spirv type");
 }
 
-static std::string mapSPIRVDescToArgDesc(SPIRVArgDesc SPIRVDesc) {
+static std::string mapSPIRVDescToArgDesc(SPIRVArgDesc SPIRVDesc, bool IsMediaBlock) {
   std::string Desc;
   switch (SPIRVDesc.Ty) {
   case SPIRVType::Buffer:
@@ -417,13 +409,10 @@ static std::string mapSPIRVDescToArgDesc(SPIRVArgDesc SPIRVDesc) {
     Desc += ArgDesc::Image1dBuffer;
     break;
   case SPIRVType::Image2d:
-    Desc += ArgDesc::Image2d;
+    Desc += IsMediaBlock ? ArgDesc::Image2dMediaBlock : ArgDesc::Image2d;
     break;
   case SPIRVType::Image2dArray:
     Desc += ArgDesc::Image2dArray;
-    break;
-  case SPIRVType::Image2dMediaBlock:
-    Desc += ArgDesc::Image2dMediaBlock;
     break;
   case SPIRVType::Image3d:
     Desc += ArgDesc::Image3d;
@@ -524,7 +513,9 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
 
     // Add needed attributes to newly created function argument.
     ArgKind AK = mapSPIRVTypeToArgKind(SPVDesc.Ty);
-    ArgDesc = mapSPIRVDescToArgDesc(SPVDesc);
+    ArgDesc = mapSPIRVDescToArgDesc(
+        SPVDesc,
+        F.getAttributes().hasParamAttr(i, VCFunctionMD::VCMediaBlockIO));
     Attribute Attr = Attribute::get(Ctx, VCFunctionMD::VCArgumentKind,
                                     std::to_string(static_cast<unsigned>(AK)));
     NewF->addParamAttr(i, Attr);

@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2021-2024 Intel Corporation
+; Copyright (C) 2021-2025 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -14,11 +14,12 @@
 define void @test(i32 %image) {
 ; CHECK-LABEL: @test(
 
-; CHECK: %intel.image2d_media_block_ro_t addrspace(1)*
+; CHECK: %opencl.image2d_ro_t addrspace(1)*
+; CHECK: "VCMediaBlockIO"
 ; CHECK: [[IMAGE:%[^)]+]])
 
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[TMP0:%.*]] = ptrtoint %intel.image2d_media_block_ro_t addrspace(1)* [[IMAGE]] to i32
+; CHECK-NEXT:    [[TMP0:%.*]] = ptrtoint %opencl.image2d_ro_t addrspace(1)* [[IMAGE]] to i32
 ; CHECK-NEXT:    ret void
 ;
 entry:

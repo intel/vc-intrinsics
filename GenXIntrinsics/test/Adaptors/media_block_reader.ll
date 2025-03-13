@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2021-2024 Intel Corporation
+; Copyright (C) 2021-2025 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -11,9 +11,9 @@
 ; UNSUPPORTED: opaque-pointers
 ; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
-%intel.image2d_media_block_ro_t = type opaque
+%opencl.image2d_ro_t = type opaque
 
-define spir_kernel void @test(%intel.image2d_media_block_ro_t addrspace(1)* %image) #0 {
+define spir_kernel void @test(%opencl.image2d_ro_t addrspace(1)* "VCMediaBlockIO" %image) #0 {
 ; CHECK-LABEL: @test(
 
 ; CHECK: i32
@@ -23,11 +23,11 @@ define spir_kernel void @test(%intel.image2d_media_block_ro_t addrspace(1)* %ima
 ; CHECK-NEXT:    ret void
 ;
 entry:
-  %0 = call i32 @llvm.genx.address.convert.i32.p1intel.image2d_media_block_ro_t(%intel.image2d_media_block_ro_t addrspace(1)* %image)
+  %0 = call i32 @llvm.genx.address.convert.i32.p1opencl.image2d_ro_t(%opencl.image2d_ro_t addrspace(1)* %image)
   ret void
 }
 
-declare i32 @llvm.genx.address.convert.i32.p1intel.image2d_media_block_ro_t(%intel.image2d_media_block_ro_t addrspace(1)*)
+declare i32 @llvm.genx.address.convert.i32.p1opencl.image2d_ro_t(%opencl.image2d_ro_t addrspace(1)*)
 
 attributes #0 = { "VCFunction" }
 

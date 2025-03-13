@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -48,7 +48,6 @@ enum class SPIRVType {
   Image1dBuffer,
   Image2d,
   Image2dArray,
-  Image2dMediaBlock,
   Image3d,
   // Sampler + sampler_t.
   Sampler,
@@ -114,8 +113,6 @@ static constexpr const char TypePrefix[] = "intel.";
 
 // Stateful buffer type.
 static constexpr const char Buffer[] = "buffer";
-// Media block image.
-static constexpr const char MediaBlockImage[] = "image2d_media_block";
 } // namespace IntelTypes
 
 namespace CommonTypes {
@@ -155,7 +152,6 @@ inline unsigned getOpaqueTypeAddressSpace(SPIRVType Ty) {
   case SPIRVType::Image1dBuffer:
   case SPIRVType::Image2d:
   case SPIRVType::Image2dArray:
-  case SPIRVType::Image2dMediaBlock:
   case SPIRVType::Image3d:
     return SPIRVParams::SPIRVGlobalAS;
   default:
