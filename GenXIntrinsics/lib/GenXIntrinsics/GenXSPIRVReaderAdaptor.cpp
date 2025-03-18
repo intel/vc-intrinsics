@@ -765,6 +765,9 @@ bool GenXSPIRVReaderAdaptorImpl::processVCKernelAttributes(Function &F) {
                     .str();
       dropAttributeAtIndex(F, AttrIndex, VCFunctionMD::VCArgumentDesc);
     }
+    if (VCINTR::AttributeList::hasAttributeAtIndex(
+            Attrs, AttrIndex, VCFunctionMD::VCMediaBlockIO))
+      dropAttributeAtIndex(F, AttrIndex, VCFunctionMD::VCMediaBlockIO);
     ArgKinds.push_back(
         llvm::ValueAsMetadata::get(llvm::ConstantInt::get(I32Ty, ArgKind)));
     ArgIOKinds.push_back(

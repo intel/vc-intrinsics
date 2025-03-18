@@ -13,6 +13,7 @@
 
 ; CHECK: define dllexport spir_kernel void @test(
 ; CHECK-SAME: ptr addrspace(1)
+; CHECK-NOT: "VCMediaBlockIO"
 ; CHECK-SAME: [[IMAGE:%[^)]+]])
 define spir_kernel void @test(target("spirv.Image", void, 1, 0, 0, 0, 0, 0, 0) "VCMediaBlockIO" %image) #0 {
 ; CHECK-NEXT: ptrtoint ptr addrspace(1) [[IMAGE]] to i32

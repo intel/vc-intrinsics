@@ -15,6 +15,7 @@
 
 ; CHECK: define dllexport spir_kernel void @test(
 ; CHECK-SAME: %opencl.image2d_ro_t addrspace(1)*
+; CHECK-NOT: "VCMediaBlockIO"
 ; CHECK-SAME: [[IM2D:%[^,]+]])
 define spir_kernel void @test(%opencl.image2d_ro_t addrspace(1)* "VCMediaBlockIO" %im2d) #0 {
 ; CHECK-NEXT: ptrtoint %opencl.image2d_ro_t addrspace(1)* [[IM2D]] to i32
