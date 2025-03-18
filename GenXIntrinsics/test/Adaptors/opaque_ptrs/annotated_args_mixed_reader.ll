@@ -37,7 +37,7 @@ define spir_kernel void @test(target("spirv.BufferSurfaceINTEL", 2) %buf, target
 ; CHECK-NEXT: ptrtoint ptr addrspace(1) [[IM3D]] to i32
   %im3d.conv = call i32 @llvm.genx.address.convert.i32.t_spirv.Image_isVoid_2_0_0_0_0_0_2(target("spirv.Image", void, 2, 0, 0, 0, 0, 0, 2) %im3d)
 ; CHECK-NEXT: ptrtoint ptr addrspace(1) [[PTR]] to i64
-  %ptr.conv = call i64 @llvm.genx.address.convert.i64.p1(ptr addrspace(1) %ptr)
+  %ptr.conv = ptrtoint ptr addrspace(1) %ptr to i64
 ; CHECK-NEXT: ret void
   ret void
 }
@@ -45,7 +45,6 @@ define spir_kernel void @test(target("spirv.BufferSurfaceINTEL", 2) %buf, target
 declare i32 @llvm.genx.address.convert.i32.t_spirv.BufferSurfaceINTEL_2(target("spirv.BufferSurfaceINTEL", 2))
 declare i32 @llvm.genx.address.convert.i32.t_spirv.Image_isVoid_5_0_0_0_0_0_2(target("spirv.Image", void, 5, 0, 0, 0, 0, 0, 2))
 declare i32 @llvm.genx.address.convert.i32.t_spirv.Image_isVoid_2_0_0_0_0_0_2(target("spirv.Image", void, 2, 0, 0, 0, 0, 0, 2))
-declare i64 @llvm.genx.address.convert.i64.p1(ptr addrspace(1))
 
 attributes #0 = { "VCFunction" }
 

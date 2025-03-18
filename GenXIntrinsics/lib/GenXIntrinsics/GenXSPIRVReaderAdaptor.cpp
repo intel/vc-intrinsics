@@ -471,8 +471,6 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
                    auto *OrigTy = Orig->getType();
                    auto *ArgTy = Arg.getType();
                    if (isArgConvIntrinsic(Orig)) {
-                     if (ArgTy->isPointerTy() && OrigTy->isIntegerTy(64))
-                       return ArgTy;
 #if VC_INTR_LLVM_VERSION_MAJOR > 15
                      if (ArgTy->isTargetExtTy()) {
                        auto &Ctx = Arg.getContext();
@@ -486,6 +484,7 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
                        return PointerType::get(Ctx, AddrSpace);
                      }
 #endif
+                     return ArgTy;
                    }
                    if (OrigTy->isPointerTy() && ArgTy->isPointerTy())
                      return getKernelArgPointerType(cast<PointerType>(OrigTy),

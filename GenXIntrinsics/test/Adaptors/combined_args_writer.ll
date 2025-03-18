@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2020-2024 Intel Corporation
+; Copyright (C) 2020-2025 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -9,40 +9,34 @@
 ; Test combined writer translation: kernel has both annotated explicit
 ; arguments and impicit arguments. Implicit arguments would not show
 ; in normal flow, though they appear in old cmc.
+
 ; XFAIL: llvm13, llvm14
 ; UNSUPPORTED: opaque-pointers
 ; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 ; RUN: opt %pass%GenXSPIRVWriterAdaptor %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 
+; CHECK: define spir_kernel void @test(
+; CHECK-SAME: %opencl.image2d_ro_t addrspace(1)*
+; CHECK-NOT: "VCArgumentDesc"
+; CHECK-NOT: "VCArgumentKind"
+; CHECK-SAME: [[IN:%[^,]+]],
+; CHECK-SAME: %opencl.image2d_wo_t addrspace(1)*
+; CHECK-NOT: "VCArgumentDesc"
+; CHECK-NOT: "VCArgumentKind"
+; CHECK-SAME: [[OUT:%[^,]+]],
+; CHECK-SAME: <3 x i32>
+; CHECK-SAME: "VCArgumentKind"="24"
+; CHECK-SAME: [[LOCAL_ID:%[^)]+]])
 define void @test(i32 %in, i32 %out, <3 x i32> %__arg_llvm.genx.local.id) {
-; CHECK-LABEL: @test(
-
-; CHECK: %opencl.image2d_ro_t addrspace(1)*
-; CHECK-NOT: "VCArgumentDesc"
-; CHECK-NOT: "VCArgumentKind"
-; CHECK: [[IN:%[^,]+]],
-
-; CHECK: %opencl.image2d_wo_t addrspace(1)*
-; CHECK-NOT: "VCArgumentDesc"
-; CHECK-NOT: "VCArgumentKind"
-; CHECK: [[OUT:%[^,]+]],
-
-; CHECK: <3 x i32>
-; CHECK: "VCArgumentKind"="24"
-; CHECK: [[LOCAL_ID:%[^)]+]])
-
-; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[TMP0:%.*]] = ptrtoint %opencl.image2d_ro_t addrspace(1)* [[IN]] to i32
-; CHECK-NEXT:    [[TMP1:%.*]] = ptrtoint %opencl.image2d_wo_t addrspace(1)* [[OUT]] to i32
-; CHECK-NEXT:    [[TMP2:%.*]] = extractelement <3 x i32> [[LOCAL_ID]], i32 0
-; CHECK-NEXT:    [[CALL1_I_I_I:%.*]] = tail call <8 x i32> @llvm.genx.media.ld.v8i32(i32 0, i32 [[TMP0]], i32 0, i32 32, i32 [[TMP2]], i32 0)
-; CHECK-NEXT:    tail call void @llvm.genx.media.st.v8i32(i32 0, i32 [[TMP1]], i32 0, i32 32, i32 [[TMP2]], i32 0, <8 x i32> [[CALL1_I_I_I]])
-; CHECK-NEXT:    ret void
-;
-entry:
-  %0 = extractelement <3 x i32> %__arg_llvm.genx.local.id, i32 0
-  %call1.i.i.i = tail call <8 x i32> @llvm.genx.media.ld.v8i32(i32 0, i32 %in, i32 0, i32 32, i32 %0, i32 0)
-  tail call void @llvm.genx.media.st.v8i32(i32 0, i32 %out, i32 0, i32 32, i32 %0, i32 0, <8 x i32> %call1.i.i.i)
+; CHECK-NEXT: [[IN_CONV:%.*]] = call i32 @llvm.genx.address.convert.i32.p1opencl.image2d_ro_t(%opencl.image2d_ro_t addrspace(1)* [[IN]])
+; CHECK-NEXT: [[OUT_CONV:%.*]] = call i32 @llvm.genx.address.convert.i32.p1opencl.image2d_wo_t(%opencl.image2d_wo_t addrspace(1)* [[OUT]])
+; CHECK-NEXT: [[LOCAL_ID_X:%.*]] = extractelement <3 x i32> [[LOCAL_ID]], i32 0
+; CHECK-NEXT: [[VAL:%.*]] = tail call <8 x i32> @llvm.genx.media.ld.v8i32(i32 0, i32 [[IN_CONV]], i32 0, i32 32, i32 [[LOCAL_ID_X]], i32 0)
+; CHECK-NEXT: tail call void @llvm.genx.media.st.v8i32(i32 0, i32 [[OUT_CONV]], i32 0, i32 32, i32 [[LOCAL_ID_X]], i32 0, <8 x i32> [[VAL]])
+; CHECK-NEXT: ret void
+  %local.id.x = extractelement <3 x i32> %__arg_llvm.genx.local.id, i32 0
+  %val = tail call <8 x i32> @llvm.genx.media.ld.v8i32(i32 0, i32 %in, i32 0, i32 32, i32 %local.id.x, i32 0)
+  tail call void @llvm.genx.media.st.v8i32(i32 0, i32 %out, i32 0, i32 32, i32 %local.id.x, i32 0, <8 x i32> %val)
   ret void
 }
 

@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2020-2024 Intel Corporation
+; Copyright (C) 2020-2025 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -9,65 +9,54 @@
 ; Test kernel arguments translation from old style with metadata to
 ; new style with opaque types that SPIRV translator can
 ; understand. Here annotations for OCL runtime are used.
+
 ; UNSUPPORTED: opaque-pointers
 ; XFAIL: llvm13, llvm14
 ; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 ; RUN: opt %pass%GenXSPIRVWriterAdaptor %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 
+; CHECK: define spir_kernel void @test(
+; CHECK-SAME: %intel.buffer_rw_t addrspace(1)*
+; CHECK-NOT: "VCArgumentDesc"
+; CHECK-NOT: "VCArgumentKind"
+; CHECK-SAME: [[BUF:%[^,]+]],
+; CHECK-SAME: %opencl.image1d_rw_t addrspace(1)*
+; CHECK-NOT: "VCArgumentDesc"
+; CHECK-NOT: "VCArgumentKind"
+; CHECK-SAME: [[IM1D:%[^,]+]],
+; CHECK-SAME: %opencl.image1d_buffer_rw_t addrspace(1)*
+; CHECK-NOT: "VCArgumentDesc"
+; CHECK-NOT: "VCArgumentKind"
+; CHECK-SAME: [[IM1DB:%[^,]+]],
+; CHECK-SAME: %opencl.image2d_rw_t addrspace(1)*
+; CHECK-NOT: "VCArgumentDesc"
+; CHECK-NOT: "VCArgumentKind"
+; CHECK-SAME: [[IM2D:%[^,]+]],
+; CHECK-SAME: %opencl.image3d_rw_t addrspace(1)*
+; CHECK-NOT: "VCArgumentDesc"
+; CHECK-NOT: "VCArgumentKind"
+; CHECK-SAME: [[IM3D:%[^,]+]],
+; CHECK-SAME: %opencl.sampler_t addrspace(2)*
+; CHECK-NOT: "VCArgumentDesc"
+; CHECK-NOT: "VCArgumentKind"
+; CHECK-SAME: [[SAMP:%[^,]+]],
+; CHECK-SAME: i8 addrspace(1)*
+; CHECK-NOT: "VCArgumentDesc"
+; CHECK-NOT: "VCArgumentKind"
+; CHECK-SAME: [[PTR:%[^,]+]],
+; CHECK-SAME: <4 x i32>
+; CHECK-NOT: "VCArgumentDesc"
+; CHECK-NOT: "VCArgumentKind"
+; CHECK-SAME: [[GEN:%[^)]+]])
 define void @test(i32 %buf, i32 %im1d, i32 %im1db, i32 %im2d, i32 %im3d, i32 %samp, i64 %ptr, <4 x i32> %gen) {
-; CHECK-LABEL: @test(
-
-; CHECK: %intel.buffer_rw_t addrspace(1)*
-; CHECK-NOT: "VCArgumentDesc"
-; CHECK-NOT: "VCArgumentKind"
-; CHECK: [[BUF:%[^,]+]],
-
-; CHECK: %opencl.image1d_rw_t addrspace(1)*
-; CHECK-NOT: "VCArgumentDesc"
-; CHECK-NOT: "VCArgumentKind"
-; CHECK: [[IM1D:%[^,]+]],
-
-; CHECK: %opencl.image1d_buffer_rw_t addrspace(1)*
-; CHECK-NOT: "VCArgumentDesc"
-; CHECK-NOT: "VCArgumentKind"
-; CHECK: [[IM1DB:%[^,]+]],
-
-; CHECK: %opencl.image2d_rw_t addrspace(1)*
-; CHECK-NOT: "VCArgumentDesc"
-; CHECK-NOT: "VCArgumentKind"
-; CHECK: [[IM2D:%[^,]+]],
-
-; CHECK: %opencl.image3d_rw_t addrspace(1)*
-; CHECK-NOT: "VCArgumentDesc"
-; CHECK-NOT: "VCArgumentKind"
-; CHECK: [[IM3D:%[^,]+]],
-
-; CHECK: %opencl.sampler_t addrspace(2)*
-; CHECK-NOT: "VCArgumentDesc"
-; CHECK-NOT: "VCArgumentKind"
-; CHECK: [[SAMP:%[^,]+]],
-
-; CHECK: i8 addrspace(1)*
-; CHECK-NOT: "VCArgumentDesc"
-; CHECK-NOT: "VCArgumentKind"
-; CHECK: [[PTR:%[^,]+]],
-
-; CHECK: <4 x i32>
-; CHECK-NOT: "VCArgumentDesc"
-; CHECK-NOT: "VCArgumentKind"
-; CHECK: [[GEN:%[^)]+]])
-
-; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[TMP0:%.*]] = ptrtoint %intel.buffer_rw_t addrspace(1)* [[BUF]] to i32
-; CHECK-NEXT:    [[TMP1:%.*]] = ptrtoint %opencl.image1d_rw_t addrspace(1)* [[IM1D]] to i32
-; CHECK-NEXT:    [[TMP2:%.*]] = ptrtoint %opencl.image1d_buffer_rw_t addrspace(1)* [[IM1DB]] to i32
-; CHECK-NEXT:    [[TMP3:%.*]] = ptrtoint %opencl.image2d_rw_t addrspace(1)* [[IM2D]] to i32
-; CHECK-NEXT:    [[TMP4:%.*]] = ptrtoint %opencl.image3d_rw_t addrspace(1)* [[IM3D]] to i32
-; CHECK-NEXT:    [[TMP5:%.*]] = ptrtoint %opencl.sampler_t addrspace(2)* [[SAMP]] to i32
-; CHECK-NEXT:    [[TMP6:%.*]] = ptrtoint i8 addrspace(1)* [[PTR]] to i64
-; CHECK-NEXT:    ret void
-;
-entry:
+; CHECK-NEXT: call i32 @llvm.genx.address.convert.i32.p1intel.buffer_rw_t(%intel.buffer_rw_t addrspace(1)* [[BUF]])
+; CHECK-NEXT: call i32 @llvm.genx.address.convert.i32.p1opencl.image1d_rw_t(%opencl.image1d_rw_t addrspace(1)* [[IM1D]])
+; CHECK-NEXT: call i32 @llvm.genx.address.convert.i32.p1opencl.image1d_buffer_rw_t(%opencl.image1d_buffer_rw_t addrspace(1)* [[IM1DB]])
+; CHECK-NEXT: call i32 @llvm.genx.address.convert.i32.p1opencl.image2d_rw_t(%opencl.image2d_rw_t addrspace(1)* [[IM2D]])
+; CHECK-NEXT: call i32 @llvm.genx.address.convert.i32.p1opencl.image3d_rw_t(%opencl.image3d_rw_t addrspace(1)* [[IM3D]])
+; CHECK-NEXT: call i32 @llvm.genx.address.convert.i32.p2opencl.sampler_t(%opencl.sampler_t addrspace(2)* [[SAMP]])
+; CHECK-NEXT: ptrtoint i8 addrspace(1)* [[PTR]] to i64
+; CHECK-NEXT: ret void
   ret void
 }
 

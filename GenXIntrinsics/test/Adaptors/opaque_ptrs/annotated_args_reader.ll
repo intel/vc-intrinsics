@@ -15,7 +15,7 @@
 
 @0 = private unnamed_addr constant [15 x i8] c"some attribute\00", section "llvm.metadata"
 ; CHECK-LABEL: @llvm.global.annotations
-; CHECK ptr @test
+; CHECK-SAME: ptr @test
 @llvm.global.annotations = appending global [1 x { ptr, ptr, ptr, i32 }] [{ ptr, ptr, ptr, i32 } { ptr @test, ptr @0, ptr undef, i32 undef }], section "llvm.metadata"
 
 ; CHECK: define dllexport spir_kernel void @test(
@@ -49,7 +49,7 @@ define spir_kernel void @test(target("spirv.BufferSurfaceINTEL", 2) %buf, target
 ; CHECK-NEXT: ptrtoint ptr addrspace(2) [[SAMP]] to i32
   %samp.conv = call i32 @llvm.genx.address.convert.i32.t_spirv.Sampler(target("spirv.Sampler") %samp)
 ; CHECK-NEXT: ptrtoint ptr addrspace(1) [[PTR]] to i64
-  %ptr.conv = call i64 @llvm.genx.address.convert.i64.p1(ptr addrspace(1) %ptr)
+  %ptr.conv = ptrtoint ptr addrspace(1) %ptr to i64
 ; CHECK-NEXT: ret void
   ret void
 }
@@ -60,7 +60,6 @@ declare i32 @llvm.genx.address.convert.i32.t_spirv.Image_isVoid_5_0_0_0_0_0_2(ta
 declare i32 @llvm.genx.address.convert.i32.t_spirv.Image_isVoid_1_0_0_0_0_0_2(target("spirv.Image", void, 1, 0, 0, 0, 0, 0, 2))
 declare i32 @llvm.genx.address.convert.i32.t_spirv.Image_isVoid_2_0_0_0_0_0_2(target("spirv.Image", void, 2, 0, 0, 0, 0, 0, 2))
 declare i32 @llvm.genx.address.convert.i32.t_spirv.Sampler(target("spirv.Sampler"))
-declare i64 @llvm.genx.address.convert.i64.p1(ptr addrspace(1))
 
 attributes #0 = { "VCFunction" }
 

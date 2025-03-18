@@ -341,7 +341,7 @@ static void rewriteArgumentUses(Instruction *InsertBefore, Argument &OldArg,
     }
   } else if (OldTy->isPointerTy() && NewTy->isIntegerTy()) {
     Cast = Builder.CreateIntToPtr(&NewArg, OldTy);
-  } else if (OldTy->isIntegerTy() && NewTy->isPointerTy()) {
+  } else if (OldTy->isIntegerTy(64) && NewTy->isPointerTy()) {
     Cast = Builder.CreatePtrToInt(&NewArg, OldTy);
   } else {
     auto *M = OldArg.getParent()->getParent();

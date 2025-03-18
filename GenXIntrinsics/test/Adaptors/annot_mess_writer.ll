@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2020-2024 Intel Corporation
+; Copyright (C) 2020-2025 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -12,36 +12,28 @@
 ; UNSUPPORTED: opaque-pointers
 ; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 
+; CHECK: define spir_kernel void @test(
+; CHECK-SAME: %opencl.image2d_ro_t addrspace(1)*
+; CHECK-NOT: "VCArgumentDesc"
+; CHECK-NOT: "VCArgumentKind"
+; CHECK-SAME: [[IM2D:%[^,]+]],
+; CHECK-SAME: %opencl.sampler_t addrspace(2)*
+; CHECK-NOT: "VCArgumentDesc"
+; CHECK-NOT: "VCArgumentKind"
+; CHECK-SAME: [[SAMP:%[^,]+]],
+; CHECK-SAME: i8 addrspace(1)*
+; CHECK-NOT: "VCArgumentDesc"
+; CHECK-NOT: "VCArgumentKind"
+; CHECK-SAME: [[PTR:%[^,]+]],
+; CHECK-SAME: i32
+; CHECK-NOT: "VCArgumentDesc"
+; CHECK-NOT: "VCArgumentKind"
+; CHECK-SAME: [[GEN:%[^)]+]])
 define void @test(i32 %im2d, i32 %samp, i64 %ptr, i32 %gen) {
-; CHECK-LABEL: @test(
-
-; CHECK: %opencl.image2d_ro_t addrspace(1)*
-; CHECK-NOT: "VCArgumentDesc"
-; CHECK-NOT: "VCArgumentKind"
-; CHECK: [[IM2D:%[^,]+]],
-
-; CHECK: %opencl.sampler_t addrspace(2)*
-; CHECK-NOT: "VCArgumentDesc"
-; CHECK-NOT: "VCArgumentKind"
-; CHECK: [[SAMP:%[^,]+]],
-
-; CHECK: i8 addrspace(1)*
-; CHECK-NOT: "VCArgumentDesc"
-; CHECK-NOT: "VCArgumentKind"
-; CHECK: [[PTR:%[^,]+]],
-
-; CHECK: i32
-; CHECK-NOT: "VCArgumentDesc"
-; CHECK-NOT: "VCArgumentKind"
-; CHECK: [[GEN:%[^)]+]])
-
-; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[TMP0:%.*]] = ptrtoint %opencl.image2d_ro_t addrspace(1)* [[IM2D]] to i32
-; CHECK-NEXT:    [[TMP1:%.*]] = ptrtoint %opencl.sampler_t addrspace(2)* [[SAMP]] to i32
-; CHECK-NEXT:    [[TMP2:%.*]] = ptrtoint i8 addrspace(1)* [[PTR:%.*]] to i64
-; CHECK-NEXT:    ret void
-;
-entry:
+; CHECK-NEXT: call i32 @llvm.genx.address.convert.i32.p1opencl.image2d_ro_t(%opencl.image2d_ro_t addrspace(1)* [[IM2D]])
+; CHECK-NEXT: call i32 @llvm.genx.address.convert.i32.p2opencl.sampler_t(%opencl.sampler_t addrspace(2)* [[SAMP]])
+; CHECK-NEXT: ptrtoint i8 addrspace(1)* [[PTR]] to i64
+; CHECK-NEXT: ret void
   ret void
 }
 

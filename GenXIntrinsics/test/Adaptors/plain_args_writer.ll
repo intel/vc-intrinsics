@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2020-2024 Intel Corporation
+; Copyright (C) 2020-2025 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -9,40 +9,33 @@
 ; Test kernel arguments translation from old style with metadata to
 ; new style with opaque types that SPIRV translator can
 ; understand. Arguments without annotations are used here (CMRT like).
+
 ; UNSUPPORTED: opaque-pointers
 ; XFAIL: llvm13, llvm14
 ; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 ; RUN: opt %pass%GenXSPIRVWriterAdaptor %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 
-define spir_kernel void @test(i32 %surf, i32 %samp, i64 %ptr, i32 %gen) {
-; CHECK-LABEL: @test(
-
-; CHECK: %intel.buffer_rw_t addrspace(1)*
+; CHECK: define spir_kernel void @test(
+; CHECK-SAME: %intel.buffer_rw_t addrspace(1)*
 ; CHECK-NOT: "VCArgumentDesc"
 ; CHECK-NOT: "VCArgumentKind"
-; CHECK: [[SURF:%[^,]+]],
-
+; CHECK-SAME: [[BUF:%[^,]+]],
 ; CHECK: %opencl.sampler_t addrspace(2)*
 ; CHECK-NOT: "VCArgumentDesc"
 ; CHECK-NOT: "VCArgumentKind"
-; CHECK: [[SAMP:%[^,]+]],
-
-; CHECK: i64
+; CHECK-SAME: [[SAMP:%[^,]+]],
+; CHECK-SAME: i64
 ; CHECK-NOT: "VCArgumentDesc"
 ; CHECK-NOT: "VCArgumentKind"
-; CHECK: [[PTR:%[^,]+]],
-
-; CHECK: i32
+; CHECK-SAME: [[PTR:%[^,]+]],
+; CHECK-SAME: i32
 ; CHECK-NOT: "VCArgumentDesc"
 ; CHECK-NOT: "VCArgumentKind"
-; CHECK: [[GEN:%[^)]+]])
-
-; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[TMP0:%.*]] = ptrtoint %intel.buffer_rw_t addrspace(1)* [[SURF]] to i32
-; CHECK-NEXT:    [[TMP1:%.*]] = ptrtoint %opencl.sampler_t addrspace(2)* [[SAMP]] to i32
-; CHECK-NEXT:    ret void
-;
-entry:
+; CHECK-SAME: [[GEN:%[^)]+]])
+define spir_kernel void @test(i32 %buf, i32 %samp, i64 %ptr, i32 %gen) {
+; CHECK-NEXT: call i32 @llvm.genx.address.convert.i32.p1intel.buffer_rw_t(%intel.buffer_rw_t addrspace(1)* [[BUF]])
+; CHECK-NEXT: call i32 @llvm.genx.address.convert.i32.p2opencl.sampler_t(%opencl.sampler_t addrspace(2)* [[SAMP]])
+; CHECK-NEXT: ret void
   ret void
 }
 
