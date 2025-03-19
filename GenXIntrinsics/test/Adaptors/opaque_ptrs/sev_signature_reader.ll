@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2024 Intel Corporation
+; Copyright (C) 2024-2025 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -14,9 +14,11 @@
 ; CHECK: @global1 = internal global <1 x i32> undef, align 4
 ; CHECK: @global2 = internal global <1 x ptr> undef, align 4
 ; CHECK: @global3 = external global <1 x ptr>
+; CHECK: @global4 = external global ptr
 @global1 = internal global i32 undef, align 4 #1
 @global2 = internal global ptr undef, align 4 #1
 @global3 = external global ptr #1
+@global4 = external global ptr #2
 
 ; CHECK: define <1 x i32> @f1(<1 x i32> %a, <1 x i32> %b)
 define "VCSingleElementVector"="0" i32 @f1(i32 "VCSingleElementVector" %a, i32 "VCSingleElementVector" %b) #0 {
@@ -52,3 +54,4 @@ declare void @llvm.genx.intr(ptr)
 
 attributes #0 = { "VCFunction" }
 attributes #1 = { "VCGlobalVariable" "VCSingleElementVector"="0" }
+attributes #2 = { "VCGlobalVariable" "VCSingleElementVector"="1" }

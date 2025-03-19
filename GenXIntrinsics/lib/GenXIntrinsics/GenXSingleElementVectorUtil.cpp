@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -192,6 +192,8 @@ Type *SEVUtil::getTypeFreeFromSEV(Type *Ty) {
 // Returns SEV-rich analogue of Type Ty accordingly to the following scheme:
 // U*...**...* ---> <1 x U*...*>*...*
 Type *SEVUtil::getTypeWithSEV(Type *Ty, size_t InnerPointers) {
+  if (VCINTR::Type::isOpaquePointerTy(Ty) && InnerPointers > 0)
+    return Ty;
   if (auto *VecTy = dyn_cast<VectorType>(Ty)) {
     (void)VecTy;
     assert(InnerPointers == 0);
