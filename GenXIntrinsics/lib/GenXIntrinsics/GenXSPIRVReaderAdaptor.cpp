@@ -473,15 +473,12 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
                    if (isArgConvIntrinsic(Orig)) {
 #if VC_INTR_LLVM_VERSION_MAJOR > 15
                      if (ArgTy->isTargetExtTy()) {
+                       // N.B. Target extension types are fully supported and tested
+                       // only with opaque pointers enabled.
                        auto &Ctx = Arg.getContext();
-#if VC_INTR_LLVM_VERSION_MAJOR == 16
-                       assert(!Ctx.supportsTypedPointers() &&
-                              "Target extension types should be used only with "
-                              "opaque pointers");
-#endif
                        unsigned AddrSpace =
                            getOpaqueTypeAddressSpace(Descs[Arg.getArgNo()].Ty);
-                       return PointerType::get(Ctx, AddrSpace);
+                       return PointerType::get(Type::getInt8Ty(Ctx), AddrSpace);
                      }
 #endif
                      return ArgTy;
