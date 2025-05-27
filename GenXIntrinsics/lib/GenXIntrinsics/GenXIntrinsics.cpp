@@ -241,7 +241,7 @@ DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
   }
   case IIT_HALF_VEC_ARG: {
     unsigned ArgInfo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
-    OutputTable.push_back(IITDescriptor::get(IITDescriptor::HalfVecArgument,
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::OneNthEltsVecArgument,
                                              ArgInfo));
     return;
   }
@@ -345,7 +345,7 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
     assert(ITy->getBitWidth() % 2 == 0);
     return IntegerType::get(Context, ITy->getBitWidth() / 2);
   }
-  case IITDescriptor::HalfVecArgument:
+  case IITDescriptor::OneNthEltsVecArgument:
     return VectorType::getHalfElementsVectorType(cast<VectorType>(
                                                   Tys[D.getArgumentNumber()]));
   case IITDescriptor::SameVecWidthArgument: {
