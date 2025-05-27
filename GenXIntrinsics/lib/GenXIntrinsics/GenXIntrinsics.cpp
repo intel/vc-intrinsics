@@ -242,7 +242,7 @@ DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
   case IIT_HALF_VEC_ARG: {
     unsigned ArgInfo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::OneNthEltsVecArgument,
-                                             ArgInfo));
+                                             2, ArgInfo));
     return;
   }
   case IIT_SAME_VEC_WIDTH_ARG: {
