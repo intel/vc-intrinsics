@@ -481,6 +481,10 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
                        return PointerType::get(Type::getInt8Ty(Ctx), AddrSpace);
                      }
 #endif
+                     if (!VCINTR::Type::isOpaquePointerTy(ArgTy) &&
+                         Arg.hasByValAttr())
+                       return OrigTy;
+
                      return ArgTy;
                    }
                    if (OrigTy->isPointerTy() && ArgTy->isPointerTy())
