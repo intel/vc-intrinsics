@@ -104,6 +104,21 @@ $ cmake -DLLVM_DIR=<llvm install>/lib/cmake/llvm -DVC_INTR_ENABLE_LIT_TESTS=ON -
 
 Target `check-vc-intrinsics` will run lit tests.
 
+## Supported Platforms
+
+* Intel® Gen12 graphics
+* Intel® Xe
+* Intel® Xe2
+* Intel® Xe3
+
+No code changes may regress support for any currently supported hardware.
+All contributions must ensure compatibility and functionality across all
+supported hardware platforms. Contributions that break hardware compatibility
+may be rejected or reverted.
+
+Any intentional changes to the list of supported platforms will be communicated
+on this page.
+
 ## How to provide feedback
 
 Please submit an issue using native github.com interface:
