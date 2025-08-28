@@ -192,8 +192,6 @@ Type *SEVUtil::getTypeFreeFromSEV(Type *Ty) {
 // Returns SEV-rich analogue of Type Ty accordingly to the following scheme:
 // U*...**...* ---> <1 x U*...*>*...*
 Type *SEVUtil::getTypeWithSEV(Type *Ty, size_t InnerPointers) {
-  if (VCINTR::Type::isOpaquePointerTy(Ty) && InnerPointers > 0)
-    return Ty;
   if (auto *VecTy = dyn_cast<VectorType>(Ty)) {
     (void)VecTy;
     assert(InnerPointers == 0);
@@ -205,6 +203,17 @@ Type *SEVUtil::getTypeWithSEV(Type *Ty, size_t InnerPointers) {
     if (It == SEVRichStructMap.end())
       llvm_unreachable("Unexpected SEV StructType");
     return It->second;
+  } else if (VCINTR::Type::isOpaquePointerTy(Ty)) {
+    // For opaque pointers ignore the InnerPointers parameter and always return
+    // <1 x ptr>.
+    // N.B. In case of typed pointers writer vs opaque pointers reader the full
+    // information about the original type is lost and we have to assume that
+    // the the SEV type was <1 x "any number of *">.
+    // The number of inner * has no use because we don't know the total number
+    // of * in the original type. To fix this we need to set attribute value to
+    // the number of outer pointers instead of inner ones, but it will lead to
+    // backward compatibility issues.
+    return VCINTR::getVectorType(Ty, 1);
   }
   auto NPtrs = getPointerNesting(Ty);
 

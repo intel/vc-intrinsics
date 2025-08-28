@@ -9,14 +9,7 @@
 ; REQUIRES: opaque-pointers
 ; RUN: opt -passes=GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
-define internal "VCSingleElementVector"="1" ptr @foo(ptr "VCSingleElementVector"="2" %in, ptr "VCSingleElementVector"="3" %out) #0 {
-  ; CHECK: store ptr %in, ptr %out, align 8
-  ; CHECK-NEXT: ret ptr %out
-  store ptr %in, ptr %out, align 8
-  ret ptr %out
-}
-
-define internal "VCSingleElementVector"="0" ptr @bar(ptr "VCSingleElementVector"="0" %in, ptr "VCSingleElementVector"="0" %out) #0 {
+define internal "VCSingleElementVector"="0" ptr @bar(ptr "VCSingleElementVector"="1" %in, ptr "VCSingleElementVector"="2" %out) #0 {
   ; CHECK: [[EX:[^ ]+]] = extractelement <1 x ptr> %out, i64 0
   ; CHECK-NEXT: [[INS:[^ ]+]] = extractelement <1 x ptr> %in, i64 0
   ; CHECK-NEXT: store ptr [[INS]], ptr [[EX]], align 8

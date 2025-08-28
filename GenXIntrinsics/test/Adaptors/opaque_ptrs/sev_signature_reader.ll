@@ -14,7 +14,7 @@
 ; CHECK: @global1 = internal global <1 x i32> undef, align 4
 ; CHECK: @global2 = internal global <1 x ptr> undef, align 4
 ; CHECK: @global3 = external global <1 x ptr>
-; CHECK: @global4 = external global ptr
+; CHECK: @global4 = external global <1 x ptr>
 @global1 = internal global i32 undef, align 4 #1
 @global2 = internal global ptr undef, align 4 #1
 @global3 = external global ptr #1
