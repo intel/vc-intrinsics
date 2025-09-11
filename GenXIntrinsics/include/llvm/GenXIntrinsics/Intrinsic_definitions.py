@@ -2533,19 +2533,19 @@ Imported_Intrinsics = \
 ###
     "lsc_atomic_bti" : { "result" : "any",
                          "arguments" : ["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],
-                         "attributes" : "None"
+                         "attributes" : "NoWillReturn"
                        },
     "lsc_atomic_slm" : { "result" : "any",
                          "arguments" : ["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],
-                         "attributes" : "None"
+                         "attributes" : "NoWillReturn"
                        },
     "lsc_atomic_stateless" : { "result" : "any",
                                "arguments" : ["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],
-                               "attributes" : "None"
+                               "attributes" : "NoWillReturn"
                              },
     "lsc_atomic_bindless" : { "result" : "any",
                               "arguments" : ["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],
-                              "attributes" : "None"
+                              "attributes" : "NoWillReturn"
                             },
 
 ### ``llvm.genx.lsc.xatomic.*.<return type>.<any type>.<any vector>`` : lsc_atomic instructions
@@ -2576,19 +2576,19 @@ Imported_Intrinsics = \
 ###
     "lsc_xatomic_bti" : { "result" : "any",
                           "arguments" : ["any","char","char","char","short","int","char","char","char","char","anyvector",0,0,"int",0],
-                          "attributes" : "None"
+                          "attributes" : "NoWillReturn"
                         },
     "lsc_xatomic_slm" : { "result" : "any",
                           "arguments" : ["any","char","char","char","short","int","char","char","char","char","anyvector",0,0,"int",0],
-                          "attributes" : "None"
+                          "attributes" : "NoWillReturn"
                         },
     "lsc_xatomic_stateless" : { "result" : "any",
                                 "arguments" : ["any","char","char","char","short","int","char","char","char","char","anyvector",0,0,"int",0],
-                                "attributes" : "None"
+                                "attributes" : "NoWillReturn"
                               },
     "lsc_xatomic_bindless" : { "result" : "any",
                                "arguments" : ["any","char","char","char","short","int","char","char","char","char","anyvector",0,0,"int",0],
-                               "attributes" : "None"
+                               "attributes" : "NoWillReturn"
                              },
 
 ### ``llvm.genx.lsc.fence.<vector type>`` : lsc_fence instruction
@@ -2861,52 +2861,52 @@ Imported_Intrinsics = \
 ###
     "dword_atomic_add" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int","anyint",0,0],
-                           "attributes" : "None",
+                           "attributes" : "NoWillReturn",
                            "platforms" : "-Xe2",
                          },
     "dword_atomic_sub" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int","anyint",0,0],
-                           "attributes" : "None",
+                           "attributes" : "NoWillReturn",
                            "platforms" : "-Xe2",
                          },
     "dword_atomic_min" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int","anyint",0,0],
-                           "attributes" : "None",
+                           "attributes" : "NoWillReturn",
                            "platforms" : "-Xe2",
                          },
     "dword_atomic_max" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int","anyint",0,0],
-                           "attributes" : "None",
+                           "attributes" : "NoWillReturn",
                            "platforms" : "-Xe2",
                          },
     "dword_atomic_xchg" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0,0],
-                            "attributes" : "None",
+                            "attributes" : "NoWillReturn",
                             "platforms" : "-Xe2",
                           },
     "dword_atomic_and" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int","anyint",0,0],
-                           "attributes" : "None",
+                           "attributes" : "NoWillReturn",
                            "platforms" : "-Xe2",
                          },
     "dword_atomic_or" : { "result" : "anyvector",
                           "arguments" : ["anyvector","int","anyint",0,0],
-                          "attributes" : "None",
+                          "attributes" : "NoWillReturn",
                           "platforms" : "-Xe2",
                         },
     "dword_atomic_xor" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int","anyint",0,0],
-                           "attributes" : "None",
+                           "attributes" : "NoWillReturn",
                            "platforms" : "-Xe2",
                          },
     "dword_atomic_imin" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0,0],
-                            "attributes" : "None",
+                            "attributes" : "NoWillReturn",
                             "platforms" : "-Xe2",
                           },
     "dword_atomic_imax" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0,0],
-                            "attributes" : "None",
+                            "attributes" : "NoWillReturn",
                             "platforms" : "-Xe2",
                           },
 
@@ -2936,52 +2936,52 @@ Imported_Intrinsics = \
 ###
     "dword_atomic2_add" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0],
-                            "attributes" : "None",
+                            "attributes" : "NoWillReturn",
                             "platforms" : "-Xe2",
                           },
     "dword_atomic2_sub" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0],
-                            "attributes" : "None",
+                            "attributes" : "NoWillReturn",
                             "platforms" : "-Xe2",
                           },
     "dword_atomic2_min" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0],
-                            "attributes" : "None",
+                            "attributes" : "NoWillReturn",
                             "platforms" : "-Xe2",
                           },
     "dword_atomic2_max" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0],
-                            "attributes" : "None",
+                            "attributes" : "NoWillReturn",
                             "platforms" : "-Xe2",
                           },
     "dword_atomic2_xchg" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","anyint",0],
-                             "attributes" : "None",
+                             "attributes" : "NoWillReturn",
                              "platforms" : "-Xe2",
                            },
     "dword_atomic2_and" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0],
-                            "attributes" : "None",
+                            "attributes" : "NoWillReturn",
                             "platforms" : "-Xe2",
                           },
     "dword_atomic2_or" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int","anyint",0],
-                           "attributes" : "None",
+                           "attributes" : "NoWillReturn",
                            "platforms" : "-Xe2",
                          },
     "dword_atomic2_xor" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0],
-                            "attributes" : "None",
+                            "attributes" : "NoWillReturn",
                             "platforms" : "-Xe2",
                           },
     "dword_atomic2_imin" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","anyint",0],
-                             "attributes" : "None",
+                             "attributes" : "NoWillReturn",
                              "platforms" : "-Xe2",
                            },
     "dword_atomic2_imax" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","anyint",0],
-                             "attributes" : "None",
+                             "attributes" : "NoWillReturn",
                              "platforms" : "-Xe2",
                            },
 
@@ -3004,22 +3004,22 @@ Imported_Intrinsics = \
 ###
     "dword_atomic_fmin" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0,0],
-                            "attributes" : "None",
+                            "attributes" : "NoWillReturn",
                             "platforms" : "-Xe2",
                           },
     "dword_atomic_fmax" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0,0],
-                            "attributes" : "None",
+                            "attributes" : "NoWillReturn",
                             "platforms" : "-Xe2",
                           },
     "dword_atomic_fadd" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0,0],
-                            "attributes" : "None",
+                            "attributes" : "NoWillReturn",
                             "platforms" : "-Xe2",
                           },
     "dword_atomic_fsub" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","anyint",0,0],
-                            "attributes" : "None",
+                            "attributes" : "NoWillReturn",
                             "platforms" : "-Xe2",
                           },
 
@@ -3041,22 +3041,22 @@ Imported_Intrinsics = \
 ###
     "dword_atomic2_fmin" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","anyint",0],
-                             "attributes" : "None",
+                             "attributes" : "NoWillReturn",
                              "platforms" : "-Xe2",
                            },
     "dword_atomic2_fmax" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","anyint",0],
-                             "attributes" : "None",
+                             "attributes" : "NoWillReturn",
                              "platforms" : "-Xe2",
                            },
     "dword_atomic2_fadd" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","anyint",0],
-                             "attributes" : "None",
+                             "attributes" : "NoWillReturn",
                              "platforms" : "-Xe2",
                            },
     "dword_atomic2_fsub" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","anyint",0],
-                             "attributes" : "None",
+                             "attributes" : "NoWillReturn",
                              "platforms" : "-Xe2",
                            },
 
@@ -3079,12 +3079,12 @@ Imported_Intrinsics = \
 ###
     "dword_atomic_inc" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int",0,0],
-                           "attributes" : "None",
+                           "attributes" : "NoWillReturn",
                            "platforms" : "-Xe2",
                          },
     "dword_atomic_dec" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int",0,0],
-                           "attributes" : "None",
+                           "attributes" : "NoWillReturn",
                            "platforms" : "-Xe2",
                          },
 
@@ -3105,12 +3105,12 @@ Imported_Intrinsics = \
 ###
     "dword_atomic2_inc" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int",0],
-                            "attributes" : "None",
+                            "attributes" : "NoWillReturn",
                             "platforms" : "-Xe2",
                           },
     "dword_atomic2_dec" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int",0],
-                            "attributes" : "None",
+                            "attributes" : "NoWillReturn",
                             "platforms" : "-Xe2",
                           },
 
@@ -3132,7 +3132,7 @@ Imported_Intrinsics = \
 ###
     "dword_atomic_cmpxchg" : { "result" : "anyvector",
                                "arguments" : ["anyvector","int",0,0,0,0],
-                               "attributes" : "None",
+                               "attributes" : "NoWillReturn",
                                "platforms" : "-Xe2",
                              },
 
@@ -3153,7 +3153,7 @@ Imported_Intrinsics = \
 ###
     "dword_atomic2_cmpxchg" : { "result" : "anyvector",
                                 "arguments" : ["anyvector","int",0,0,0],
-                                "attributes" : "None",
+                                "attributes" : "NoWillReturn",
                                 "platforms" : "-Xe2",
                               },
 
@@ -3175,7 +3175,7 @@ Imported_Intrinsics = \
 ###
     "dword_atomic_fcmpwr" : { "result" : "anyvector",
                               "arguments" : ["anyvector","int","anyint",0,0,0],
-                              "attributes" : "None",
+                              "attributes" : "NoWillReturn",
                               "platforms" : "-Xe2",
                             },
 
@@ -3196,7 +3196,7 @@ Imported_Intrinsics = \
 ###
     "dword_atomic2_fcmpwr" : { "result" : "anyvector",
                                "arguments" : ["anyvector","int","anyint",0,0],
-                               "attributes" : "None",
+                               "attributes" : "NoWillReturn",
                                "platforms" : "-Xe2",
                              },
 
@@ -3230,52 +3230,52 @@ Imported_Intrinsics = \
     "typed_atomic_add" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int",0,"anyint",2,2,2],
                            "platforms" : "-Xe2",
-                           "attributes" : "None"
+                           "attributes" : "NoWillReturn"
                          },
     "typed_atomic_sub" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int",0,"anyint",2,2,2],
                            "platforms" : "-Xe2",
-                           "attributes" : "None"
+                           "attributes" : "NoWillReturn"
                          },
     "typed_atomic_min" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int",0,"anyint",2,2,2],
                            "platforms" : "-Xe2",
-                           "attributes" : "None"
+                           "attributes" : "NoWillReturn"
                          },
     "typed_atomic_max" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int",0,"anyint",2,2,2],
                            "platforms" : "-Xe2",
-                           "attributes" : "None"
+                           "attributes" : "NoWillReturn"
                          },
     "typed_atomic_xchg" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int",0,"anyint",2,2,2],
                             "platforms" : "-Xe2",
-                            "attributes" : "None"
+                            "attributes" : "NoWillReturn"
                           },
     "typed_atomic_and" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int",0,"anyint",2,2,2],
                            "platforms" : "-Xe2",
-                           "attributes" : "None"
+                           "attributes" : "NoWillReturn"
                          },
     "typed_atomic_or" : { "result" : "anyvector",
                           "arguments" : ["anyvector","int",0,"anyint",2,2,2],
                           "platforms" : "-Xe2",
-                          "attributes" : "None"
+                          "attributes" : "NoWillReturn"
                         },
     "typed_atomic_xor" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int",0,"anyint",2,2,2],
                            "platforms" : "-Xe2",
-                           "attributes" : "None"
+                           "attributes" : "NoWillReturn"
                          },
     "typed_atomic_imin" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int",0,"anyint",2,2,2],
                             "platforms" : "-Xe2",
-                            "attributes" : "None"
+                            "attributes" : "NoWillReturn"
                           },
     "typed_atomic_imax" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int",0,"anyint",2,2,2],
                             "platforms" : "-Xe2",
-                            "attributes" : "None"
+                            "attributes" : "NoWillReturn"
                           },
 
 ### ``llvm.genx.typed.atomic.*.<return type>.<vector type>.<any int>`` : atomic typed with fmin/fmax operation
@@ -3300,22 +3300,22 @@ Imported_Intrinsics = \
     "typed_atomic_fmin" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int",0,"anyint",2,2,2],
                             "platforms" : "-Xe2",
-                            "attributes" : "None"
+                            "attributes" : "NoWillReturn"
                           },
     "typed_atomic_fmax" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int",0,"anyint",2,2,2],
                             "platforms" : "-Xe2",
-                            "attributes" : "None"
+                            "attributes" : "NoWillReturn"
                           },
     "typed_atomic_fadd" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int",0,"anyint",2,2,2],
                             "platforms" : "-Xe2",
-                            "attributes" : "None"
+                            "attributes" : "NoWillReturn"
                           },
     "typed_atomic_fsub" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int",0,"anyint",2,2,2],
                             "platforms" : "-Xe2",
-                            "attributes" : "None"
+                            "attributes" : "NoWillReturn"
                           },
 
 ### ``llvm.genx.typed.atomic.*.<return type>.<vector type>.<any int>`` : atomic typed with inc/dec operation
@@ -3339,12 +3339,12 @@ Imported_Intrinsics = \
     "typed_atomic_inc" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int","anyint",2,2,2],
                            "platforms" : "-Xe2",
-                           "attributes" : "None"
+                           "attributes" : "NoWillReturn"
                          },
     "typed_atomic_dec" : { "result" : "anyvector",
                            "arguments" : ["anyvector","int","anyint",2,2,2],
                            "platforms" : "-Xe2",
-                           "attributes" : "None"
+                           "attributes" : "NoWillReturn"
                          },
 
 ### ``llvm.genx.typed.atomic.cmpxchg.<return type>.<vector type>.<any int>`` : vISA TYPED_ATOMIC CMPXCHG instruction
@@ -3368,7 +3368,7 @@ Imported_Intrinsics = \
     "typed_atomic_cmpxchg" : { "result" : "anyvector",
                                "arguments" : ["anyvector","int",0,0,"anyint",2,2,2],
                                "platforms" : "-Xe2",
-                               "attributes" : "None"
+                               "attributes" : "NoWillReturn"
                              },
 
 ### ``llvm.genx.typed.atomic.fcmpwr.<return type>.<vector type>.<any int>`` : vISA TYPED_ATOMIC FCMPWR instruction
@@ -3392,7 +3392,7 @@ Imported_Intrinsics = \
     "typed_atomic_fcmpwr" : { "result" : "anyvector",
                               "arguments" : ["anyvector","int",0,0,"anyint",2,2,2],
                               "platforms" : "-Xe2",
-                              "attributes" : "None"
+                              "attributes" : "NoWillReturn"
                             },
 
 ### ``llvm.genx.gather.private.<return type>.<vector type>.<any int>`` : CMC internal, no VISA
@@ -3853,27 +3853,27 @@ Imported_Intrinsics = \
     "untyped_atomic_add" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","int",0,0,0],
                              "platforms" : "-Xe2",
-                             "attributes" : "None"
+                             "attributes" : "NoWillReturn"
                            },
     "untyped_atomic_sub" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","int",0,0,0],
                              "platforms" : "-Xe2",
-                             "attributes" : "None"
+                             "attributes" : "NoWillReturn"
                            },
     "untyped_atomic_min" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","int",0,0,0],
                              "platforms" : "-Xe2",
-                             "attributes" : "None"
+                             "attributes" : "NoWillReturn"
                            },
     "untyped_atomic_max" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","int",0,0,0],
                              "platforms" : "-Xe2",
-                             "attributes" : "None"
+                             "attributes" : "NoWillReturn"
                            },
     "untyped_atomic_xchg" : { "result" : "anyvector",
                               "arguments" : ["anyvector","int","int",0,0,0],
                               "platforms" : "-Xe2",
-                              "attributes" : "None"
+                              "attributes" : "NoWillReturn"
                             },
     "untyped_atomic_and" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","int",0,0,0],
@@ -3883,22 +3883,22 @@ Imported_Intrinsics = \
     "untyped_atomic_or" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","int",0,0,0],
                             "platforms" : "-Xe2",
-                            "attributes" : "None"
+                            "attributes" : "NoWillReturn"
                           },
     "untyped_atomic_xor" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","int",0,0,0],
                              "platforms" : "-Xe2",
-                             "attributes" : "None"
+                             "attributes" : "NoWillReturn"
                            },
     "untyped_atomic_imin" : { "result" : "anyvector",
                               "arguments" : ["anyvector","int","int",0,0,0],
                               "platforms" : "-Xe2",
-                              "attributes" : "None"
+                              "attributes" : "NoWillReturn"
                             },
     "untyped_atomic_imax" : { "result" : "anyvector",
                               "arguments" : ["anyvector","int","int",0,0,0],
                               "platforms" : "-Xe2",
-                              "attributes" : "None"
+                              "attributes" : "NoWillReturn"
                             },
 
 ### ``llvm.genx.untyped.atomic.*.<return type>.<vector type>`` : vISA UNTYPED_ATOMIC with inc/dec
@@ -3920,12 +3920,12 @@ Imported_Intrinsics = \
     "untyped_atomic_inc" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","int",0,0],
                              "platforms" : "-Xe2",
-                             "attributes" : "None"
+                             "attributes" : "NoWillReturn"
                            },
     "untyped_atomic_dec" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","int",0,0],
                              "platforms" : "-Xe2",
-                             "attributes" : "None"
+                             "attributes" : "NoWillReturn"
                            },
 
 ### ``llvm.genx.untyped.atomic.cmpxchg.<return type>.<vector type>`` : vISA UNTYPED_ATOMIC CMPXCHG instruction
@@ -3947,7 +3947,7 @@ Imported_Intrinsics = \
     "untyped_atomic_cmpxchg" : { "result" : "anyvector",
                                  "arguments" : ["anyvector","int","int",0,0,0,0],
                                  "platforms" : "-Xe2",
-                                 "attributes" : "None"
+                                 "attributes" : "NoWillReturn"
                                },
 
 ### ``llvm.genx.svm.block.ld*.<return type>.<address type>`` : vISA SVM BLOCK_LD instruction
@@ -4122,52 +4122,52 @@ Imported_Intrinsics = \
     "svm_atomic_add" : { "result" : "anyvector",
                          "arguments" : ["anyvector","anyint",0,0],
                          "platforms" : "-Xe2",
-                         "attributes" : "None"
+                         "attributes" : "NoWillReturn"
                        },
     "svm_atomic_sub" : { "result" : "anyvector",
                          "arguments" : ["anyvector","anyint",0,0],
                          "platforms" : "-Xe2",
-                         "attributes" : "None"
+                         "attributes" : "NoWillReturn"
                        },
     "svm_atomic_min" : { "result" : "anyvector",
                          "arguments" : ["anyvector","anyint",0,0],
                          "platforms" : "-Xe2",
-                         "attributes" : "None"
+                         "attributes" : "NoWillReturn"
                        },
     "svm_atomic_max" : { "result" : "anyvector",
                          "arguments" : ["anyvector","anyint",0,0],
                          "platforms" : "-Xe2",
-                         "attributes" : "None"
+                         "attributes" : "NoWillReturn"
                        },
     "svm_atomic_xchg" : { "result" : "anyvector",
                           "arguments" : ["anyvector","anyint",0,0],
                           "platforms" : "-Xe2",
-                          "attributes" : "None"
+                          "attributes" : "NoWillReturn"
                         },
     "svm_atomic_and" : { "result" : "anyvector",
                          "arguments" : ["anyvector","anyint",0,0],
                          "platforms" : "-Xe2",
-                         "attributes" : "None"
+                         "attributes" : "NoWillReturn"
                        },
     "svm_atomic_or" : { "result" : "anyvector",
                         "arguments" : ["anyvector","anyint",0,0],
                         "platforms" : "-Xe2",
-                        "attributes" : "None"
+                        "attributes" : "NoWillReturn"
                       },
     "svm_atomic_xor" : { "result" : "anyvector",
                          "arguments" : ["anyvector","anyint",0,0],
                          "platforms" : "-Xe2",
-                         "attributes" : "None"
+                         "attributes" : "NoWillReturn"
                        },
     "svm_atomic_imin" : { "result" : "anyvector",
                           "arguments" : ["anyvector","anyint",0,0],
                           "platforms" : "-Xe2",
-                          "attributes" : "None"
+                          "attributes" : "NoWillReturn"
                         },
     "svm_atomic_imax" : { "result" : "anyvector",
                           "arguments" : ["anyvector","anyint",0,0],
                           "platforms" : "-Xe2",
-                          "attributes" : "None"
+                          "attributes" : "NoWillReturn"
                         },
 
 ### ``llvm.genx.svm.atomic.*.<return type>.<vector type>.<any int>`` : vISA SVM_ATOMIC with inc/dec
@@ -4187,12 +4187,12 @@ Imported_Intrinsics = \
     "svm_atomic_inc" : { "result" : "anyvector",
                          "arguments" : ["anyvector","anyint",0],
                          "platforms" : "-Xe2",
-                         "attributes" : "None"
+                         "attributes" : "NoWillReturn"
                        },
     "svm_atomic_dec" : { "result" : "anyvector",
                          "arguments" : ["anyvector","anyint",0],
                          "platforms" : "-Xe2",
-                         "attributes" : "None"
+                         "attributes" : "NoWillReturn"
                        },
 
 ### ``llvm.genx.svm.atomic.cmpxchg.<return type>.<vector type>.<any int>`` : vISA SVM_ATOMIC CMPXCHG instruction
@@ -4212,7 +4212,7 @@ Imported_Intrinsics = \
     "svm_atomic_cmpxchg" : { "result" : "anyvector",
                              "arguments" : ["anyvector","anyint",0,0,0],
                              "platforms" : "-Xe2",
-                             "attributes" : "None"
+                             "attributes" : "NoWillReturn"
                            },
 
 ### ``llvm.genx.svm.atomic.*.<return type>.<vector type>.<any int>`` : vISA SVM_ATOMIC with binary operator
@@ -4233,12 +4233,12 @@ Imported_Intrinsics = \
     "svm_atomic_fmin" : { "result" : "anyvector",
                           "arguments" : ["anyvector","anyint",0,0],
                           "platforms" : "-Xe2",
-                          "attributes" : "None"
+                          "attributes" : "NoWillReturn"
                         },
     "svm_atomic_fmax" : { "result" : "anyvector",
                           "arguments" : ["anyvector","anyint",0,0],
                           "platforms" : "-Xe2",
-                          "attributes" : "None"
+                          "attributes" : "NoWillReturn"
                         },
 
 ### ``llvm.genx.svm.atomic.fcmpwr.<return type>.<vector type>.<any int>`` : vISA SVM_ATOMIC FCMPWR instruction
@@ -4258,7 +4258,7 @@ Imported_Intrinsics = \
     "svm_atomic_fcmpwr" : { "result" : "anyvector",
                             "arguments" : ["anyvector","anyint",0,0,0],
                             "platforms" : "-Xe2",
-                            "attributes" : "None"
+                            "attributes" : "NoWillReturn"
                           },
 
 ### ``llvm.genx.load.<return type>.<any int>`` : vISA LOAD (sampler load) instruction
@@ -4529,7 +4529,7 @@ Imported_Intrinsics = \
 ###
     "raw_send" : { "result" : "anyvector",
                    "arguments" : ["int","anyint","int","int","anyvector",0],
-                   "attributes" : "SideEffects"
+                   "attributes" : "NoWillReturn,SideEffects"
                  },
 
 ### ``llvm.genx.raw.send.noresult.<any int>.<vector type>`` : vISA RAW_SEND instruction with no result
@@ -4554,7 +4554,7 @@ Imported_Intrinsics = \
 ###
     "raw_send_noresult" : { "result" : "void",
                             "arguments" : ["int","anyint","int","int","anyvector"],
-                            "attributes" : "SideEffects"
+                            "attributes" : "NoWillReturn,SideEffects"
                           },
 
 ### ``llvm.genx.raw.sends.<return type>.<any int>.<vector type>.<vector type>`` : vISA RAW_SENDS instruction
@@ -4593,7 +4593,7 @@ Imported_Intrinsics = \
 ###
     "raw_sends" : { "result" : "anyvector",
                     "arguments" : ["int","anyint","char","int","int","anyvector","anyvector",0],
-                    "attributes" : "None"
+                    "attributes" : "NoWillReturn"
                   },
 
 ### ``llvm.genx.raw.sends.noresult.<any int>.<vector type>.<vector type>`` : vISA RAW_SENDS instruction with no result
@@ -4622,7 +4622,7 @@ Imported_Intrinsics = \
 ###
     "raw_sends_noresult" : { "result" : "void",
                              "arguments" : ["int","anyint","char","int","int","anyvector","anyvector"],
-                             "attributes" : "None"
+                             "attributes" : "NoWillReturn"
                            },
 
 ### ``llvm.genx.raw.send2.<return type>.<vector type>.<vector type>`` : vISA RAW_SEND instruction
@@ -4646,7 +4646,7 @@ Imported_Intrinsics = \
 ###
     "raw_send2" : { "result" : "anyvector",
                     "arguments" : ["char","char","anyvector","char","char","char","int","int","anyvector",0],
-                    "attributes" : "None"
+                    "attributes" : "NoWillReturn"
                   },
 
 ### ``llvm.genx.raw.send2.noresult.<vector type>.<vector type>`` : vISA RAW_SEND instruction with no result
@@ -4668,7 +4668,7 @@ Imported_Intrinsics = \
 ###
     "raw_send2_noresult" : { "result" : "void",
                              "arguments" : ["char","char","anyvector","char","char","int","int","anyvector"],
-                             "attributes" : "None"
+                             "attributes" : "NoWillReturn"
                            },
 
 ### ``llvm.genx.raw.sends2.<return type>.<vector type>.<vector type>.<vector type>`` : vISA RAW_SENDS instruction
@@ -4693,7 +4693,7 @@ Imported_Intrinsics = \
 ###
     "raw_sends2" : { "result" : "anyvector",
                      "arguments" : ["char","char","anyvector","char","char","char","char","int","int","anyvector","anyvector",0],
-                     "attributes" : "None"
+                     "attributes" : "NoWillReturn"
                    },
 
 ### ``llvm.genx.raw.sends2.noresult.<vector type>.<vector type>.<vector type>`` : vISA RAW_SENDS instruction with no result
@@ -4715,7 +4715,7 @@ Imported_Intrinsics = \
 ###
     "raw_sends2_noresult" : { "result" : "void",
                               "arguments" : ["char","char","anyvector","char","char","char","int","int","anyvector","anyvector"],
-                              "attributes" : "None"
+                              "attributes" : "NoWillReturn"
                             },
 
 ## ---------------------------
@@ -5614,52 +5614,52 @@ Imported_Intrinsics = \
 ##
     "dword_atomic2_add_predef_surface" : { "result" : "anyvector",
                                            "arguments" : ["anyvector","anyptr","anyint",0],
-                                           "attributes" : "None",
+                                           "attributes" : "NoWillReturn",
                                            "platforms" : "-Xe2",
                                          },
     "dword_atomic2_sub_predef_surface" : { "result" : "anyvector",
                                            "arguments" : ["anyvector","anyptr","anyint",0],
-                                           "attributes" : "None",
+                                           "attributes" : "NoWillReturn",
                                            "platforms" : "-Xe2",
                                          },
     "dword_atomic2_min_predef_surface" : { "result" : "anyvector",
                                            "arguments" : ["anyvector","anyptr","anyint",0],
-                                           "attributes" : "None",
+                                           "attributes" : "NoWillReturn",
                                            "platforms" : "-Xe2",
                                          },
     "dword_atomic2_max_predef_surface" : { "result" : "anyvector",
                                            "arguments" : ["anyvector","anyptr","anyint",0],
-                                           "attributes" : "None",
+                                           "attributes" : "NoWillReturn",
                                            "platforms" : "-Xe2",
                                          },
     "dword_atomic2_xchg_predef_surface" : { "result" : "anyvector",
                                             "arguments" : ["anyvector","anyptr","anyint",0],
-                                            "attributes" : "None",
+                                            "attributes" : "NoWillReturn",
                                             "platforms" : "-Xe2",
                                           },
     "dword_atomic2_and_predef_surface" : { "result" : "anyvector",
                                            "arguments" : ["anyvector","anyptr","anyint",0],
-                                           "attributes" : "None",
+                                           "attributes" : "NoWillReturn",
                                            "platforms" : "-Xe2",
                                          },
     "dword_atomic2_or_predef_surface" : { "result" : "anyvector",
                                           "arguments" : ["anyvector","anyptr","anyint",0],
-                                          "attributes" : "None",
+                                          "attributes" : "NoWillReturn",
                                           "platforms" : "-Xe2",
                                         },
     "dword_atomic2_xor_predef_surface" : { "result" : "anyvector",
                                            "arguments" : ["anyvector","anyptr","anyint",0],
-                                           "attributes" : "None",
+                                           "attributes" : "NoWillReturn",
                                            "platforms" : "-Xe2",
                                          },
     "dword_atomic2_imin_predef_surface" : { "result" : "anyvector",
                                             "arguments" : ["anyvector","anyptr","anyint",0],
-                                            "attributes" : "None",
+                                            "attributes" : "NoWillReturn",
                                             "platforms" : "-Xe2",
                                           },
     "dword_atomic2_imax_predef_surface" : { "result" : "anyvector",
                                             "arguments" : ["anyvector","anyptr","anyint",0],
-                                            "attributes" : "None",
+                                            "attributes" : "NoWillReturn",
                                             "platforms" : "-Xe2",
                                           },
 
@@ -5683,22 +5683,22 @@ Imported_Intrinsics = \
 ##
     "dword_atomic2_fmin_predef_surface" : { "result" : "anyvector",
                                             "arguments" : ["anyvector","anyptr","anyint",0],
-                                            "attributes" : "None",
+                                            "attributes" : "NoWillReturn",
                                             "platforms" : "-Xe2",
                                           },
     "dword_atomic2_fmax_predef_surface" : { "result" : "anyvector",
                                             "arguments" : ["anyvector","anyptr","anyint",0],
-                                            "attributes" : "None",
+                                            "attributes" : "NoWillReturn",
                                             "platforms" : "-Xe2",
                                           },
     "dword_atomic2_fadd_predef_surface" : { "result" : "anyvector",
                                             "arguments" : ["anyvector","anyptr","anyint",0],
-                                            "attributes" : "None",
+                                            "attributes" : "NoWillReturn",
                                             "platforms" : "-Xe2",
                                           },
     "dword_atomic2_fsub_predef_surface" : { "result" : "anyvector",
                                             "arguments" : ["anyvector","anyptr","anyint",0],
-                                            "attributes" : "None",
+                                            "attributes" : "NoWillReturn",
                                             "platforms" : "-Xe2",
                                           },
 
@@ -5719,12 +5719,12 @@ Imported_Intrinsics = \
 ##
     "dword_atomic2_inc_predef_surface" : { "result" : "anyvector",
                                            "arguments" : ["anyvector","anyptr","anyint"],
-                                           "attributes" : "None",
+                                           "attributes" : "NoWillReturn",
                                            "platforms" : "-Xe2",
                                          },
     "dword_atomic2_dec_predef_surface" : { "result" : "anyvector",
                                            "arguments" : ["anyvector","anyptr","anyint"],
-                                           "attributes" : "None",
+                                           "attributes" : "NoWillReturn",
                                            "platforms" : "-Xe2",
                                          },
 
@@ -5745,7 +5745,7 @@ Imported_Intrinsics = \
 ##
     "dword_atomic2_cmpxchg_predef_surface" : { "result" : "anyvector",
                                                "arguments" : ["anyvector","anyptr","anyint",0,0],
-                                               "attributes" : "None",
+                                               "attributes" : "NoWillReturn",
                                                "platforms" : "-Xe2",
                                              },
 
@@ -5766,7 +5766,7 @@ Imported_Intrinsics = \
 ##
     "dword_atomic2_fcmpwr_predef_surface" : { "result" : "anyvector",
                                               "arguments" : ["anyvector","anyptr","anyint",0,0],
-                                              "attributes" : "None",
+                                              "attributes" : "NoWillReturn",
                                               "platforms" : "-Xe2",
                                             },
 

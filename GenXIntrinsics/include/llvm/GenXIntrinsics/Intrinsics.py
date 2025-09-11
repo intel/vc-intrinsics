@@ -74,6 +74,7 @@ attribute_map = {
     "InaccessibleMemOnly": set(["NoUnwind","InaccessibleMemOnly"]),
     "WriteMem":            set(["NoUnwind","WriteOnly"]),
     "SideEffects":         set(["NoUnwind"]),
+    "NoWillReturn":        set(["NoUnwind"]),
 }
 
 modref_map = {
@@ -116,7 +117,7 @@ def getAttributeListModRef(Attrs):
     """
     s = reduce(lambda acc, v: attribute_map[v] | acc, Attrs, set())
     attr = []
-    isReturn = True
+    isReturn = False if "NoWillReturn" in Attrs else True
     for x in sorted(s):
       if x in modref_map:
         attr += ['addMemoryAttr(MemoryEffects::' + modref_map[x] + '())']
