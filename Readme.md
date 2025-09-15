@@ -106,10 +106,10 @@ Target `check-vc-intrinsics` will run lit tests.
 
 ## Supported Platforms
 
-* Intel® Gen12 graphics
-* Intel® Xe
-* Intel® Xe2
-* Intel® Xe3
+* Intel&reg; Gen12 graphics
+* Intel&reg; Xe
+* Intel&reg; Xe2
+* Intel&reg; Xe3
 
 No code changes may regress support for any currently supported hardware.
 All contributions must ensure compatibility and functionality across all
