@@ -1,6 +1,6 @@
 # ========================== begin_copyright_notice ============================
 #
-# Copyright (C) 2019-2024 Intel Corporation
+# Copyright (C) 2019-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -1616,7 +1616,10 @@ Imported_Intrinsics = \
 ### | U8            |    8  | 8-bit unsigned integer                          |
 ### | BF16          |    9  | bfloat16 (S1E8M7) floating point                |
 ### | HF16          |   10  | half-precision (S1E5M10) floating point         |
+### | BF8           |   11  | bfloat8 (S1E5M2) floating point                 |
 ### | TF32          |   12  | tensorfloat32 (S1E8M10) floating point          |
+### | HF8           |   14  | hfloat8 (S1E4M3) floating point                 |
+### | E2M1          |   15  | 4-bit floating point (S1E2M1)                   |
 ### +---------------+-------+-------------------------------------------------+
 ###
 ###
@@ -1673,6 +1676,80 @@ Imported_Intrinsics = \
                        "platforms" : [
                            "XeHP", "XeHPG", "XeLPGPlus" ],
                      },
+
+
+### ``llvm.genx.bdpas.*`` : bdpas instruction (Dot Product Accumulate Systolic with block scaling)
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### M = RepeatCount
+### N = ExecSize = 16
+### K = SystolicDepth
+###
+### * arg0: accumulator (vLf32 or vLf16 or vLbf16, L=M*N)
+### * arg1: B matrix (vLi32, L=K*N)
+### * arg2: A matrix (vLi32, L=M*K)
+### * arg3: B matrix block scale in E8M0 format (vXi8), X depends on the B matrix data type, see the table below
+### * arg4: A matrix block scale in E8M0 format (vYi8), Y depends on the A matrix data type, see the table below
+### * arg5: B matrix data type (i32)
+### * arg6: A matrix data type (i32)
+### * arg7: SystolicDepth (i32), must be constant equal to 8
+### * arg8: RepeatCount (i32), must be constant equal to 8
+###
+### * Return value: result, (vLf32 or vLf16 or vLbf16, L=M*N)
+###
+### See the `dpas2` intrinsic description for the PrecisionType enum values.
+###
+### Supported data type combinations:
+### +-----------+-------------+------------+------------+-----------------+-----+-----+
+### | Result    | Accumulator |  B matrix  |  A matrix  | Ops Per Channel |  X  |  Y  |
+### +-----------+-------------+------------+------------+-----------------+-----+-----+
+### | f32, hf16 |  f32, hf16  |    hf16    |    hf16    |        2        |  N  |  M  |
+### | f32, bf16 |  f32, bf16  |    bf16    |    bf16    |        2        |  N  |  M  |
+### | f32, bf16 |  f32, bf16  |  bf8, hf8  |  bf8, hf8  |        4        |  N  |  M  |
+### | f32, bf16 |  f32, bf16  |    e2m1    |    e2m1    |        8        | 2*N | 2*M |
+### +-----------+-------------+------------+------------+-----------------+-----+-----+
+###
+### Note: i16 can be used as a placeholder for bf16 in the return value and accumulator.
+###
+    "bdpas" : { "result" : "anyvector",
+                "arguments" : ["anyvector","anyvector","anyvector","anyvector","anyvector","int","int","int","int"],
+                "attributes" : "NoMem",
+                "platforms" : "Xe3P+",
+              },
+
+### ``llvm.genx.mxfp.reduce.32x32.*`` : 32x32 block scale reduction routine
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0: v1024i16 or v1024bf16 or v1024f16, 32x32 matrix
+###
+### * Return value: v32i16 or v32bf16 or v32f16, 32x1 vector of reduced values
+###
+### For each input matrix row the routine produces a single element which is a maximum of
+### the row absolute values.
+###
+### The order of elements in the output is the following:
+###   0, 16, 8, 24, 4, 20, 12, 28, 2, 18, 10, 26, 6, 22, 14, 30,
+###   1, 17, 9, 25, 5, 21, 13, 29, 3, 19, 11, 27, 7, 23, 15, 31
+###
+    "mxfp_reduce_32x32" : { "result" : "anyvector",
+                            "arguments" : ["anyvector"],
+                            "attributes" : "NoMem",
+                            "platforms" : "Xe3P+",
+                          },
+
+### ``llvm.genx.mxfp.linearize.*`` : routine to linearize the block scale vector
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0: v32i16 or v32bf16 or v32f16, 32x1 vector of reduced values
+###
+### * Return value: v32i16 or v32bf16 or v32f16, 32x1 vector of linearized values
+###
+###
+    "mxfp_linearize" : { "result" : "anyvector",
+                         "arguments" : [0],
+                         "attributes" : "NoMem",
+                         "platforms" : "Xe3P+",
+                       },
 
 ### ``llvm.genx.*dp4a*.<return type>.<vector type>.<vector type>.<vector type>`` : dp4a instruction (Dot Product 4 Accumulate)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1830,6 +1907,29 @@ Imported_Intrinsics = \
               "attributes" : "NoMem"
             },
 
+### ``llvm.genx.lfsr.*``: lfsr instructions
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### The instruction is used to generate a pseudo-random number sequence.
+### The algorithm is based on a linear feedback shift register (LFSR).
+###
+### * arg0: seed, vNi32
+### * arg1: polynomial, same type as arg0
+### * arg2: mode, i8, must be compile-time constant
+###
+### * Return value: result, same type as arg0
+###
+### The mode argument is an enum with the following values:
+### * 0: b32 - input is 32-bit value
+### * 1: 2xb16 - input is a pair of 16-bit values
+### * 2: 4xb8 - input is a quad of 8-bit values
+###
+    "lfsr" : { "result" : "anyint",
+               "arguments" : [0, 0, "char"],
+               "attributes" : "NoMem",
+               "platforms" : "Xe3P+"
+             },
+
+
 ### srnd
 ### ^^^
 ###
@@ -1860,6 +1960,22 @@ Imported_Intrinsics = \
                               "platforms" : "Xe3+"
                             },
 
+
+### ``llvm.genx.biased.rounding.hf8.*`` : biased rounding instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0: input, vNf16 or vNbf16
+### * arg1: bias, vNi8
+###
+### * Return value: result, vNi8
+###
+### Note: bf16 can be substituted with i16.
+###
+    "biased_rounding_hf8" : { "result" : "anyint",
+                              "arguments" : ["anyvector", 0],
+                              "attributes" : "NoMem",
+                              "platforms" : "Xe3P+"
+                            },
 
 ### bf_cvt
 ### ^^^^^^
@@ -1926,6 +2042,66 @@ Imported_Intrinsics = \
                   "attributes" : "NoMem",
                   "platforms" : "Xe3+"
                 },
+
+
+## ``llvm.genx.packed.4bit.upconvert.lut`` : packed fp4/int4 upconvert operation
+## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+##
+## * arg0: lookup table, v16i32 vector.
+## * arg1: input packed 4-bit data, vNi8 or vNi16 vector (overloaded),
+##         must be a region of <4;1,0> (for i8) or <2;1,0> (for i16).
+##
+## * Return value: packed 8 or 16-bit values, vNi32.
+##
+## Restrictions:
+## * The only supported N values for this operation are 16 and 32.
+##
+## This intrinsic represents 4bit->8bit and 4bit->16bit upconvert thru a lookup table
+    "packed_4bit_upconvert_lut" : { "result": "anyint",
+                                    "arguments": ["int16", "anyint"],
+                                    "attributes": "NoMem",
+                                    "platforms" : "Xe3P+", },
+
+### ``llvm.genx.4bit.downconvert`` : fp4/int4 downconvert operation
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### The intrinsic represents bf16->4bit and f16->4bit downscale operations.
+###
+### * arg0: src0, vNi32
+### * arg1: src1, vNi32
+### * arg2: bias, vNi32, ignored when rounding mode is "round to nearest even"
+### * arg3: conversion type, i8, enum value, must be constant
+### * arg4: packing mode, i8, enum value, must be constant
+### * arg5: rounding mode, i8, enum value, must be constant
+###
+### * Return value: result, vNi32. The output values are packed into 32-bit
+### integers according to the packing mode operand.
+###
+### The supported output data formats are the following:
+### * E2M1 - 2-bit exponent, 1-bit mantissa and 1-bit sign floating point values
+### * Int4 - 4-bit signed integer values
+###
+### The conversion type argument (arg3) is an enum with the following values:
+### * 1: BFtoE2M1 - bfloat16 to E2M1
+### * 2: BFtoInt4 - bfloat16 to Int4
+### * 4: HFtoE2M1 - half precision to E2M1
+### * 5: HFtoInt4 - half precision to Int4
+###
+### The packing mode argument (arg4) is an emum with the following values (lsb to msb):
+### * 0: { downscale(src0[0:15]) | downscale(src0[16:31]) << 4, 0, downscale(src1[0:15]) | downscale(src1[16:31]) << 4, 0 }
+### * 1: { downscale(src0[0:15]) | downscale(src1[0:15]) << 4, 0, downscale(src0[16:31]) | downscale(src1[16:31]) << 4, 0 }
+### * 2: { 0, downscale(src0[0:15]) | downscale(src0[16:31]) << 4, 0, downscale(src1[0:15]) | downscale(src1[16:31]) << 4 }
+### * 3: { 0, downscale(src0[0:15]) | downscale(src1[0:15]) << 4, 0, downscale(src0[16:31]) | downscale(src1[16:31]) << 4 }
+###
+### The rounding mode argument (arg5) is an emum with the following values:
+### * 0: biased round
+### * 1: round to nearest even
+###
+    "4bit_downconvert" : { "result": "anyint",
+                           "arguments": [0, 0, 0, "char", "char", "char"],
+                           "attributes": "NoMem",
+                           "platforms" : "Xe3P+",
+                         },
 
 ### ``llvm.genx.lsc.load.*.<return type if not void>.<any type>.<any type>`` : lsc_load instructions
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -4717,6 +4893,43 @@ Imported_Intrinsics = \
                               "arguments" : ["char","char","anyvector","char","char","char","int","int","anyvector","anyvector"],
                               "attributes" : "NoWillReturn"
                             },
+## ``llvm.genx.raw.sendg`` : raw send generalized message
+## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+##
+## * arg0: i16 dst size (in bytes) [MBC]
+## * arg1: i1 IsConditional
+## * arg2: i1 IsEOT
+## * arg3: i8 SFID [MBC]
+## * arg4: vNxi1 Predicate (overloaded)
+## * arg5: vector src0 (overloaded)
+## * arg6: i16 src0 size (in bytes) [MBC]
+## * arg7: vector src1 (overloaded)
+## * arg8: i16 src1 size (in bytes) [MBC]
+## * arg9: i64 indirect descriptor 0
+## * arg10: i64 indirect descriptor 1
+## * arg11: i64 descriptor [MBC]
+## * arg12: vector to take values for masked simd lanes from
+##
+## * Return value: vector dst (overloaded)
+##
+    "raw_sendg": { "result" : "anyvector",
+                   "arguments" : [
+                       "short",     # dst size
+                       "bool",      # cond
+                       "bool",      # EOT
+                       "char",      # sfid
+                       "anyint",    # predicate
+                       "anyvector", # src0
+                       "short",     # src0 size
+                       "anyvector", # src1
+                       "short",     # src1 size
+                       "long",      # ind0
+                       "long",      # ind1
+                       "long",      # desc
+                       0,           # passthru
+                   ],
+                   "attributes" : "NoWillReturn,SideEffects",
+                   "platforms" : "Xe3P+" },
 
 ## ---------------------------
 ### Video Analytics Instrinsics

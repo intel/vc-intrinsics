@@ -99,6 +99,7 @@ platform_list = [
     "XeHPCVG",
     "Xe2",
     "Xe3",
+    "Xe3P",
 ]
 
 def getAttributeList(Attrs):
