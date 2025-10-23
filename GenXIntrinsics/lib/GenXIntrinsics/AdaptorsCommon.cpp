@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 
 #include "AdaptorsCommon.h"
 
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 
@@ -30,6 +31,45 @@ static void legalizeAttribute(Argument &Arg, Type *NewType,
 
 #endif
 
+Type *getPtrElemType(Value *V) {
+#if VC_INTR_LLVM_VERSION_MAJOR < 14
+  return VCINTR::Type::getNonOpaquePtrEltTy(V->getType());
+#else // VC_INTR_LLVM_VERSION_MAJOR < 14
+#if VC_INTR_LLVM_VERSION_MAJOR < 17
+  auto *PtrTy = cast<PointerType>(V->getType());
+  if (!PtrTy->isOpaque())
+    return VCINTR::Type::getNonOpaquePtrEltTy(PtrTy);
+#endif // VC_INTR_LLVM_VERSION_MAJOR < 17
+  SmallPtrSet<Type *, 2> ElemTys;
+  SmallVector<Value *, 4> Stack;
+  Stack.push_back(V);
+  while (!Stack.empty()) {
+    auto* Current = Stack.back();
+    Stack.pop_back();
+    for (auto *U : Current->users()) {
+      if (ElemTys.size() > 1)
+        return nullptr;
+      auto *I = dyn_cast<Instruction>(U);
+      if (!I)
+        continue;
+      if (auto *LI = dyn_cast<LoadInst>(I)) {
+        if (Current == LI->getPointerOperand())
+          ElemTys.insert(LI->getType());
+      } else if (auto *SI = dyn_cast<StoreInst>(I)) {
+        if (Current == SI->getPointerOperand())
+          ElemTys.insert(SI->getValueOperand()->getType());
+      } else if (auto *GEPI = dyn_cast<GetElementPtrInst>(I)) {
+        if (Current == GEPI->getPointerOperand())
+          ElemTys.insert(GEPI->getSourceElementType());
+      } else if (isa<BitCastInst>(I) || isa<AddrSpaceCastInst>(I)) {
+        Stack.push_back(I);
+      }
+    }
+  }
+  return ElemTys.empty() ? nullptr : *ElemTys.begin();
+#endif // VC_INTR_LLVM_VERSION_MAJOR < 14
+}
+
 void legalizeParamAttributes(Function *F) {
   assert(F && "Valid function ptr must be passed");
 
@@ -39,14 +79,11 @@ void legalizeParamAttributes(Function *F) {
     if (!PTy)
       continue;
 
+    auto *ElemType = getPtrElemType(&Arg);
 #if VC_INTR_LLVM_VERSION_MAJOR >= 13
-#if VC_INTR_LLVM_VERSION_MAJOR < 17
-    if (PTy->isOpaque())
-#endif // VC_INTR_LLVM_VERSION_MAJOR < 18
+    if (!ElemType)
       continue;
 #endif // VC_INTR_LLVM_VERSION_MAJOR >= 13
-
-    auto *ElemType = VCINTR::Type::getNonOpaquePtrEltTy(PTy);
 
     legalizeAttribute(Arg, ElemType, Attribute::ByVal);
 

@@ -481,8 +481,7 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
                        return PointerType::get(Type::getInt8Ty(Ctx), AddrSpace);
                      }
 #endif
-                     if (!VCINTR::Type::isOpaquePointerTy(ArgTy) &&
-                         Arg.hasByValAttr())
+                     if (Arg.hasByValAttr())
                        return OrigTy;
 
                      return ArgTy;
@@ -522,8 +521,6 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
     Attr = Attribute::get(Ctx, VCFunctionMD::VCArgumentDesc, ArgDesc);
     NewF->addParamAttr(i, Attr);
   }
-
-  legalizeParamAttributes(NewF);
 
   return NewF;
 }
@@ -605,6 +602,8 @@ static void rewriteKernelArguments(Function &F) {
       cast<Instruction>(Orig)->eraseFromParent();
     }
   }
+
+  legalizeParamAttributes(NewF);
 
   F.mutateType(NewF->getType());
   F.replaceAllUsesWith(NewF);
