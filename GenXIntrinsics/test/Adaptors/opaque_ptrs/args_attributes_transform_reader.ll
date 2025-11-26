@@ -30,6 +30,14 @@ define spir_kernel void @test_restore(ptr addrspace(1) byval(i8) %arg) #0 {
   ret void
 }
 
+; CHECK: define dllexport spir_kernel void @test_no_restore(
+; CHECK-SAME: ptr addrspace(1) byval(%foo)
+; CHECK-SAME: [[ARG:%[^)]+]])
+define spir_kernel void @test_no_restore(ptr addrspace(1) byval(%foo) %arg) #0 {
+  %gep = getelementptr i8, ptr addrspace(1) %arg, i32 0
+  ret void
+}
+
 declare ptr @llvm.genx.address.convert.p0foo.p1(ptr addrspace(1)) #0
 
 attributes #0 = { "VCFunction" }

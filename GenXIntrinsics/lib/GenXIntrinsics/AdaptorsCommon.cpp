@@ -20,10 +20,22 @@ namespace genx {
 
 static void legalizeAttribute(Argument &Arg, Type *NewType,
                               Attribute::AttrKind Kind) {
-
-  if (!Arg.hasAttribute(Kind) ||
-      Arg.getAttribute(Kind).getValueAsType() == NewType)
+  if (!Arg.hasAttribute(Kind))
     return;
+  auto *AttrType = Arg.getAttribute(Kind).getValueAsType();
+  if (AttrType == NewType)
+    return;
+
+#if VC_INTR_LLVM_VERSION_MAJOR >= 14
+  if (!AttrType->isIntegerTy(8)) {
+#if VC_INTR_LLVM_VERSION_MAJOR >= 17
+    return;
+#else // VC_INTR_LLVM_VERSION_MAJOR >= 17
+  if (cast<PointerType>(Arg.getType())->isOpaque())
+    return;
+#endif // VC_INTR_LLVM_VERSION_MAJOR >= 17
+  }
+#endif // VC_INTR_LLVM_VERSION_MAJOR >= 14
 
   Arg.removeAttr(Kind);
   Arg.addAttr(Attribute::get(Arg.getParent()->getContext(), Kind, NewType));
@@ -40,6 +52,7 @@ Type *getPtrElemType(Value *V) {
   if (!PtrTy->isOpaque())
     return VCINTR::Type::getNonOpaquePtrEltTy(PtrTy);
 #endif // VC_INTR_LLVM_VERSION_MAJOR < 17
+  auto *Int8Ty = Type::getInt8Ty(V->getContext());
   SmallPtrSet<Type *, 2> ElemTys;
   SmallVector<Value *, 4> Stack;
   Stack.push_back(V);
@@ -48,7 +61,7 @@ Type *getPtrElemType(Value *V) {
     Stack.pop_back();
     for (auto *U : Current->users()) {
       if (ElemTys.size() > 1)
-        return nullptr;
+        return Int8Ty;
       auto *I = dyn_cast<Instruction>(U);
       if (!I)
         continue;
@@ -66,7 +79,7 @@ Type *getPtrElemType(Value *V) {
       }
     }
   }
-  return ElemTys.empty() ? nullptr : *ElemTys.begin();
+  return ElemTys.empty() ? Int8Ty : *ElemTys.begin();
 #endif // VC_INTR_LLVM_VERSION_MAJOR < 14
 }
 
@@ -80,13 +93,8 @@ void legalizeParamAttributes(Function *F) {
       continue;
 
     auto *ElemType = getPtrElemType(&Arg);
-#if VC_INTR_LLVM_VERSION_MAJOR >= 13
-    if (!ElemType)
-      continue;
-#endif // VC_INTR_LLVM_VERSION_MAJOR >= 13
 
     legalizeAttribute(Arg, ElemType, Attribute::ByVal);
-
 #if VC_INTR_LLVM_VERSION_MAJOR >= 11
     legalizeAttribute(Arg, ElemType, Attribute::Preallocated);
 #if VC_INTR_LLVM_VERSION_MAJOR >= 12
