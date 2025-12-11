@@ -4054,7 +4054,7 @@ Imported_Intrinsics = \
     "untyped_atomic_and" : { "result" : "anyvector",
                              "arguments" : ["anyvector","int","int",0,0,0],
                              "platforms" : "-Xe2",
-                             "attributes" : "None"
+                             "attributes" : "NoWillReturn"
                            },
     "untyped_atomic_or" : { "result" : "anyvector",
                             "arguments" : ["anyvector","int","int",0,0,0],
