@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2020-2023 Intel Corporation
+; Copyright (C) 2020-2024 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -11,8 +11,7 @@
 ; kernel metadata without any checks. Required until full transition
 ; is done.
 
-; UNSUPPORTED: llvm17, llvm18
-; XFAIL: llvm15
+; UNSUPPORTED: opaque-pointers
 ; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 
 define spir_kernel void @test(i32 "VCArgumentDesc"="image2d_t read_only" "VCArgumentKind"="2" %in, i32 "VCArgumentDesc"="image2d_t write_only" "VCArgumentKind"="2" %out, <3 x i32> "VCArgumentKind"="24" %__arg_llvm.genx.local.id) #0 {
@@ -39,6 +38,6 @@ declare void @llvm.genx.media.st.v8i32(i32, i32, i32, i32, i32, i32, <8 x i32>) 
 attributes #0 = { "VCFunction" }
 
 ; CHECK: !genx.kernels = !{[[KERNEL:![0-9]+]]}
-; CHECK: [[KERNEL]] = !{void (i32, i32, <3 x i32>)* @test, !"test", ![[KINDS:[0-9]+]], i32 0, i32 0, !{{[0-9]+}}, ![[DESCS:[0-9]+]], i32 0}
+; CHECK: [[KERNEL]] = !{{{.*}} @test, !"test", ![[KINDS:[0-9]+]], i32 0, i32 0, !{{[0-9]+}}, ![[DESCS:[0-9]+]], i32 0}
 ; CHECK-DAG: ![[KINDS]] = !{i32 2, i32 2, i32 24}
 ; CHECK-DAG: ![[DESCS]] = !{!"image2d_t read_only", !"image2d_t write_only", !""}

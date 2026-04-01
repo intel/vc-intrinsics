@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -101,16 +101,17 @@ static SPIRVArgDesc parseImageType(StringRef TyName) {
   std::tie(ImageType, TyName) = parseImageDim(TyName);
   AccessType AccType;
   std::tie(AccType, TyName) = parseAccessQualifier(TyName);
-  assert(TyName == CommonTypes::TypeSuffix && "Bad image type");
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
+  assert(TyName.starts_with(CommonTypes::TypeSuffix) && "Bad image type");
+#else
+  assert(TyName.startswith(CommonTypes::TypeSuffix) && "Bad image type");
+#endif
   return {ImageType, AccType};
 }
 
 static std::pair<SPIRVType, StringRef> parseIntelMainType(StringRef TyName) {
   if (TyName.consume_front(IntelTypes::Buffer))
     return {SPIRVType::Buffer, TyName};
-
-  if (TyName.consume_front(IntelTypes::MediaBlockImage))
-    return {SPIRVType::Image2dMediaBlock, TyName};
 
   llvm_unreachable("Unexpected intel extension type");
 }
@@ -141,7 +142,7 @@ static SPIRVType evaluateImageTypeFromSPVIR(SPIRVIRTypes::Dim Dim,
       break;
     case SPIRVIRTypes::DimBuffer:
       ResultType = SPIRVType::Image1dBuffer;
-      break; 
+      break;
     }
   } else {
     switch (Dim) {
@@ -176,6 +177,9 @@ static SPIRVArgDesc parseSPIRVIRImageType(StringRef TyName) {
   // SPIRV friendly Ir image type looks like this:
   // spirv.Image._{Sampled T}_{Dim}_{Depth}_{Arrayed}_{MS}_{Fmt}_{Acc}
 
+  // skip dot
+  TyName = TyName.drop_front(1);
+
   // skip Samled Type.
   TyName = skipUnderscores(TyName, 2);
 
@@ -207,7 +211,11 @@ static VCINTR::Optional<SPIRVArgDesc> parseIntelType(StringRef TyName) {
   std::tie(MainType, TyName) = parseIntelMainType(TyName);
   AccessType AccType;
   std::tie(AccType, TyName) = parseAccessQualifier(TyName);
-  assert(TyName == CommonTypes::TypeSuffix && "Bad intel type");
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
+  assert(TyName.starts_with(CommonTypes::TypeSuffix) && "Bad intel type");
+#else
+  assert(TyName.startswith(CommonTypes::TypeSuffix) && "Bad intel type");
+#endif
   return SPIRVArgDesc{MainType, AccType};
 }
 
@@ -217,7 +225,11 @@ static VCINTR::Optional<SPIRVArgDesc> parseOCLType(StringRef TyName) {
 
   // Sampler type.
   if (TyName.consume_front(OCLTypes::Sampler)) {
-    assert(TyName == CommonTypes::TypeSuffix && "Bad sampler type");
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
+    assert(TyName.starts_with(CommonTypes::TypeSuffix) && "Bad sampler type");
+#else
+    assert(TyName.startswith(CommonTypes::TypeSuffix) && "Bad sampler type");
+#endif
     return {SPIRVType::Sampler};
   }
 
@@ -256,6 +268,33 @@ static VCINTR::Optional<SPIRVArgDesc> parseOpaqueType(StringRef TyName) {
   return parseSPIRVIRType(TyName);
 }
 
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
+static SPIRVArgDesc analyzeTargetExtTypeArg(const Argument &Arg,
+                                            TargetExtType *TET) {
+  auto TyName = TET->getName();
+  if (TyName.consume_front(SPIRVIRTypes::TypePrefix)) {
+    if (TyName.consume_front(SPIRVIRTypes::Sampler))
+      return {SPIRVType::Sampler};
+    if (TyName.consume_front(SPIRVIRTypes::Buffer)) {
+      assert(TET->getNumIntParameters() == 1);
+      auto Acc = static_cast<AccessType>(TET->getIntParameter(0));
+      return SPIRVArgDesc(SPIRVType::Buffer, Acc);
+    }
+    if (TyName.consume_front(SPIRVIRTypes::Image)) {
+      auto Dim = static_cast<SPIRVIRTypes::Dim>(
+          TET->getIntParameter(SPIRVIRTypes::Dimension));
+      auto Arr = static_cast<bool>(TET->getIntParameter(SPIRVIRTypes::Arrayed));
+      auto Acc =
+          static_cast<AccessType>(TET->getIntParameter(SPIRVIRTypes::Access));
+      auto SpvTy = evaluateImageTypeFromSPVIR(Dim, Arr);
+      return SPIRVArgDesc(SpvTy, Acc);
+    }
+    llvm_unreachable("Unexpected spirv target extension type");
+  }
+  llvm_unreachable("Unexpected target extension type");
+}
+#endif //VC_INTR_LLVM_VERSION_MAJOR >= 16
+
 static SPIRVArgDesc analyzeKernelArg(const Argument &Arg) {
   const Function *F = Arg.getParent();
   // If there is vc attribute, then no conversion is needed.
@@ -264,6 +303,10 @@ static SPIRVArgDesc analyzeKernelArg(const Argument &Arg) {
     return {SPIRVType::None};
 
   Type *Ty = Arg.getType();
+#if VC_INTR_LLVM_VERSION_MAJOR >= 16
+  if (auto *TET = dyn_cast<TargetExtType>(Ty))
+    return analyzeTargetExtTypeArg(Arg, TET);
+#endif //VC_INTR_LLVM_VERSION_MAJOR >= 16
   // Not a pointer means that it is general argument without annotation.
   if (!isa<PointerType>(Ty))
     return {SPIRVType::Other};
@@ -274,6 +317,9 @@ static SPIRVArgDesc analyzeKernelArg(const Argument &Arg) {
   if (AddressSpace != SPIRVParams::SPIRVGlobalAS &&
       AddressSpace != SPIRVParams::SPIRVConstantAS)
     return {SPIRVType::Other};
+
+  if (VCINTR::Type::isOpaquePointerTy(Ty))
+    return {SPIRVType::Pointer};
 
   Type *PointeeTy = VCINTR::Type::getNonOpaquePtrEltTy(PointerTy);
   // Not a pointer to struct, cannot be sampler or image.
@@ -334,7 +380,6 @@ static ArgKind mapSPIRVTypeToArgKind(SPIRVType Ty) {
   case SPIRVType::Image1dBuffer:
   case SPIRVType::Image2d:
   case SPIRVType::Image2dArray:
-  case SPIRVType::Image2dMediaBlock:
   case SPIRVType::Image3d:
     return ArgKind::Surface;
   case SPIRVType::Sampler:
@@ -348,7 +393,7 @@ static ArgKind mapSPIRVTypeToArgKind(SPIRVType Ty) {
   llvm_unreachable("Unexpected spirv type");
 }
 
-static std::string mapSPIRVDescToArgDesc(SPIRVArgDesc SPIRVDesc) {
+static std::string mapSPIRVDescToArgDesc(SPIRVArgDesc SPIRVDesc, bool IsMediaBlock) {
   std::string Desc;
   switch (SPIRVDesc.Ty) {
   case SPIRVType::Buffer:
@@ -364,7 +409,10 @@ static std::string mapSPIRVDescToArgDesc(SPIRVArgDesc SPIRVDesc) {
     Desc += ArgDesc::Image1dBuffer;
     break;
   case SPIRVType::Image2d:
-    Desc += ArgDesc::Image2d;
+    Desc += IsMediaBlock ? ArgDesc::Image2dMediaBlock : ArgDesc::Image2d;
+    break;
+  case SPIRVType::Image2dArray:
+    Desc += ArgDesc::Image2dArray;
     break;
   case SPIRVType::Image2dArray:
     Desc += ArgDesc::Image2dArray;
@@ -406,6 +454,8 @@ static std::string mapSPIRVDescToArgDesc(SPIRVArgDesc SPIRVDesc) {
 static PointerType *getKernelArgPointerType(PointerType *ConvertTy,
                                             PointerType *ArgTy) {
   auto AddressSpace = ConvertTy->getPointerAddressSpace();
+  if (VCINTR::Type::isOpaquePointerTy(ArgTy))
+    return VCINTR::PointerType::getWithSamePointeeType(ArgTy, AddressSpace);
   auto *ConvertPointeeTy = VCINTR::Type::getNonOpaquePtrEltTy(ConvertTy);
   auto *ArgPointeeTy = VCINTR::Type::getNonOpaquePtrEltTy(ArgTy);
 
@@ -422,13 +472,30 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
   // Collect new kernel argument types.
   std::vector<Type *> NewTypes;
   std::transform(F.arg_begin(), F.arg_end(), std::back_inserter(NewTypes),
-                 [](Argument &Arg) {
-                   auto *Ty = getOriginalValue(Arg)->getType();
+                 [Descs](Argument &Arg) -> llvm::Type * {
+                   auto *Orig = getOriginalValue(Arg);
+                   auto *OrigTy = Orig->getType();
                    auto *ArgTy = Arg.getType();
-                   if (Ty->isPointerTy() && ArgTy->isPointerTy())
-                     Ty = getKernelArgPointerType(cast<PointerType>(Ty),
-                                                  cast<PointerType>(ArgTy));
-                   return Ty;
+                   if (isArgConvIntrinsic(Orig)) {
+#if VC_INTR_LLVM_VERSION_MAJOR > 15
+                     if (ArgTy->isTargetExtTy()) {
+                       // N.B. Target extension types are fully supported and tested
+                       // only with opaque pointers enabled.
+                       auto &Ctx = Arg.getContext();
+                       unsigned AddrSpace =
+                           getOpaqueTypeAddressSpace(Descs[Arg.getArgNo()].Ty);
+                       return PointerType::get(Type::getInt8Ty(Ctx), AddrSpace);
+                     }
+#endif
+                     if (Arg.hasByValAttr())
+                       return OrigTy;
+
+                     return ArgTy;
+                   }
+                   if (OrigTy->isPointerTy() && ArgTy->isPointerTy())
+                     return getKernelArgPointerType(cast<PointerType>(OrigTy),
+                                                    cast<PointerType>(ArgTy));
+                   return OrigTy;
                  });
 
   auto *NewFTy = FunctionType::get(F.getReturnType(), NewTypes, false);
@@ -451,7 +518,9 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
 
     // Add needed attributes to newly created function argument.
     ArgKind AK = mapSPIRVTypeToArgKind(SPVDesc.Ty);
-    ArgDesc = mapSPIRVDescToArgDesc(SPVDesc);
+    ArgDesc = mapSPIRVDescToArgDesc(
+        SPVDesc,
+        F.getAttributes().hasParamAttr(i, VCFunctionMD::VCMediaBlockIO));
     Attribute Attr = Attribute::get(Ctx, VCFunctionMD::VCArgumentKind,
                                     std::to_string(static_cast<unsigned>(AK)));
     NewF->addParamAttr(i, Attr);
@@ -493,10 +562,13 @@ static void rewriteKernelArguments(Function &F) {
   // 2. Kernel is referenced in @llvm.global.annotations
   //    We have to replace the original function with the new one
   if (!F.use_empty()) {
-    assert(F.hasOneUse());
-    auto *Bitcast = F.user_back();
-    assert(Bitcast->hasOneUse());
-    auto *Struct = Bitcast->user_back();
+    Value *Ptr = &F;
+    assert(Ptr->hasOneUse());
+    if (isa<BitCastOperator>(Ptr->user_back())) {
+      Ptr = Ptr->user_back();
+      assert(Ptr->hasOneUse());
+    }
+    auto *Struct = Ptr->user_back();
     assert(Struct->hasOneUse());
     auto *Array = Struct->user_back();
     assert(Array->hasOneUse());
@@ -526,7 +598,10 @@ static void rewriteKernelArguments(Function &F) {
 
     if (isa<Instruction>(Orig) && OrigTy != NewTy) {
       IRBuilder<> Builder(cast<Instruction>(Orig));
-      NewVal = Builder.CreatePointerBitCastOrAddrSpaceCast(NewVal, OrigTy);
+      if (OrigTy->isIntegerTy())
+        NewVal = Builder.CreatePtrToInt(NewVal, OrigTy);
+      else
+        NewVal = Builder.CreatePointerBitCastOrAddrSpaceCast(NewVal, OrigTy);
     }
 
     Orig->replaceAllUsesWith(NewVal);
@@ -535,6 +610,8 @@ static void rewriteKernelArguments(Function &F) {
       cast<Instruction>(Orig)->eraseFromParent();
     }
   }
+
+  legalizeParamAttributes(NewF);
 
   F.mutateType(NewF->getType());
   F.replaceAllUsesWith(NewF);
@@ -696,6 +773,9 @@ bool GenXSPIRVReaderAdaptorImpl::processVCKernelAttributes(Function &F) {
                     .str();
       dropAttributeAtIndex(F, AttrIndex, VCFunctionMD::VCArgumentDesc);
     }
+    if (VCINTR::AttributeList::hasAttributeAtIndex(
+            Attrs, AttrIndex, VCFunctionMD::VCMediaBlockIO))
+      dropAttributeAtIndex(F, AttrIndex, VCFunctionMD::VCMediaBlockIO);
     ArgKinds.push_back(
         llvm::ValueAsMetadata::get(llvm::ConstantInt::get(I32Ty, ArgKind)));
     ArgIOKinds.push_back(

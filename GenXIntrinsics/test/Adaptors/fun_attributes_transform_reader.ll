@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2021-2023 Intel Corporation
+; Copyright (C) 2021-2024 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -9,8 +9,7 @@
 ; Test that adaptor correctly translates function attributes to VC-specific
 ; metadata (the processed attributes are expected to be discarded)
 
-; UNSUPPORTED: llvm8, llvm17, llvm18
-; XFAIL: llvm15
+; UNSUPPORTED: llvm8
 ; RUN: opt %pass%GenXSPIRVReaderAdaptor -S < %s | FileCheck %s
 ; CHECK: @test_VCFunction()
 ; CHECK: @test_VCStackCall()
@@ -55,7 +54,7 @@ define spir_kernel void @test_VCSLMSize() #6 {
 ; CHECK-DAG: attributes #[[FATR_FLOAT_CONTROL_IDX]] = { "CMFloatControl"="0" }
 ; CHECK-DAG: attributes #[[FATR_SLM_SIZE_IDX]] = { "CMGenxMain" }
 
-; CHECK-DAG: !{void ()* @test_VCSLMSize, !"test_VCSLMSize", !{{[0-9]+}}, i32 100500, i32 0, !{{[0-9]+}}, !{{[0-9]+}}, i32 0}
+; CHECK-DAG: !{{{.*}} @test_VCSLMSize, !"test_VCSLMSize", !{{[0-9]+}}, i32 100500, i32 0, !{{[0-9]+}}, !{{[0-9]+}}, i32 0}
 
 attributes #0 = { "VCFunction" }
 attributes #1 = { "VCFunction" "VCStackCall" }

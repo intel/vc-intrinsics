@@ -1,6 +1,6 @@
 ;=========================== begin_copyright_notice ============================
 ;
-; Copyright (C) 2022-2023 Intel Corporation
+; Copyright (C) 2022-2024 Intel Corporation
 ;
 ; SPDX-License-Identifier: MIT
 ;
@@ -9,7 +9,6 @@
 ; Test GenXSingleElementVectorUtil preserves calling convention
 ; (spir_func here)
 
-; UNSUPPORTED: llvm17, llvm18
 ; RUN: opt %pass%GenXSPIRVWriterAdaptor -S < %s | FileCheck %s
 
 ; ModuleID = 'sev_calling_conv_reader.ll'
@@ -18,23 +17,19 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "spir64-unknown-unknown"
 
 ; Function Attrs: noinline nounwind
-; CHECK: define internal spir_func void @bar(i32* "VCSingleElementVector"="0" %a) #0
-define internal spir_func void @bar(<1 x i32>* %a) #0 {
+; CHECK: define internal spir_func void @bar(i32 "VCSingleElementVector"="0" %a) #0
+define internal spir_func void @bar(<1 x i32> %a) #0 {
   ret void
 }
 
 ; Function Attrs: noinline nounwind
-define dllexport spir_kernel void @foo() #1 !intel_reqd_sub_group_size !2 {
-; CHECK: call spir_func void @bar(i32* undef)
-  call spir_func void @bar(<1 x i32>* undef)
+define dllexport spir_kernel void @foo() #1 !intel_reqd_sub_group_size !0 {
+; CHECK: call spir_func void @bar(i32 undef)
+  call spir_func void @bar(<1 x i32> undef)
   ret void
 }
 
 attributes #0 = { noinline nounwind }
 attributes #1 = { noinline nounwind "CMGenxMain" "oclrt"="1" }
 
-!genx.kernels = !{!0}
-
-!0 = !{void ()* @foo, !"foo", !1, i32 0, i32 0, !1, !1, i32 0}
-!1 = !{}
-!2 = !{i32 1}
+!0 = !{i32 1}

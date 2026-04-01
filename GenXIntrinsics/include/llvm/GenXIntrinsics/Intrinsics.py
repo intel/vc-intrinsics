@@ -74,6 +74,7 @@ attribute_map = {
     "InaccessibleMemOnly": set(["NoUnwind","InaccessibleMemOnly"]),
     "WriteMem":            set(["NoUnwind","WriteOnly"]),
     "SideEffects":         set(["NoUnwind"]),
+    "NoWillReturn":        set(["NoUnwind"]),
 }
 
 modref_map = {
@@ -98,6 +99,8 @@ platform_list = [
     "XeHPCVG",
     "Xe2",
     "Xe3",
+    "Xe3P",
+    "Xe3PLPG",
 ]
 
 def getAttributeList(Attrs):
@@ -116,11 +119,14 @@ def getAttributeListModRef(Attrs):
     """
     s = reduce(lambda acc, v: attribute_map[v] | acc, Attrs, set())
     attr = []
+    isReturn = False if "NoWillReturn" in Attrs else True
     for x in sorted(s):
       if x in modref_map:
         attr += ['addMemoryAttr(MemoryEffects::' + modref_map[x] + '())']
       else:
         attr += ['addAttribute(Attribute::'+x+')']
+        if x == "NoReturn" : isReturn = False
+    if isReturn : attr += ['addAttribute(Attribute::WillReturn)']
     return attr
 
 Intrinsics = dict()

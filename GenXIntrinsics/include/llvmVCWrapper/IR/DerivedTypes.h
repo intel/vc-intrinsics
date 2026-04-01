@@ -52,6 +52,20 @@ inline unsigned getNumElements(llvm::VectorType *VecType) {
 }
 
 } // namespace VectorType
+namespace PointerType {
+
+inline llvm::PointerType *getWithSamePointeeType(llvm::PointerType *PT,
+                                                 unsigned AddressSpace) {
+#if VC_INTR_LLVM_VERSION_MAJOR < 14
+  return llvm::PointerType::get(PT->getElementType(), AddressSpace);
+#elif VC_INTR_LLVM_VERSION_MAJOR < 17
+  return llvm::PointerType::getWithSamePointeeType(PT, AddressSpace);
+#else
+  return llvm::PointerType::get(PT->getContext(), AddressSpace);
+#endif
 }
+
+} // namespace PointerType
+} // namespace VCINTR
 
 #endif // VCINTR_IR_DERIVEDYPES_H
