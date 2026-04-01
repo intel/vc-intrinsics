@@ -320,15 +320,32 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
   case IITDescriptor::Quad: return Type::getFP128Ty(Context);
 
   case IITDescriptor::Integer:
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+    return IntegerType::get(Context, D.IntegerWidth);
+#else
     return IntegerType::get(Context, D.Integer_Width);
+#endif
   case IITDescriptor::Vector:
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+    return VCINTR::getVectorType(DecodeFixedType(Infos, Tys, Context),D.VectorWidth);
+#else
     return VCINTR::getVectorType(DecodeFixedType(Infos, Tys, Context),D.Vector_Width);
+#endif
   case IITDescriptor::Pointer:
     return PointerType::get(DecodeFixedType(Infos, Tys, Context),
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+			    D.PointerAddressSpace);
+
+#else
                             D.Pointer_AddressSpace);
+#endif
   case IITDescriptor::Struct: {
     SmallVector<Type *, 8> Elts;
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+    for (unsigned i = 0, e = D.StructNumElements; i != e; ++i)
+#else
     for (unsigned i = 0, e = D.Struct_NumElements; i != e; ++i)
+#endif
       Elts.push_back(DecodeFixedType(Infos, Tys, Context));
     return StructType::get(Context, Elts);
   }

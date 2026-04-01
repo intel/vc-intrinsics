@@ -414,12 +414,6 @@ static std::string mapSPIRVDescToArgDesc(SPIRVArgDesc SPIRVDesc, bool IsMediaBlo
   case SPIRVType::Image2dArray:
     Desc += ArgDesc::Image2dArray;
     break;
-  case SPIRVType::Image2dArray:
-    Desc += ArgDesc::Image2dArray;
-    break;
-  case SPIRVType::Image2dMediaBlock:
-    Desc += ArgDesc::Image2dMediaBlock;
-    break;
   case SPIRVType::Image3d:
     Desc += ArgDesc::Image3d;
     break;
