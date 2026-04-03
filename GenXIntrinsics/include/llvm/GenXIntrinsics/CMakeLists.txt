@@ -12,6 +12,7 @@ add_custom_command(
             ${CMAKE_CURRENT_SOURCE_DIR}/Intrinsics.py
             ${CMAKE_CURRENT_SOURCE_DIR}/Intrinsic_definitions.py
             ${CMAKE_CURRENT_BINARY_DIR}/${GENX_INTRINSICS_DESCRIPTION}
+            ${LLVM_VERSION_MAJOR}
     DEPENDS
          ${CMAKE_CURRENT_SOURCE_DIR}/Intrinsics.py
          ${CMAKE_CURRENT_SOURCE_DIR}/Intrinsic_definitions.py
