@@ -306,7 +306,7 @@ static SPIRVArgDesc analyzeKernelArg(const Argument &Arg) {
 #if VC_INTR_LLVM_VERSION_MAJOR >= 16
   if (auto *TET = dyn_cast<TargetExtType>(Ty))
     return analyzeTargetExtTypeArg(Arg, TET);
-#endif //VC_INTR_LLVM_VERSION_MAJOR >= 16
+#endif
   // Not a pointer means that it is general argument without annotation.
   if (!isa<PointerType>(Ty))
     return {SPIRVType::Other};

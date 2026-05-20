@@ -610,9 +610,9 @@ void SEVUtil::rewriteSEVSignature(Function &F, bool IsScalarToVector) {
   NewF.copyMetadata(&F, 0);
 #if VC_INTR_LLVM_VERSION_MAJOR >= 18
   NewF.updateAfterNameChange();
-#else  // VC_INTR_LLVM_VERSION_MAJOR >= 18
+#else
   NewF.recalculateIntrinsicID();
-#endif // VC_INTR_LLVM_VERSION_MAJOR >= 18
+#endif
   F.getParent()->getFunctionList().insert(F.getIterator(), &NewF);
 #if VC_INTR_LLVM_VERSION_MAJOR > 15
   NewF.splice(NewF.begin(), &F);

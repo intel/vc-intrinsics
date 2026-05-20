@@ -41,7 +41,7 @@ static void legalizeAttribute(Argument &Arg, Type *NewType,
   Arg.addAttr(Attribute::get(Arg.getParent()->getContext(), Kind, NewType));
 }
 
-#endif
+#endif // VC_INTR_LLVM_VERSION_MAJOR >= 9
 
 Type *getPtrElemType(Value *V) {
 #if VC_INTR_LLVM_VERSION_MAJOR < 14

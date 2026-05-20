@@ -309,9 +309,9 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
   case IITDescriptor::MMX:
 #if VC_INTR_LLVM_VERSION_MAJOR >= 20
     return FixedVectorType::get(Type::getInt64Ty(Context), 1);
-#else  // VC_INTR_LLVM_VERSION_MAJOR >= 20
+#else
     return Type::getX86_MMXTy(Context);
-#endif // VC_INTR_LLVM_VERSION_MAJOR >= 20
+#endif
   case IITDescriptor::Token: return Type::getTokenTy(Context);
   case IITDescriptor::Metadata: return Type::getMetadataTy(Context);
   case IITDescriptor::Half: return Type::getHalfTy(Context);
@@ -449,7 +449,7 @@ static std::string getMangledTypeStr(Type *Ty) {
 #if VC_INTR_LLVM_VERSION_MAJOR >= 13
 #if VC_INTR_LLVM_VERSION_MAJOR < 17
     if (PTyp->isOpaque())
-#endif // VC_INTR_LLVM_VERSION_MAJOR < 18
+#endif // VC_INTR_LLVM_VERSION_MAJOR < 17
       return Result;
 #endif // VC_INTR_LLVM_VERSION_MAJOR >= 13
     Result += getMangledTypeStr(VCINTR::Type::getNonOpaquePtrEltTy(PTyp));
@@ -720,7 +720,7 @@ static bool isCompatibleIntrinsicSignature(FunctionType *DecodedType,
 
   return DecStrTy->isLayoutIdentical(FoundStrTy);
 }
-#endif
+#endif // NDEBUG
 
 Function *GenXIntrinsic::getGenXDeclaration(Module *M, GenXIntrinsic::ID id,
                                             ArrayRef<Type *> Tys) {
