@@ -1700,14 +1700,15 @@ Imported_Intrinsics = \
 ### See the `dpas2` intrinsic description for the PrecisionType enum values.
 ###
 ### Supported data type combinations:
-### +-----------+-------------+------------+------------+-----------------+-----+-----+
-### | Result    | Accumulator |  B matrix  |  A matrix  | Ops Per Channel |  X  |  Y  |
-### +-----------+-------------+------------+------------+-----------------+-----+-----+
-### | f32, hf16 |  f32, hf16  |    hf16    |    hf16    |        2        |  N  |  M  |
-### | f32, bf16 |  f32, bf16  |    bf16    |    bf16    |        2        |  N  |  M  |
-### | f32, bf16 |  f32, bf16  |  bf8, hf8  |  bf8, hf8  |        4        |  N  |  M  |
-### | f32, bf16 |  f32, bf16  |    e2m1    |    e2m1    |        8        | 2*N | 2*M |
-### +-----------+-------------+------------+------------+-----------------+-----+-----+
+### +-----------+-------------+------------+------------+---------+---------+-----------------+-----+-----+
+### | Result    | Accumulator |  B matrix  |  A matrix  | B scale | A scale | Ops Per Channel |  X  |  Y  |
+### +-----------+-------------+------------+------------+---------+---------+-----------------+-----+-----+
+### | f32, hf16 |  f32, hf16  |    hf16    |    hf16    |  e8m0   |  e8m0   |        2        |  N  |  M  |
+### | f32, bf16 |  f32, bf16  |    bf16    |    bf16    |  e8m0   |  e8m0   |        2        |  N  |  M  |
+### | f32, bf16 |  f32, bf16  |  bf8, hf8  |  bf8, hf8  |  e8m0   |  e8m0   |        4        |  N  |  M  |
+### | f32, bf16 |  f32, bf16  |  bf8, hf8  |  bf8, hf8  |  e8m0   |  e8m0   |        4        |  N  |  M  |
+### | f32, bf16 |  f32, bf16  |    e2m1    |    e2m1    |  e8m0   |  e8m0   |        8        | 2*N | 2*M |
+### +-----------+-------------+------------+------------+---------+---------+-----------------+-----+-----+
 ###
 ### Note: i16 can be used as a placeholder for bf16 in the return value and accumulator.
 ###
@@ -2087,11 +2088,11 @@ Imported_Intrinsics = \
 ### * 4: HFtoE2M1 - half precision to E2M1
 ### * 5: HFtoInt4 - half precision to Int4
 ###
-### The packing mode argument (arg4) is an emum with the following values (lsb to msb):
-### * 0: { downscale(src0[0:15]) | downscale(src0[16:31]) << 4, 0, downscale(src1[0:15]) | downscale(src1[16:31]) << 4, 0 }
-### * 1: { downscale(src0[0:15]) | downscale(src1[0:15]) << 4, 0, downscale(src0[16:31]) | downscale(src1[16:31]) << 4, 0 }
-### * 2: { 0, downscale(src0[0:15]) | downscale(src0[16:31]) << 4, 0, downscale(src1[0:15]) | downscale(src1[16:31]) << 4 }
-### * 3: { 0, downscale(src0[0:15]) | downscale(src1[0:15]) << 4, 0, downscale(src0[16:31]) | downscale(src1[16:31]) << 4 }
+### The packing mode argument (arg4) is an enum with the following values (lsb to msb):
+### * 0: { downscale(src0[0:15], src2[0:15]) | downscale(src0[16:31], src2[16:31]) << 4, 0, downscale(src1[0:15], src2[0:15]) | downscale(src1[16:31], src2[16:31]) << 4, 0 }
+### * 1: { downscale(src0[0:15], src2[0:15]) | downscale(src1[0:15], src2[16:31]) << 4, 0, downscale(src0[16:31], src2[0:15]) | downscale(src1[16:31], src2[16:31]) << 4, 0 }
+### * 2: { 0, downscale(src0[0:15], src2[0:15]) | downscale(src0[16:31], src2[16:31]) << 4, 0, downscale(src1[0:15], src2[0:15]) | downscale(src1[16:31], src2[16:31]) << 4 }
+### * 3: { 0, downscale(src0[0:15], src2[0:15]) | downscale(src1[0:15], src2[16:31]) << 4, 0, downscale(src0[16:31], src2[0:15]) | downscale(src1[16:31], src2[16:31]) << 4 }
 ###
 ### The rounding mode argument (arg5) is an emum with the following values:
 ### * 0: biased round
