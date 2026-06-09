@@ -80,7 +80,11 @@ enum IIT_Info {
   IIT_V16  = 12,
   IIT_V32  = 13,
   IIT_PTR  = 14,
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+  IIT_ANY  = 15,
+#else
   IIT_ARG  = 15,
+#endif
 
   // Values from 16+ are only encodable with the inefficient encoding.
   IIT_V64  = 16,
@@ -94,7 +98,11 @@ enum IIT_Info {
   IIT_STRUCT5 = 24,
   IIT_EXTEND_ARG = 25,
   IIT_TRUNC_ARG = 26,
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+  IIT_PTR_AS = 27,
+#else
   IIT_ANYPTR = 27,
+#endif
   IIT_V1   = 28,
   IIT_VARARG = 29,
   IIT_HALF_VEC_ARG = 30,
@@ -216,32 +224,57 @@ DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::Pointer, 0));
     DecodeIITType(NextElt, Infos, OutputTable);
     return;
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+  case IIT_PTR_AS: {  // [PTR_AS addrspace, subtype]
+#else
   case IIT_ANYPTR: {  // [ANYPTR addrspace, subtype]
+#endif
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::Pointer,
                                              Infos[NextElt++]));
     DecodeIITType(NextElt, Infos, OutputTable);
     return;
   }
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+  case IIT_ANY: {
+    unsigned OverloadInfo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Overloaded, OverloadInfo));
+    return;
+  }
+#else
   case IIT_ARG: {
     unsigned ArgInfo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::Argument, ArgInfo));
     return;
   }
+#endif
   case IIT_EXTEND_ARG: {
     unsigned ArgInfo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Extend,
+                                             ArgInfo));
+#else
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::ExtendArgument,
                                              ArgInfo));
+#endif
     return;
   }
   case IIT_TRUNC_ARG: {
     unsigned ArgInfo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Trunc,
+                                             ArgInfo));
+#else
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::TruncArgument,
                                              ArgInfo));
+#endif
     return;
   }
   case IIT_HALF_VEC_ARG: {
     unsigned ArgInfo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
-#if VC_INTR_LLVM_VERSION_MAJOR >= 21
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::OneNthEltsVec,
+                                             2, ArgInfo));
+#elif VC_INTR_LLVM_VERSION_MAJOR >= 21
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::OneNthEltsVecArgument,
                                              2, ArgInfo));
 #else
@@ -252,8 +285,13 @@ DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
   }
   case IIT_SAME_VEC_WIDTH_ARG: {
     unsigned ArgInfo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::SameVecWidth,
+                                             ArgInfo));
+#else
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::SameVecWidthArgument,
                                              ArgInfo));
+#endif
     return;
   }
 #if VC_INTR_LLVM_VERSION_MAJOR < 17
@@ -272,8 +310,14 @@ DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
   case IIT_VEC_OF_ANYPTRS_TO_ELT: {
     unsigned short ArgNo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
     unsigned short RefNo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+    // In LLVM 23+, the packing changed: overload index in lower bits, ref overload index in upper bits
+    OutputTable.push_back(
+        IITDescriptor::get(IITDescriptor::VecOfAnyPtrsToElt, /*Hi=*/RefNo, /*Lo=*/ArgNo));
+#else
     OutputTable.push_back(
         IITDescriptor::get(IITDescriptor::VecOfAnyPtrsToElt, ArgNo, RefNo));
+#endif
     return;
   }
   case IIT_EMPTYSTRUCT:
@@ -320,29 +364,61 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
   case IITDescriptor::Quad: return Type::getFP128Ty(Context);
 
   case IITDescriptor::Integer:
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+    return IntegerType::get(Context, D.IntegerWidth);
+#else
     return IntegerType::get(Context, D.Integer_Width);
+#endif
   case IITDescriptor::Vector:
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+    return VCINTR::getVectorType(DecodeFixedType(Infos, Tys, Context),D.VectorWidth);
+#else
     return VCINTR::getVectorType(DecodeFixedType(Infos, Tys, Context),D.Vector_Width);
+#endif
   case IITDescriptor::Pointer:
     return PointerType::get(DecodeFixedType(Infos, Tys, Context),
-                            D.Pointer_AddressSpace);
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+			          D.PointerAddressSpace);
+
+#else
+                D.Pointer_AddressSpace);
+#endif
   case IITDescriptor::Struct: {
     SmallVector<Type *, 8> Elts;
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+    for (unsigned i = 0, e = D.StructNumElements; i != e; ++i)
+#else
     for (unsigned i = 0, e = D.Struct_NumElements; i != e; ++i)
+#endif
       Elts.push_back(DecodeFixedType(Infos, Tys, Context));
     return StructType::get(Context, Elts);
   }
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+  // For any overload kind or partially dependent type, substitute it with the
+  // corresponding concrete type from OverloadTys.
+  case IITDescriptor::Overloaded:
+  case IITDescriptor::VecOfAnyPtrsToElt:
+    return Tys[D.getOverloadIndex()];
+  case IITDescriptor::Extend: {
+    Type *Ty = Tys[D.getOverloadIndex()];
+#else
   case IITDescriptor::Argument:
     return Tys[D.getArgumentNumber()];
   case IITDescriptor::ExtendArgument: {
     Type *Ty = Tys[D.getArgumentNumber()];
+#endif
     if (VectorType *VTy = dyn_cast<VectorType>(Ty))
       return VectorType::getExtendedElementVectorType(VTy);
 
     return IntegerType::get(Context, 2 * cast<IntegerType>(Ty)->getBitWidth());
   }
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+  case IITDescriptor::Trunc: {
+    Type *Ty = Tys[D.getOverloadIndex()];
+#else
   case IITDescriptor::TruncArgument: {
     Type *Ty = Tys[D.getArgumentNumber()];
+#endif
     if (VectorType *VTy = dyn_cast<VectorType>(Ty))
       return VectorType::getTruncatedElementVectorType(VTy);
 
@@ -350,16 +426,28 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
     assert(ITy->getBitWidth() % 2 == 0);
     return IntegerType::get(Context, ITy->getBitWidth() / 2);
   }
-#if VC_INTR_LLVM_VERSION_MAJOR >= 21
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+  case IITDescriptor::OneNthEltsVec:
+    return VectorType::getHalfElementsVectorType(cast<VectorType>(
+                                                  Tys[D.getOverloadIndex()]));
+  case IITDescriptor::SameVecWidth: {
+    Type *EltTy = DecodeFixedType(Infos, Tys, Context);
+    Type *Ty = Tys[D.getOverloadIndex()];
+#elif VC_INTR_LLVM_VERSION_MAJOR >= 21
   case IITDescriptor::OneNthEltsVecArgument:
-#else
-  case IITDescriptor::HalfVecArgument:
-#endif
     return VectorType::getHalfElementsVectorType(cast<VectorType>(
                                                   Tys[D.getArgumentNumber()]));
   case IITDescriptor::SameVecWidthArgument: {
     Type *EltTy = DecodeFixedType(Infos, Tys, Context);
     Type *Ty = Tys[D.getArgumentNumber()];
+#else
+  case IITDescriptor::HalfVecArgument:
+    return VectorType::getHalfElementsVectorType(cast<VectorType>(
+                                                  Tys[D.getArgumentNumber()]));
+  case IITDescriptor::SameVecWidthArgument: {
+    Type *EltTy = DecodeFixedType(Infos, Tys, Context);
+    Type *Ty = Tys[D.getArgumentNumber()];
+#endif
     if (VectorType *VTy = dyn_cast<VectorType>(Ty)) {
       return VCINTR::getVectorType(EltTy,
                                    VCINTR::VectorType::getNumElements(VTy));
@@ -368,11 +456,19 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
   }
 #if VC_INTR_LLVM_VERSION_MAJOR < 17
   case IITDescriptor::PtrToArgument: {
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+    Type *Ty = Tys[D.getOverloadIndex()];
+#else
     Type *Ty = Tys[D.getArgumentNumber()];
+#endif
     return PointerType::getUnqual(Ty);
   }
   case IITDescriptor::PtrToElt: {
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+    Type *Ty = Tys[D.getOverloadIndex()];
+#else
     Type *Ty = Tys[D.getArgumentNumber()];
+#endif
     VectorType *VTy = dyn_cast<VectorType>(Ty);
     if (!VTy)
       llvm_unreachable("Expected an argument of Vector Type");
@@ -380,9 +476,11 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
     return PointerType::getUnqual(EltTy);
   }
 #endif
+#if VC_INTR_LLVM_VERSION_MAJOR < 23
   case IITDescriptor::VecOfAnyPtrsToElt:
     // Return the overloaded type (which determines the pointers address space)
     return Tys[D.getOverloadArgNumber()];
+#endif
   default:
     break;
   }

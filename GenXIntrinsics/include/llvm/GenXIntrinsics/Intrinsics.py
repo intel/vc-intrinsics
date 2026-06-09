@@ -132,6 +132,18 @@ def getAttributeListModRef(Attrs):
 Intrinsics = dict()
 parse = sys.argv
 
+# Extract LLVM version if provided (should be last argument)
+# Command line: Intrinsics.py Intrinsic_definitions.py output.gen [llvm_version]
+llvm_version_major = 0
+if len(parse) >= 4 and parse[-1].isdigit():
+    # Version is provided as last argument
+    llvm_version_major = int(parse[-1])
+    # Output file is second to last when version is provided
+    outputFile = parse[-2]
+else:
+    # Output file is always last when no version provided
+    outputFile = parse[-1]
+
 for i in range(len(parse)):
     #Populate the dictionary with the appropriate Intrinsics
     if i != 0:
@@ -139,8 +151,6 @@ for i in range(len(parse)):
             module = importlib.import_module(os.path.split(parse[i])[1].replace(".py",""))
             Intrinsics.update(module.Imported_Intrinsics)
 
-# Output file is always last
-outputFile = parse[-1]
 
 
 def ik_compare(ikl, ikr):
@@ -413,7 +423,15 @@ def addAnyTypes(value,argNum):
     if "any:" in value:
         default_value = value[4:] #get the default value encoded after the "any" type
         value = "any"
-    calculated_num = (argNum << 3) | any_map[value]
+    
+    # LLVM 23+ changed the bit packing scheme for overloaded types
+    # Old: (argNum << 3) | anyKind  - argument number in upper bits
+    # New: (anyKind << 5) | argNum  - overload index in lower 5 bits, kind in upper 3 bits
+    if llvm_version_major >= 23:
+        calculated_num = (any_map[value] << 5) | argNum
+    else:
+        calculated_num = (argNum << 3) | any_map[value]
+
     if calculated_num < 16:
         return_val = hex(calculated_num).upper()[2:]
     else:
