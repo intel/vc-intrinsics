@@ -21,6 +21,7 @@ SPDX-License-Identifier: MIT
 
 #include "llvmVCWrapper/Analysis/InstructionSimplify.h"
 #include "llvmVCWrapper/IR/Attributes.h"
+#include "llvmVCWrapper/IR/Instructions.h"
 #include "llvmVCWrapper/Support/Alignment.h"
 
 
@@ -267,12 +268,12 @@ Value *SEVUtil::createVectorToScalarValue(Value *Vector,
     return UndefValue::get(getTypeFreeFromSEV(Vector->getType()));
   else if (isa<PointerType>(Vector->getType()))
     Val = new BitCastInst(Vector, getTypeFreeFromSEV(Vector->getType()),
-                          "sev.cast.", InsertBefore);
+                          "sev.cast.", VCINTR::getInsertPosition(InsertBefore));
   else if (auto *Const = dyn_cast<Constant>(Vector))
     return Const->getAggregateElement(idx);
   else {
     Val = ExtractElementInst::Create(Vector, getVectorIndex(idx), "sev.cast.",
-                                     InsertBefore);
+                                     VCINTR::getInsertPosition(InsertBefore));
   }
   if (auto *InVector = dyn_cast<Instruction>(Vector))
     Val->setDebugLoc(InVector->getDebugLoc());
@@ -314,13 +315,14 @@ Value *SEVUtil::createScalarToVectorValue(Value *Scalar, Type *RefTy,
   else if (isa<PointerType>(Scalar->getType()) && isa<PointerType>(RefTy)) {
     auto Inner = getInnerPointerVectorNesting(RefTy);
     return new BitCastInst(Scalar, getTypeWithSEV(Scalar->getType(), Inner),
-                           "sev.cast.", InsertBefore);
+                           "sev.cast.",
+                           VCINTR::getInsertPosition(InsertBefore));
   } else if (auto *Const = dyn_cast<ConstantInt>(Scalar))
     return ConstantInt::getSigned(RefTy, getConstantElement(Const));
   else {
     return InsertElementInst::Create(UndefValue::get(RefTy), Scalar,
                                      getVectorIndex(0), "sev.cast.",
-                                     InsertBefore);
+                                     VCINTR::getInsertPosition(InsertBefore));
   }
 }
 
@@ -444,7 +446,8 @@ void SEVUtil::replaceAllUsesWith(Function &OldF, Function &NewF) {
       NewParams.push_back(Conv);
     }
 
-    auto *NewCall = CallInst::Create(&NewF, NewParams, "", OldInst);
+    auto *NewCall = CallInst::Create(&NewF, NewParams, "",
+                                     VCINTR::getInsertPosition(OldInst));
     NewCall->setCallingConv(OldInst->getCallingConv());
     NewCall->setTailCallKind(OldInst->getTailCallKind());
     NewCall->copyIRFlags(OldInst);
@@ -503,7 +506,8 @@ void SEVUtil::rewriteSEVReturns(Function &NewF) {
       assert(hasSEV(RetV->getType()));
       Conv = createVectorToScalarValue(RetV, RetInst);
     }
-    auto *NewRet = ReturnInst::Create(Context, Conv, RetInst);
+    auto *NewRet =
+        ReturnInst::Create(Context, Conv, VCINTR::getInsertPosition(RetInst));
     NewRet->takeName(RetInst);
     RetInst->eraseFromParent();
   }
@@ -657,7 +661,7 @@ Instruction *SEVUtil::visitStoreInst(StoreInst &OldInst) {
   return new llvm::StoreInst(NewVals[0], NewVals[1], OldInst.isVolatile(),
                              VCINTR::Align::getAlign(&OldInst),
                              OldInst.getOrdering(), OldInst.getSyncScopeID(),
-                             &OldInst);
+                             VCINTR::getInsertPosition(&OldInst));
 }
 
 Instruction *SEVUtil::visitBinaryOperator(BinaryOperator &OldInst) {
@@ -665,7 +669,7 @@ Instruction *SEVUtil::visitBinaryOperator(BinaryOperator &OldInst) {
   auto NewVals = ValueCont{};
   std::tie(NewTy, NewVals) = getOperandsFreeFromSEV(OldInst);
   return BinaryOperator::Create(OldInst.getOpcode(), NewVals[0], NewVals[1], "",
-                                &OldInst);
+                                VCINTR::getInsertPosition(&OldInst));
 }
 
 Instruction *SEVUtil::visitCmpInst(CmpInst &OldInst) {
@@ -673,7 +677,8 @@ Instruction *SEVUtil::visitCmpInst(CmpInst &OldInst) {
   auto NewVals = ValueCont{};
   std::tie(NewTy, NewVals) = getOperandsFreeFromSEV(OldInst);
   return CmpInst::Create(OldInst.getOpcode(), OldInst.getPredicate(),
-                         NewVals[0], NewVals[1], "", &OldInst);
+                         NewVals[0], NewVals[1], "",
+                         VCINTR::getInsertPosition(&OldInst));
 }
 
 Instruction *SEVUtil::visitShuffleVectorInst(ShuffleVectorInst &OldInst) {
@@ -702,7 +707,8 @@ Instruction *SEVUtil::visitShuffleVectorInst(ShuffleVectorInst &OldInst) {
       Idx = UndefValue::get(Int32Ty);
     else
       Idx = ConstantInt::get(Int32Ty, Mask[0]);
-    return ExtractElementInst::Create(VectorOp, Idx, "", &OldInst);
+    return ExtractElementInst::Create(VectorOp, Idx, "",
+                                      VCINTR::getInsertPosition(&OldInst));
   }
 
   auto *NewOp0 = Op0;
@@ -720,21 +726,21 @@ Instruction *SEVUtil::visitShuffleVectorInst(ShuffleVectorInst &OldInst) {
 
   return new ShuffleVectorInst(
       NewOp0, NewOp1, VCINTR::ShuffleVectorInst::getShuffleMask(Mask, Context),
-      "", &OldInst);
+      "", VCINTR::getInsertPosition(&OldInst));
 }
 
 Instruction *SEVUtil::visitSelectInst(SelectInst &OldInst) {
   Type *NewTy = nullptr;
   auto NewVals = ValueCont{};
   std::tie(NewTy, NewVals) = getOperandsFreeFromSEV(OldInst);
-  return SelectInst::Create(NewVals[0], NewVals[1], NewVals[2], "", &OldInst,
-                            &OldInst);
+  return SelectInst::Create(NewVals[0], NewVals[1], NewVals[2], "",
+                            VCINTR::getInsertPosition(&OldInst), &OldInst);
 }
 
 Instruction *SEVUtil::visitPHINode(PHINode &OldInst) {
   auto NewTy = getTypeFreeFromSEV(OldInst.getType());
-  auto Phi =
-      PHINode::Create(NewTy, OldInst.getNumIncomingValues(), "", &OldInst);
+  auto Phi = PHINode::Create(NewTy, OldInst.getNumIncomingValues(), "",
+                             VCINTR::getInsertPosition(&OldInst));
   for (auto I = size_t{0}; I < OldInst.getNumIncomingValues(); ++I) {
     auto *V = OldInst.getIncomingValue(I);
     auto *BB = OldInst.getIncomingBlock(I);
@@ -748,14 +754,16 @@ Instruction *SEVUtil::visitAllocaInst(AllocaInst &OldInst) {
   auto *NewTy = getTypeFreeFromSEV(OldInst.getAllocatedType());
   return new llvm::AllocaInst(NewTy, OldInst.getType()->getAddressSpace(),
                               OldInst.getArraySize(),
-                              VCINTR::Align::getAlign(&OldInst), "", &OldInst);
+                              VCINTR::Align::getAlign(&OldInst), "",
+                              VCINTR::getInsertPosition(&OldInst));
 }
 
 Instruction *SEVUtil::visitCastInst(CastInst &OldInst) {
   Type *NewTy = nullptr;
   auto NewVals = ValueCont{};
   std::tie(NewTy, NewVals) = getOperandsFreeFromSEV(OldInst);
-  return CastInst::Create(OldInst.getOpcode(), NewVals[0], NewTy, "", &OldInst);
+  return CastInst::Create(OldInst.getOpcode(), NewVals[0], NewTy, "",
+                          VCINTR::getInsertPosition(&OldInst));
 }
 
 Instruction *SEVUtil::visitLoadInst(LoadInst &OldInst) {
@@ -765,21 +773,23 @@ Instruction *SEVUtil::visitLoadInst(LoadInst &OldInst) {
   return new llvm::LoadInst(NewTy, NewVals[0], "", OldInst.isVolatile(),
                             VCINTR::Align::getAlign(&OldInst),
                             OldInst.getOrdering(), OldInst.getSyncScopeID(),
-                            &OldInst);
+                            VCINTR::getInsertPosition(&OldInst));
 }
 
 Instruction *SEVUtil::visitUnaryOperator(UnaryOperator &OldInst) {
   Type *NewTy = nullptr;
   auto NewVals = ValueCont{};
   std::tie(NewTy, NewVals) = getOperandsFreeFromSEV(OldInst);
-  return UnaryOperator::Create(OldInst.getOpcode(), NewVals[0], "", &OldInst);
+  return UnaryOperator::Create(OldInst.getOpcode(), NewVals[0], "",
+                               VCINTR::getInsertPosition(&OldInst));
 }
 
 Instruction *SEVUtil::visitVAArgInst(VAArgInst &OldInst) {
   Type *NewTy = nullptr;
   auto NewVals = ValueCont{};
   std::tie(NewTy, NewVals) = getOperandsFreeFromSEV(OldInst);
-  return new VAArgInst(NewVals[0], NewTy, "", &OldInst);
+  return new VAArgInst(NewVals[0], NewTy, "",
+                       VCINTR::getInsertPosition(&OldInst));
 }
 
 Instruction *SEVUtil::visitExtractValueInst(ExtractValueInst &OldInst) {
@@ -787,7 +797,7 @@ Instruction *SEVUtil::visitExtractValueInst(ExtractValueInst &OldInst) {
   auto NewVals = ValueCont{};
   std::tie(NewTy, NewVals) = getOperandsFreeFromSEV(OldInst);
   return ExtractValueInst::Create(NewVals[0], OldInst.getIndices(), "",
-                                  &OldInst);
+                                  VCINTR::getInsertPosition(&OldInst));
 }
 
 Instruction *SEVUtil::visitGetElementPtrInst(GetElementPtrInst &OldInst) {
@@ -799,7 +809,7 @@ Instruction *SEVUtil::visitGetElementPtrInst(GetElementPtrInst &OldInst) {
                  std::back_inserter(IdxList), [](Value *V) { return V; });
   auto *PointeeTy = getTypeFreeFromSEV(OldInst.getSourceElementType());
   return GetElementPtrInst::Create(PointeeTy, NewVals[0], IdxList, "",
-                                   &OldInst);
+                                   VCINTR::getInsertPosition(&OldInst));
 }
 
 Instruction *SEVUtil::visitExtractElementInst(ExtractElementInst &OldInst) {
