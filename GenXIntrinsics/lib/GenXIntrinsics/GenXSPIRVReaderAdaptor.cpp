@@ -456,7 +456,7 @@ static PointerType *getKernelArgPointerType(PointerType *ConvertTy,
   if (ConvertPointeeTy->isAggregateType())
     return ConvertTy;
 
-  return ArgPointeeTy->getPointerTo(AddressSpace);
+  return PointerType::get(ArgPointeeTy->getContext(), AddressSpace);
 }
 
 // Create new empty function with restored types based on old function and
@@ -478,7 +478,7 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
                        auto &Ctx = Arg.getContext();
                        unsigned AddrSpace =
                            getOpaqueTypeAddressSpace(Descs[Arg.getArgNo()].Ty);
-                       return PointerType::get(Type::getInt8Ty(Ctx), AddrSpace);
+                       return PointerType::get(Ctx, AddrSpace);
                      }
 #endif
                      if (Arg.hasByValAttr())

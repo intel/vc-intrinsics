@@ -141,7 +141,7 @@ Type *SEVUtil::getTypeFreeFromSEV(Type *Ty) {
     auto UTy = getTypeFreeFromSEV(VCINTR::Type::getNonOpaquePtrEltTy(Ptr));
     if (UTy == VCINTR::Type::getNonOpaquePtrEltTy(Ptr))
       return Ptr;
-    return PointerType::get(UTy, Ptr->getAddressSpace());
+    return PointerType::get(Ptr->getContext(), Ptr->getAddressSpace());
   } else if (auto *VecTy = dyn_cast<VectorType>(Ty)) {
     if (VCINTR::VectorType::getNumElements(VecTy) == 1)
       return VecTy->getElementType();
@@ -223,9 +223,8 @@ Type *SEVUtil::getTypeWithSEV(Type *Ty, size_t InnerPointers) {
     return VCINTR::getVectorType(Ty, 1);
 
   auto *Ptr = cast<PointerType>(Ty);
-  auto *UTy =
-      getTypeWithSEV(VCINTR::Type::getNonOpaquePtrEltTy(Ptr), InnerPointers);
-  return PointerType::get(UTy, Ptr->getAddressSpace());
+  getTypeWithSEV(VCINTR::Type::getNonOpaquePtrEltTy(Ptr), InnerPointers);
+  return PointerType::get(Ptr->getContext(), Ptr->getAddressSpace());
 }
 
 // Returns true if Ty is SEV or it is a pointer to SEV

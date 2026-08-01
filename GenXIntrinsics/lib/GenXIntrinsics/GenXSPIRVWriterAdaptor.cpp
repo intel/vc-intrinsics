@@ -70,7 +70,7 @@ private:
 
 // Get some pointer to global address space.
 static Type *getGlobalPtrType(LLVMContext &Ctx) {
-  return PointerType::get(Type::getInt8Ty(Ctx), SPIRVParams::SPIRVGlobalAS);
+  return PointerType::get(Ctx, SPIRVParams::SPIRVGlobalAS);
 }
 
 // Get some opaque structure pointer to global address space. This is
@@ -80,7 +80,7 @@ static Type *getOpaquePtrType(Module *M, StringRef Name,
   StructType *STy = VCINTR::getTypeByName(M, Name);
   if (!STy)
     STy = StructType::create(M->getContext(), Name);
-  return PointerType::get(STy, AddressSpace);
+  return PointerType::get(M->getContext(), AddressSpace);
 }
 
 static Type *getSamplerType(Module *M) {

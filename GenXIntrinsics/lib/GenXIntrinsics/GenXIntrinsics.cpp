@@ -376,12 +376,15 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
     return VCINTR::getVectorType(DecodeFixedType(Infos, Tys, Context),D.Vector_Width);
 #endif
   case IITDescriptor::Pointer:
-    return PointerType::get(DecodeFixedType(Infos, Tys, Context),
+    // Consume the nested pointee type descriptor even though opaque
+    // pointers don't need the resulting type.
+    DecodeFixedType(Infos, Tys, Context);
+    return PointerType::get(Context,
 #if VC_INTR_LLVM_VERSION_MAJOR >= 23
-			          D.PointerAddressSpace);
+                            D.PointerAddressSpace);
 
 #else
-                D.Pointer_AddressSpace);
+                            D.Pointer_AddressSpace);
 #endif
   case IITDescriptor::Struct: {
     SmallVector<Type *, 8> Elts;
