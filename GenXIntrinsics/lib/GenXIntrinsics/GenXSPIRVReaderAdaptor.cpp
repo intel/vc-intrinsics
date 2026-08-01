@@ -24,6 +24,7 @@ SPDX-License-Identifier: MIT
 #include "llvm/Pass.h"
 
 #include "llvmVCWrapper/IR/Attributes.h"
+#include "llvmVCWrapper/IR/DerivedTypes.h"
 #include "llvmVCWrapper/IR/Function.h"
 #include "llvmVCWrapper/IR/Instructions.h"
 #include "llvmVCWrapper/IR/Type.h"
@@ -456,7 +457,7 @@ static PointerType *getKernelArgPointerType(PointerType *ConvertTy,
   if (ConvertPointeeTy->isAggregateType())
     return ConvertTy;
 
-  return ArgPointeeTy->getPointerTo(AddressSpace);
+  return VCINTR::PointerType::get(ArgPointeeTy, AddressSpace);
 }
 
 // Create new empty function with restored types based on old function and
@@ -478,7 +479,7 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
                        auto &Ctx = Arg.getContext();
                        unsigned AddrSpace =
                            getOpaqueTypeAddressSpace(Descs[Arg.getArgNo()].Ty);
-                       return PointerType::get(Type::getInt8Ty(Ctx), AddrSpace);
+                       return VCINTR::PointerType::get(Ctx, AddrSpace);
                      }
 #endif
                      if (Arg.hasByValAttr())

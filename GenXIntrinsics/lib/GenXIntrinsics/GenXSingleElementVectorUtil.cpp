@@ -21,6 +21,7 @@ SPDX-License-Identifier: MIT
 
 #include "llvmVCWrapper/Analysis/InstructionSimplify.h"
 #include "llvmVCWrapper/IR/Attributes.h"
+#include "llvmVCWrapper/IR/DerivedTypes.h"
 #include "llvmVCWrapper/IR/Instructions.h"
 #include "llvmVCWrapper/Support/Alignment.h"
 
@@ -141,7 +142,7 @@ Type *SEVUtil::getTypeFreeFromSEV(Type *Ty) {
     auto UTy = getTypeFreeFromSEV(VCINTR::Type::getNonOpaquePtrEltTy(Ptr));
     if (UTy == VCINTR::Type::getNonOpaquePtrEltTy(Ptr))
       return Ptr;
-    return PointerType::get(UTy, Ptr->getAddressSpace());
+    return VCINTR::PointerType::get(UTy, Ptr->getAddressSpace());
   } else if (auto *VecTy = dyn_cast<VectorType>(Ty)) {
     if (VCINTR::VectorType::getNumElements(VecTy) == 1)
       return VecTy->getElementType();
@@ -225,7 +226,7 @@ Type *SEVUtil::getTypeWithSEV(Type *Ty, size_t InnerPointers) {
   auto *Ptr = cast<PointerType>(Ty);
   auto *UTy =
       getTypeWithSEV(VCINTR::Type::getNonOpaquePtrEltTy(Ptr), InnerPointers);
-  return PointerType::get(UTy, Ptr->getAddressSpace());
+  return VCINTR::PointerType::get(UTy, Ptr->getAddressSpace());
 }
 
 // Returns true if Ty is SEV or it is a pointer to SEV
