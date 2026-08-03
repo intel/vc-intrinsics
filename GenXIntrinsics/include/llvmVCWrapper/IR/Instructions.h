@@ -43,6 +43,15 @@ inline llvm::ArrayRef<int> getShuffleMask(llvm::ArrayRef<int> Mask,
 
 } // namespace ShuffleVectorInst
 
+#if VC_INTR_LLVM_VERSION_MAJOR >= 19
+inline llvm::BasicBlock::iterator getInsertPosition(llvm::Instruction *I) {
+  return I->getIterator();
+}
+#else
+// LLVM 24 (commit ad300a7712f3) removed this support.
+inline llvm::Instruction *getInsertPosition(llvm::Instruction *I) { return I; }
+#endif
+
 template <class ArgKind>
 inline ArgKind &getValue(VCINTR::Optional<ArgKind> &opt) {
 #if VC_INTR_LLVM_VERSION_MAJOR < 15
