@@ -937,7 +937,11 @@ void CMSimdCFLower::findAndSplitJoinPoints()
     JoinToGoto[JP] = Br->getParent();
     // This is a new join point.
     LLVM_DEBUG(dbgs() << "new join point " << JP->getName() << "\n");
+#if VC_INTR_LLVM_VERSION_MAJOR >= 19
+    auto SplitBB = JP->splitBasicBlock(&*JP->getFirstNonPHIIt(), ".afterjoin");
+#else
     auto SplitBB = JP->splitBasicBlock(JP->getFirstNonPHI(), ".afterjoin");
+#endif
     // We need to split it into its own basic block, so later we can modify
     // the join to do a branch to its JIP.
     if (PredicatedBlocks.find(JP) != PredicatedBlocks.end())
@@ -1835,7 +1839,11 @@ void CMSimdCFLower::lowerSimdCF()
     unsigned SimdWidth = jpi->second;
     LLVM_DEBUG(dbgs() << "lower join point " << JP->getName() << "\n");
     DebugLoc DL = JP->front().getDebugLoc();
+#if VC_INTR_LLVM_VERSION_MAJOR >= 19
+    Instruction *InsertBefore = &*JP->getFirstNonPHIIt();
+#else
     Instruction *InsertBefore = JP->getFirstNonPHI();
+#endif
     // Insert {NewEM,BranchCond} = llvm.genx.simdcf.join(OldEM,RM)
     Value *RMAddr = getRMAddr(JP, SimdWidth);
     Instruction *OldEM = new LoadInst(EMVar->getValueType(), EMVar,
