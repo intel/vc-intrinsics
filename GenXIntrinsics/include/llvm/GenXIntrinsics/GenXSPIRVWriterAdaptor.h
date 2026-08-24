@@ -22,7 +22,11 @@ class PassRegistry;
 //-----------------------------------------------------------------------------
 // Writer adaptor for new PM.
 class GenXSPIRVWriterAdaptor final
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+    : public RequiredPassInfoMixin<GenXSPIRVWriterAdaptor> {
+#else
     : public PassInfoMixin<GenXSPIRVWriterAdaptor> {
+#endif
   bool RewriteTypes = true;
   bool RewriteSingleElementVectors = true;
 

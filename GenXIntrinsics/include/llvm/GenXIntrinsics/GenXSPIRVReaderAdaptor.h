@@ -22,7 +22,11 @@ class PassRegistry;
 //-----------------------------------------------------------------------------
 // Reader adaptor for new PM.
 class GenXSPIRVReaderAdaptor final
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+    : public RequiredPassInfoMixin<GenXSPIRVReaderAdaptor> {
+#else
     : public PassInfoMixin<GenXSPIRVReaderAdaptor> {
+#endif
 
 public:
   PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
