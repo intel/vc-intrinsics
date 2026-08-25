@@ -55,7 +55,6 @@ else()
         LLVMSupport
         LLVMCore
         LLVMAnalysis
-        LLVMSPIRVLib
     )
   else()
     add_llvm_library(LLVMGenXIntrinsics
