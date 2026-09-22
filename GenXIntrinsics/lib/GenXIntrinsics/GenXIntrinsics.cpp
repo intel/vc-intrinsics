@@ -50,7 +50,8 @@ static cl::opt<bool> EnableGenXIntrinsicsCache(
 
 /// Intrinsic::isOverloaded(ID) - Returns true if the intrinsic can be
 /// overloaded.
-static bool isOverloaded(GenXIntrinsic::ID id);
+// Only referenced from asserts, so it's unused in NDEBUG (Release) builds.
+[[maybe_unused]] static bool isOverloaded(GenXIntrinsic::ID id);
 
 /// getIntrinsicInfoTableEntries - Return the IIT table descriptor for the
 /// specified intrinsic into an array of IITDescriptors.

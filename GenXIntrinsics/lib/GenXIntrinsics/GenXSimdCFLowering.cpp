@@ -1887,7 +1887,8 @@ void CMSimdCFLower::lowerSimdCF()
                                       VCINTR::getInsertPosition(Br));
 #else
       assert(!cast<BranchInst>(Br)->isConditional());
-      auto NewBr = BranchInst::Create(JIP, JP->getNextNode(), BranchCond, Br);
+      auto NewBr = BranchInst::Create(JIP, JP->getNextNode(), BranchCond,
+                                      VCINTR::getInsertPosition(Br));
 #endif
       assert(JoinToGoto.count(JP));
       NewBr->setDebugLoc(DL);

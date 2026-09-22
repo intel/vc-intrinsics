@@ -264,8 +264,6 @@ transformKernelSignature(Function &F, const std::vector<SPIRVArgDesc> &Descs) {
   // pointers are always disabled, so we must use target types.
 #if VC_INTR_LLVM_VERSION_MAJOR == 16
   bool UseTargetTypes = !F.getContext().supportsTypedPointers();
-#elif VC_INTR_LLVM_VERSION_MAJOR > 16
-  constexpr bool UseTargetTypes = true;
 #endif
   auto GetArgType = [&](SPIRVArgDesc Desc, Argument &Arg) {
 #if VC_INTR_LLVM_VERSION_MAJOR == 16
@@ -483,7 +481,9 @@ static VCINTR::Optional<ArgKind> extractArgumentKind(const Argument &Arg) {
   const Attribute Attr =
       Attrs.getParamAttr(Arg.getArgNo(), VCFunctionMD::VCArgumentKind);
   unsigned AttrVal = {};
-  const bool Conv = Attr.getValueAsString().getAsInteger(0, AttrVal);
+  // Conv is only referenced from the assert below, unused in Release builds.
+  [[maybe_unused]] const bool Conv =
+      Attr.getValueAsString().getAsInteger(0, AttrVal);
   assert(!Conv && "Expected integer value as arg kind");
   // TODO: add some sanity check that the value can be casted to ArgKind
   return static_cast<ArgKind>(AttrVal);

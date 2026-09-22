@@ -565,7 +565,8 @@ static void rewriteKernelArguments(Function &F) {
     assert(Struct->hasOneUse());
     auto *Array = Struct->user_back();
     assert(Array->hasOneUse());
-    auto *GV = dyn_cast<GlobalVariable>(Array->user_back());
+    // GV is only referenced from the assert below, unused in Release builds.
+    [[maybe_unused]] auto *GV = dyn_cast<GlobalVariable>(Array->user_back());
     assert(GV && GV->getName() == "llvm.global.annotations");
   }
 

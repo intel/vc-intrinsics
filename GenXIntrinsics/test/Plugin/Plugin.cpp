@@ -12,7 +12,12 @@ SPDX-License-Identifier: MIT
 
 #include "llvm/PassRegistry.h"
 #include "llvm/Passes/PassBuilder.h"
+// LLVM 22 moved this header from llvm/Passes/ to llvm/Plugins/.
+#if VC_INTR_LLVM_VERSION_MAJOR >= 22
+#include "llvm/Plugins/PassPlugin.h"
+#else
 #include "llvm/Passes/PassPlugin.h"
+#endif
 
 using namespace llvm;
 
