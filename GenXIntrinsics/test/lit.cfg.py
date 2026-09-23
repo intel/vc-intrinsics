@@ -21,7 +21,9 @@ from lit.llvm.subst import FindTool
 config.name = 'vc-intrinsics'
 
 # testFormat: The test format to use to interpret tests.
-config.test_format = lit.formats.ShTest(not llvm_config.use_lit_shell)
+# Always use lit's internal shell: execute_external=True was removed in LLVM 24
+# (all our RUN lines are simple "opt ... | FileCheck ..." pipelines, so this is safe).
+config.test_format = lit.formats.ShTest(False)
 
 # suffixes: A list of file extensions to treat as test files.
 config.suffixes = ['.ll']
