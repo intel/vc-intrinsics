@@ -127,38 +127,29 @@ template <typename T> T consumeIntegerLiteral(StringRef TyName) {
 
 static SPIRVType evaluateImageTypeFromSPVIR(SPIRVIRTypes::Dim Dim,
                                             bool Arrayed) {
-  SPIRVType ResultType;
-  if (!Arrayed) {
+  if (Arrayed) {
     switch (Dim) {
     case SPIRVIRTypes::Dim1D:
-      ResultType = SPIRVType::Image1d;
-      break;
+      return SPIRVType::Image1dArray;
     case SPIRVIRTypes::Dim2D:
-      ResultType = SPIRVType::Image2d;
-      break;
-    case SPIRVIRTypes::Dim3D:
-      ResultType = SPIRVType::Image3d;
-      break;
-    case SPIRVIRTypes::DimBuffer:
-      ResultType = SPIRVType::Image1dBuffer;
-      break;
-    default:
-      llvm_unreachable("Bad Image Type");
-    }
-  } else {
-    switch (Dim) {
-    case SPIRVIRTypes::Dim1D:
-      ResultType = SPIRVType::Image1dArray;
-      break;
-    case SPIRVIRTypes::Dim2D:
-      ResultType = SPIRVType::Image2dArray;
-      break;
+      return SPIRVType::Image2dArray;
     default:
       llvm_unreachable("Bad Image Type");
     }
   }
 
-  return ResultType;
+  switch (Dim) {
+  case SPIRVIRTypes::Dim1D:
+    return SPIRVType::Image1d;
+  case SPIRVIRTypes::Dim2D:
+    return SPIRVType::Image2d;
+  case SPIRVIRTypes::Dim3D:
+    return SPIRVType::Image3d;
+  case SPIRVIRTypes::DimBuffer:
+    return SPIRVType::Image1dBuffer;
+  }
+
+  llvm_unreachable("Bad Image Type");
 }
 
 static StringRef skipUnderscores(StringRef StrRef, int Count) {
