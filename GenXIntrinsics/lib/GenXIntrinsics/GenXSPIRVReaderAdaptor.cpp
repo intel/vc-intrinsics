@@ -118,11 +118,9 @@ static std::pair<SPIRVType, StringRef> parseIntelMainType(StringRef TyName) {
 }
 
 template <typename T> T consumeIntegerLiteral(StringRef TyName) {
-  int Literal;
-
-  auto ProperlyConsumed = !TyName.consumeInteger(0, Literal);
-  assert(ProperlyConsumed && "Expected string to rpresent integer literal");
-  (void)ProperlyConsumed;
+  int Literal = 0;
+  if (TyName.consumeInteger(0, Literal))
+    llvm_unreachable("Expected string to represent integer literal");
 
   return static_cast<T>(Literal);
 }
@@ -144,6 +142,8 @@ static SPIRVType evaluateImageTypeFromSPVIR(SPIRVIRTypes::Dim Dim,
     case SPIRVIRTypes::DimBuffer:
       ResultType = SPIRVType::Image1dBuffer;
       break;
+    default:
+      llvm_unreachable("Bad Image Type");
     }
   } else {
     switch (Dim) {
