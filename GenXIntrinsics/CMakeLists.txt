@@ -22,6 +22,36 @@ include(cmake/utils.cmake)
 # Global config.
 add_compile_definitions(VC_INTR_LLVM_VERSION_MAJOR=${LLVM_VERSION_MAJOR})
 
+include(CheckCXXSourceCompiles)
+unset(VC_INTR_LLVM_HAS_ANY_SAME_VEC_WIDTH)
+unset(VC_INTR_LLVM_HAS_ANY_SAME_VEC_WIDTH CACHE)
+set(_VC_INTR_SAVED_REQUIRED_INCLUDES "${CMAKE_REQUIRED_INCLUDES}")
+set(_VC_INTR_REQUIRED_INCLUDES ${LLVM_INCLUDE_DIRS} ${LLVM_INCLUDE_DIR}
+  ${LLVM_MAIN_SRC_DIR}/include ${LLVM_BINARY_DIR}/include)
+list(FILTER _VC_INTR_REQUIRED_INCLUDES EXCLUDE REGEX "^$")
+list(REMOVE_DUPLICATES _VC_INTR_REQUIRED_INCLUDES)
+set(_VC_INTR_SAVED_TRY_COMPILE_TARGET_TYPE "${CMAKE_TRY_COMPILE_TARGET_TYPE}")
+set(CMAKE_REQUIRED_INCLUDES ${_VC_INTR_REQUIRED_INCLUDES})
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+check_cxx_source_compiles("\
+#include <llvm/IR/Intrinsics.h>\n\
+int main() {\n\
+  using namespace llvm::Intrinsic;\n\
+  auto D = IITDescriptor::get(IITDescriptor::AnySameVecWidth, 0,\n\
+                              IITDescriptor::EC_Pointer << 4);\n\
+  return D.Kind == IITDescriptor::AnySameVecWidth ? 0 : 1;\n\
+}\n\
+" VC_INTR_LLVM_HAS_ANY_SAME_VEC_WIDTH)
+set(CMAKE_REQUIRED_INCLUDES "${_VC_INTR_SAVED_REQUIRED_INCLUDES}")
+set(CMAKE_TRY_COMPILE_TARGET_TYPE "${_VC_INTR_SAVED_TRY_COMPILE_TARGET_TYPE}")
+unset(_VC_INTR_SAVED_REQUIRED_INCLUDES)
+unset(_VC_INTR_SAVED_TRY_COMPILE_TARGET_TYPE)
+unset(_VC_INTR_REQUIRED_INCLUDES)
+
+if(VC_INTR_LLVM_HAS_ANY_SAME_VEC_WIDTH)
+  add_compile_definitions(VC_INTR_LLVM_HAS_ANY_SAME_VEC_WIDTH)
+endif()
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 
