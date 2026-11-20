@@ -311,7 +311,13 @@ DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
   case IIT_VEC_OF_ANYPTRS_TO_ELT: {
     unsigned short ArgNo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
     unsigned short RefNo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
-#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+#if VC_INTR_LLVM_VERSION_MAJOR >= 24
+    // LLVM 24 replaced VecOfAnyPtrsToElt with AnySameVecWidth, which packs
+    // the element constraint into bits [4:7] above the overload index.
+    OutputTable.push_back(IITDescriptor::get(
+        IITDescriptor::AnySameVecWidth, /*Hi=*/RefNo,
+        /*Lo=*/IITDescriptor::EC_Pointer << 4 | ArgNo));
+#elif VC_INTR_LLVM_VERSION_MAJOR >= 23
     // In LLVM 23+, the packing changed: overload index in lower bits, ref overload index in upper bits
     OutputTable.push_back(
         IITDescriptor::get(IITDescriptor::VecOfAnyPtrsToElt, /*Hi=*/RefNo, /*Lo=*/ArgNo));
@@ -398,7 +404,11 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
   // For any overload kind or partially dependent type, substitute it with the
   // corresponding concrete type from OverloadTys.
   case IITDescriptor::Overloaded:
+#if VC_INTR_LLVM_VERSION_MAJOR >= 24
+  case IITDescriptor::AnySameVecWidth:
+#else
   case IITDescriptor::VecOfAnyPtrsToElt:
+#endif
     return Tys[D.getOverloadIndex()];
   case IITDescriptor::Extend: {
     Type *Ty = Tys[D.getOverloadIndex()];
