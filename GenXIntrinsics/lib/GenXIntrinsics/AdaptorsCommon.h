@@ -113,8 +113,6 @@ static constexpr const char TypePrefix[] = "intel.";
 
 // Stateful buffer type.
 static constexpr const char Buffer[] = "buffer";
-// Media block image.
-static constexpr const char MediaBlockImage[] = "image2d_media_block";
 } // namespace IntelTypes
 
 namespace CommonTypes {

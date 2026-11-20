@@ -103,7 +103,12 @@ private:
 // New PM support
 //-----------------------------------------------------------------------------
 // CMSimdCFLovering adaptor for new PM.
+#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+class CMSimdCFLowering final
+    : public RequiredPassInfoMixin<CMSimdCFLowering> {
+#else
 class CMSimdCFLowering final : public PassInfoMixin<CMSimdCFLowering> {
+#endif
 
 public:
   CMSimdCFLowering() {}

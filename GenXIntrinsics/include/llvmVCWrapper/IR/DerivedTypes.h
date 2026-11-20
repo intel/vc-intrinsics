@@ -54,6 +54,30 @@ inline unsigned getNumElements(llvm::VectorType *VecType) {
 } // namespace VectorType
 namespace PointerType {
 
+// Opaque pointer creation. LLVM < 17 still supports typed pointers, and the
+// rest of the codebase (e.g. legalizeParamAttributes) relies on being able to
+// query the pointer's element type there, so a dummy i8 pointee type is used
+// instead of a genuinely opaque pointer until opaque pointers become
+// mandatory.
+inline llvm::PointerType *get(llvm::LLVMContext &C, unsigned AddressSpace) {
+#if VC_INTR_LLVM_VERSION_MAJOR < 17
+  return llvm::PointerType::get(llvm::Type::getInt8Ty(C), AddressSpace);
+#else
+  return llvm::PointerType::get(C, AddressSpace);
+#endif
+}
+
+// Pointer creation that keeps PointeeType as the pointee for LLVM versions
+// that still have typed pointers, and falls back to an opaque pointer
+// otherwise.
+inline llvm::PointerType *get(llvm::Type *PointeeType, unsigned AddressSpace) {
+#if VC_INTR_LLVM_VERSION_MAJOR < 17
+  return llvm::PointerType::get(PointeeType, AddressSpace);
+#else
+  return llvm::PointerType::get(PointeeType->getContext(), AddressSpace);
+#endif
+}
+
 inline llvm::PointerType *getWithSamePointeeType(llvm::PointerType *PT,
                                                  unsigned AddressSpace) {
 #if VC_INTR_LLVM_VERSION_MAJOR < 14
