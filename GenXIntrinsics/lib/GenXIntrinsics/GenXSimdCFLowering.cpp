@@ -1734,14 +1734,13 @@ void CMSimdCFLower::predicateCall(CallInst *CI, unsigned SimdWidth)
  */
 void CMSimdCFLower::lowerSimdCF()
 {
-  IRBuilder<> Builder(F->getContext());
   // First lower the simd branches.
   for (auto sbi = SimdBranches.begin(), sbe = SimdBranches.end();
       sbi != sbe; ++sbi) {
     BasicBlock *BB = sbi->first;
 
     auto Term = BB->getTerminator();
-    Builder.SetInsertPoint(Term);
+    IRBuilder<> Builder(Term);
 
     BasicBlock *UIP = Term->getSuccessor(0);
     BasicBlock *JIP = JIPs[BB];
