@@ -131,6 +131,31 @@ static Intrinsic::IITDescriptor getVector(unsigned Width) {
 #endif
 }
 
+#if VC_INTR_LLVM_VERSION_MAJOR >= 24
+namespace {
+// llvm/llvm-project#231024 replaced IITDescriptor::VecOfAnyPtrsToElt with
+// AnySameVecWidth within LLVM 24, so the major version cannot tell them apart.
+// Check for AnySameVecWidth here rather than at configure time, where an
+// in-tree build does not have the generated LLVM headers yet.
+template <typename D, typename = void> struct AnyPtrVecDesc {
+  static constexpr auto Kind = D::VecOfAnyPtrsToElt;
+  static D get(unsigned short ArgNo, unsigned short RefNo) {
+    return D::get(Kind, /*Hi=*/RefNo, /*Lo=*/ArgNo);
+  }
+};
+
+template <typename D>
+struct AnyPtrVecDesc<D, std::void_t<decltype(D::AnySameVecWidth)>> {
+  static constexpr auto Kind = D::AnySameVecWidth;
+  // AnySameVecWidth packs the element constraint into bits [4:7] above the
+  // overload index.
+  static D get(unsigned short ArgNo, unsigned short RefNo) {
+    return D::get(Kind, /*Hi=*/RefNo, /*Lo=*/D::EC_Pointer << 4 | ArgNo);
+  }
+};
+} // namespace
+#endif
+
 static void
 DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
               SmallVectorImpl<Intrinsic::IITDescriptor> &OutputTable) {
@@ -311,19 +336,15 @@ DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
   case IIT_VEC_OF_ANYPTRS_TO_ELT: {
     unsigned short ArgNo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
     unsigned short RefNo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
-#if defined(VC_INTR_LLVM_HAS_ANY_SAME_VEC_WIDTH)
-    OutputTable.push_back(IITDescriptor::get(
-        IITDescriptor::AnySameVecWidth, /*Hi=*/RefNo,
-        /*Lo=*/IITDescriptor::EC_Pointer << 4 | ArgNo));
-#else
-#if VC_INTR_LLVM_VERSION_MAJOR >= 23
+#if VC_INTR_LLVM_VERSION_MAJOR >= 24
+    OutputTable.push_back(AnyPtrVecDesc<IITDescriptor>::get(ArgNo, RefNo));
+#elif VC_INTR_LLVM_VERSION_MAJOR >= 23
     // In LLVM 23+, the packing changed: overload index in lower bits, ref overload index in upper bits
     OutputTable.push_back(
         IITDescriptor::get(IITDescriptor::VecOfAnyPtrsToElt, /*Hi=*/RefNo, /*Lo=*/ArgNo));
 #else
     OutputTable.push_back(
         IITDescriptor::get(IITDescriptor::VecOfAnyPtrsToElt, ArgNo, RefNo));
-#endif
 #endif
     return;
   }
@@ -404,8 +425,8 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
   // For any overload kind or partially dependent type, substitute it with the
   // corresponding concrete type from OverloadTys.
   case IITDescriptor::Overloaded:
-#if defined(VC_INTR_LLVM_HAS_ANY_SAME_VEC_WIDTH)
-  case IITDescriptor::AnySameVecWidth:
+#if VC_INTR_LLVM_VERSION_MAJOR >= 24
+  case AnyPtrVecDesc<IITDescriptor>::Kind:
 #else
   case IITDescriptor::VecOfAnyPtrsToElt:
 #endif
